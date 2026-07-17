@@ -47,6 +47,12 @@ class MemberTable
                 TextColumn::make('email')
                     ->searchable()
                     ->label(__('app.fields.email')),
+                TextColumn::make('government_id')
+                    ->searchable()
+                    ->label(__('app.fields.government_id')),
+                TextColumn::make('location.name')
+                    ->searchable()
+                    ->label(__('app.fields.location')),
                 TextColumn::make('gender')
                     ->searchable()
                     ->label(__('app.fields.gender')),

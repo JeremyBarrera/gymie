@@ -25,6 +25,7 @@ class MemberFactory extends Factory
             // Leave `photo` null so the UI/Table falls back to the default image URL
             'photo' => null,
             'code' => $this->faker->unique()->bothify('MEM###'),
+            'government_id' => $this->faker->unique()->bothify('ID-########'),
             'name' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
             'contact' => $location['contact'],

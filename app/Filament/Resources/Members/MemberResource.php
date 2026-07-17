@@ -47,6 +47,7 @@ class MemberResource extends Resource
             'name',
             'code',
             'email',
+            'government_id',
             'contact',
         ];
     }

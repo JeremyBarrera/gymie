@@ -5,6 +5,7 @@ namespace App\Services\Api\Schemas;
 use App\Enums\Status;
 use App\Models\Member;
 use App\Rules\ModelUnique;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -30,7 +31,7 @@ final class MemberSchema
     public static function queryRules(): array
     {
         return [
-            'searchable' => ['code', 'name', 'email', 'contact'],
+            'searchable' => ['code', 'name', 'email', 'government_id', 'contact'],
             'sortable' => ['id', 'created_at', 'name'],
             'default_sort' => '-id',
             'status_column' => 'status',
@@ -53,8 +54,10 @@ final class MemberSchema
             'photo' => ['nullable', 'file', 'image', 'max:10240'],
             'code' => ['nullable', 'string', 'max:255', new ModelUnique(Member::class, 'code')],
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', new ModelUnique(Member::class, 'email')],
+            'email' => ['nullable', 'string', 'email', 'max:255', new ModelUnique(Member::class, 'email')],
+            'government_id' => ['required', 'string', 'max:255', new ModelUnique(Member::class, 'government_id')],
             'contact' => ['required', 'string', 'max:20'],
+            'location_id' => ['required', 'integer', 'exists:locations,id'],
             'emergency_contact' => ['nullable', 'string', 'max:20'],
             'health_issue' => ['nullable', 'string', 'max:500'],
             'gender' => ['nullable', 'string', Rule::in(['male', 'female', 'other'])],
@@ -79,8 +82,10 @@ final class MemberSchema
             'photo' => ['sometimes', 'nullable', 'file', 'image', 'max:10240'],
             'code' => ['sometimes', 'nullable', 'string', 'max:255', new ModelUnique(Member::class, 'code', $memberId)],
             'name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'string', 'email', 'max:255', new ModelUnique(Member::class, 'email', $memberId)],
+            'email' => ['sometimes', 'nullable', 'string', 'email', 'max:255', new ModelUnique(Member::class, 'email', $memberId)],
+            'government_id' => ['sometimes', 'string', 'max:255', new ModelUnique(Member::class, 'government_id', $memberId)],
             'contact' => ['sometimes', 'string', 'max:20'],
+            'location_id' => ['sometimes', 'nullable', 'integer', 'exists:locations,id'],
             'emergency_contact' => ['sometimes', 'nullable', 'string', 'max:20'],
             'health_issue' => ['sometimes', 'nullable', 'string', 'max:500'],
             'gender' => ['sometimes', 'nullable', 'string', Rule::in(['male', 'female', 'other'])],
@@ -101,18 +106,27 @@ final class MemberSchema
      */
     public static function resource(Member $member): array
     {
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+
         return [
             'id' => (int) $member->id,
             'code' => $member->code ? (string) $member->code : null,
             'name' => (string) $member->name,
             'email' => (string) $member->email,
+            'government_id' => $member->government_id ? (string) $member->government_id : null,
             'contact' => $member->contact ? (string) $member->contact : null,
             'emergency_contact' => $member->emergency_contact ? (string) $member->emergency_contact : null,
             'health_issue' => $member->health_issue ? (string) $member->health_issue : null,
             'gender' => $member->gender ? (string) $member->gender : null,
             'dob' => $member->dob?->toDateString(),
             'photo' => $member->photo ? (string) $member->photo : null,
-            'photo_url' => $member->photo ? Storage::disk('public')->url((string) $member->photo) : null,
+            'photo_url' => $member->photo ? $disk->url((string) $member->photo) : null,
+            'location_id' => $member->location_id ? (int) $member->location_id : null,
+            'location' => $member->location ? [
+                'id' => $member->location->id,
+                'name' => $member->location->name,
+            ] : null,
             'address' => $member->address ? (string) $member->address : null,
             'country' => $member->country ? (string) $member->country : null,
             'state' => $member->state ? (string) $member->state : null,

@@ -55,6 +55,8 @@ class MemberInfolist
                                 TextEntry::make('name')->label(__('app.fields.name')),
                                 TextEntry::make('gender')->label(__('app.fields.gender')),
                                 TextEntry::make('email')->label(__('app.fields.email')),
+                                TextEntry::make('government_id')->label(__('app.fields.government_id')),
+                                TextEntry::make('location.name')->label(__('app.fields.location')),
                                 TextEntry::make('contact')->label(__('app.fields.contact')),
                                 TextEntry::make('emergency_contact')->label(__('app.fields.emergency_contact'))->placeholder(__('app.placeholders.na')),
                                 TextEntry::make('dob')

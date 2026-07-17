@@ -8,6 +8,7 @@ use App\Filament\Resources\Enquiries\EnquiryResource;
 use App\Filament\Resources\Expenses\ExpenseResource;
 use App\Filament\Resources\FollowUps\FollowUpResource;
 use App\Filament\Resources\Invoices\InvoiceResource;
+use App\Filament\Resources\Locations\LocationResource;
 use App\Filament\Resources\Members\MemberResource;
 use App\Filament\Resources\Plans\PlanResource;
 use App\Filament\Resources\Services\ServiceResource;
@@ -116,6 +117,7 @@ class AdminPanelProvider extends PanelProvider
         $administration = [
             ...Settings::getNavigationItems(),
             ...UserResource::getNavigationItems(),
+            ...LocationResource::getNavigationItems(),
             ...RoleResource::getNavigationItems(),
         ];
 

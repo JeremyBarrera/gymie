@@ -24,6 +24,7 @@ return [
         'date' => 'تاریخ',
         'created_at' => 'تاریخ ایجاد',
         'email' => 'ایمیل',
+        'government_id' => 'شناسه حکومت',
         'contact' => 'اطلاعات تماس',
         'gender' => 'جنسیت',
         'dob' => 'تاریخ تولد',
@@ -77,6 +78,9 @@ return [
         'state' => 'استان',
         'city' => 'شهر',
         'pincode' => 'کد پستی',
+        'phone' => 'تلفن',
+        'managed_by' => 'مدیریت شده توسط',
+        'location' => 'مکان',
         'to' => 'به',
         'refund_amount_with_currency' => 'مبلغ بازپرداخت (:currency)',
         'type' => 'نوع',
@@ -103,6 +107,8 @@ return [
         'select_country' => 'انتخاب کشور',
         'select_state' => 'انتخاب استان',
         'select_city' => 'انتخاب شهر',
+        'select_location' => 'انتخاب مکان',
+        'select_super_admin' => 'انتخاب مدیر کل',
         'select_service' => 'انتخاب سرویس',
         'select_services' => 'انتخاب سرویس‌ها',
         'select_follow_up_method' => 'انتخاب روش پیگیری',
@@ -179,6 +185,10 @@ return [
         'expenses' => [
             'singular' => 'هزینه',
             'plural' => 'هزینه‌ها',
+        ],
+        'locations' => [
+            'singular' => 'مکان',
+            'plural' => 'مکان‌ها',
         ],
         'users' => [
             'singular' => 'کاربر',
@@ -311,6 +321,7 @@ return [
     ],
     'locales' => [
         'en' => 'انگلیسی (English)',
+        'es' => 'اسپانیایی (Spanish)',
         'fr' => 'فرانسوی (French)',
         'ar' => 'عربی (Arabic)',
         'fa' => 'فارسی (Farsi)',

@@ -7,6 +7,7 @@ use App\Helpers\Helpers;
 use App\Models\Concerns\CascadesSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -48,9 +49,11 @@ class Member extends Model
         'email',
         'contact',
         'emergency_contact',
+        'location_id',
         'health_issue',
         'gender',
         'dob',
+        'government_id',
         'address',
         'country',
         'state',
@@ -83,6 +86,14 @@ class Member extends Model
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * Get the assigned location for the member.
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
     }
 
     /**

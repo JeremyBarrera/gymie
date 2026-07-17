@@ -24,6 +24,7 @@ return [
         'date' => 'Date',
         'created_at' => 'Créé',
         'email' => 'Email',
+        'government_id' => 'ID du gouvernement',
         'contact' => 'Téléphone',
         'gender' => 'Genre',
         'dob' => 'Date de naissance',
@@ -100,9 +101,14 @@ return [
         'example_phone' => '+33 6 12 34 56 78',
         'address_example' => '100/B, Oak Ave Apt. 10, Rass Street',
         'pincode' => 'Code postal',
+        'phone' => 'Téléphone',
+        'managed_by' => 'Géré par',
+        'location' => 'Emplacement',
         'select_country' => 'Sélectionner un pays',
         'select_state' => 'Sélectionner un état',
         'select_city' => 'Sélectionner une ville',
+        'select_location' => 'Sélectionner un emplacement',
+        'select_super_admin' => 'Sélectionner un super administrateur',
         'select_service' => 'Sélectionner un service',
         'select_services' => 'Sélectionner des services',
         'select_follow_up_method' => 'Sélectionner une méthode',
@@ -179,6 +185,10 @@ return [
         'expenses' => [
             'singular' => 'Dépense',
             'plural' => 'Dépenses',
+        ],
+        'locations' => [
+            'singular' => 'Emplacement',
+            'plural' => 'Emplacements',
         ],
         'users' => [
             'singular' => 'Utilisateur',
@@ -311,6 +321,7 @@ return [
     ],
     'locales' => [
         'en' => 'Anglais',
+        'es' => 'Espagnol',
         'fr' => 'Français',
         'ar' => 'Arabe',
         'fa' => 'Farsi',

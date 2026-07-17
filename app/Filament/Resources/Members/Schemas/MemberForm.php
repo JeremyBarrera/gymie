@@ -72,9 +72,15 @@ class MemberForm
                                     ->email()
                                     ->live()
                                     ->maxLength(255)
-                                    ->required()
+                                    ->nullable()
                                     ->placeholder(__('app.placeholders.example_email'))
                                     ->unique('members', 'email', ignoreRecord: true),
+                                TextInput::make('government_id')
+                                    ->label(__('app.fields.government_id'))
+                                    ->maxLength(255)
+                                    ->required()
+                                    ->placeholder(__('app.placeholders.government_id'))
+                                    ->unique('members', 'government_id', ignoreRecord: true),
                                 TextInput::make('contact')
                                     ->label(__('app.fields.contact'))
                                     ->tel()
@@ -130,39 +136,12 @@ class MemberForm
                 Section::make(__('app.ui.location'))
                     ->columns(2)
                     ->schema([
-                        Textarea::make('address')
-                            ->label(__('app.fields.address'))
+                        Select::make('location_id')
+                            ->label(__('app.fields.location'))
+                            ->relationship('location', 'name')
+                            ->searchable()
                             ->required()
-                            ->rows(5)
-                            ->placeholder(__('app.placeholders.address_example')),
-                        Group::make()
-                            ->columns(2)
-                            ->schema([
-                                Select::make('country')
-                                    ->label(__('app.fields.country'))
-                                    ->placeholder(__('app.placeholders.select_country'))
-                                    ->options(Helpers::getCountries())
-                                    ->required()
-                                    ->reactive()
-                                    ->afterStateUpdated(fn ($state, callable $set) => [
-                                        $set('state', null),
-                                        $set('city', null),
-                                    ]),
-                                Select::make('state')
-                                    ->label(__('app.fields.state'))
-                                    ->placeholder(__('app.placeholders.select_state'))
-                                    ->options(fn ($get) => Helpers::getStates($get('country')))
-                                    ->reactive(),
-                                Select::make('city')
-                                    ->label(__('app.fields.city'))
-                                    ->placeholder(__('app.placeholders.select_city'))
-                                    ->options(fn ($get) => Helpers::getCities($get('state')))
-                                    ->reactive(),
-                                TextInput::make('pincode')
-                                    ->label(__('app.fields.pincode'))
-                                    ->required()
-                                    ->placeholder(__('app.placeholders.pincode')),
-                            ]),
+                            ->placeholder(__('app.placeholders.select_location')),
                     ]),
                 Section::make(__('app.titles.subscription_and_invoice'))
                     ->visibleOn('create')

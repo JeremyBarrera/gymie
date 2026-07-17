@@ -19,6 +19,7 @@ class LocaleSwitcher extends Component
         'fr' => '🇫🇷',
         'ar' => '🇸🇦',
         'fa' => '🇮🇷',
+        'es' => '🇪🇸',
     ];
 
     public function mount(): void

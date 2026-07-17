@@ -24,6 +24,7 @@ return [
         'date' => 'التاريخ',
         'created_at' => 'تم الانشاء',
         'email' => 'البريد الالكتروني',
+        'government_id' => 'الرقم الحكومي',
         'contact' => 'رقم الهاتف',
         'gender' => 'الجنس',
         'dob' => 'تاريخ الميلاد',
@@ -77,6 +78,9 @@ return [
         'state' => 'المنطقة',
         'city' => 'المدينة',
         'pincode' => 'الرمز البريدي',
+        'phone' => 'الهاتف',
+        'managed_by' => 'يديره',
+        'location' => 'الموقع',
         'to' => 'الى',
         'refund_amount_with_currency' => 'مبلغ الاسترداد (:currency)',
         'type' => 'النوع',
@@ -103,6 +107,8 @@ return [
         'select_country' => 'اختر الدولة',
         'select_state' => 'اختر المنطقة',
         'select_city' => 'اختر المدينة',
+        'select_location' => 'اختر الموقع',
+        'select_super_admin' => 'اختر المشرف العام',
         'select_service' => 'اختر خدمة',
         'select_services' => 'اختر الخدمات',
         'select_follow_up_method' => 'اختر طريقة المتابعة',
@@ -179,6 +185,10 @@ return [
         'expenses' => [
             'singular' => 'مصروف',
             'plural' => 'المصروفات',
+        ],
+        'locations' => [
+            'singular' => 'الموقع',
+            'plural' => 'المواقع',
         ],
         'users' => [
             'singular' => 'مستخدم',
@@ -311,6 +321,7 @@ return [
     ],
     'locales' => [
         'en' => 'الانجليزية',
+        'es' => 'الإسبانية',
         'fr' => 'الفرنسية',
         'ar' => 'العربية',
         'fa' => 'فارسی',
