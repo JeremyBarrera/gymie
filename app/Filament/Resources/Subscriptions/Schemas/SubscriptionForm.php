@@ -74,26 +74,33 @@ class SubscriptionForm
                                 $fee = (float) ($plan->amount ?? 0);
                                 $taxRate = Helpers::getTaxRate() ?: 0;
 
-                                $invoices = self::invoiceItems($get);
+                                // Preserve Filament repeater UUID keys — numeric re-indexing
+                                // would $set into invoices.0.* and create duplicate children.
+                                $invoices = $get('invoices');
 
-                                foreach ($invoices as $index => $invoice) {
-                                    $discount = \App\Support\Data::float($invoice['discount_amount'] ?? 0);
-                                    $paid = \App\Support\Data::float($invoice['paid_amount'] ?? 0);
-                                    $itemKey = (string) $index;
+                                if (is_array($invoices)) {
+                                    foreach ($invoices as $itemKey => $invoice) {
+                                        if (! is_array($invoice)) {
+                                            continue;
+                                        }
 
-                                    $summary = InvoiceCalculator::summary(
-                                        $fee,
-                                        $taxRate,
-                                        $discount,
-                                        $paid,
-                                    );
+                                        $discount = Data::float($invoice['discount_amount'] ?? 0);
+                                        $paid = Data::float($invoice['paid_amount'] ?? 0);
+                                        $itemKey = (string) $itemKey;
 
-                                    // set each nested invoice field
-                                    $set("invoices.{$itemKey}.subscription_fee", $summary['fee']);
-                                    $set("invoices.{$itemKey}.tax", $summary['tax']);
-                                    $set("invoices.{$itemKey}.total_amount", $summary['total']);
-                                    $set("invoices.{$itemKey}.paid_amount", $summary['paid']);
-                                    $set("invoices.{$itemKey}.due_amount", $summary['due']);
+                                        $summary = InvoiceCalculator::summary(
+                                            $fee,
+                                            $taxRate,
+                                            $discount,
+                                            $paid,
+                                        );
+
+                                        $set("invoices.{$itemKey}.subscription_fee", $summary['fee']);
+                                        $set("invoices.{$itemKey}.tax", $summary['tax']);
+                                        $set("invoices.{$itemKey}.total_amount", $summary['total']);
+                                        $set("invoices.{$itemKey}.paid_amount", $summary['paid']);
+                                        $set("invoices.{$itemKey}.due_amount", $summary['due']);
+                                    }
                                 }
 
                                 $set('end_date', Helpers::calculateSubscriptionEndDate(
@@ -629,30 +636,6 @@ class SubscriptionForm
             round((float) $plan->amount),
             __('app.units.days', ['count' => $plan->days]),
         );
-    }
-
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private static function invoiceItems(Get $get): array
-    {
-        $items = $get('invoices');
-
-        if (! is_array($items)) {
-            return [];
-        }
-
-        $normalized = [];
-
-        foreach ($items as $item) {
-            if (! is_array($item)) {
-                continue;
-            }
-
-            $normalized[] = \App\Support\Data::map($item);
-        }
-
-        return $normalized;
     }
 
     private static function stringState(Get $get, string $path): ?string
