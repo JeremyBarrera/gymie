@@ -1,16 +1,26 @@
 <?php
 
+use App\Models\Enquiry;
+use App\Models\Location;
+use App\Models\Member;
+use App\Models\Plan;
+use App\Models\Service;
+use App\Models\Subscription;
+use App\Models\User;
+
 return [
-    \App\Models\Enquiry::class => ['followUps'],
+    Enquiry::class => ['followUps'],
 
-    \App\Models\Service::class => ['plans'],
+    Service::class => ['plans'],
 
-    \App\Models\Member::class => ['subscriptions'],
+    Member::class => ['subscriptions'],
 
-    \App\Models\Plan::class => ['subscriptions'],
+    Plan::class => ['subscriptions'],
 
-    \App\Models\Subscription::class => ['invoices'],
+    Subscription::class => ['invoices'],
 
-    \App\Models\User::class => ['followUps', 'enquiries'],
+    User::class => ['followUps', 'enquiries'],
+
+    Location::class => ['members'],
 
 ];

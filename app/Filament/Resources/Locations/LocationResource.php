@@ -10,7 +10,6 @@ use App\Filament\Resources\Locations\Schemas\LocationForm;
 use App\Filament\Resources\Locations\Schemas\LocationInfolist;
 use App\Filament\Resources\Locations\Tables\LocationTable;
 use App\Models\Location;
-use App\Support\Filament\GlobalSearchBadge;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
@@ -99,6 +98,14 @@ class LocationResource extends Resource
             'edit' => EditLocation::route('/{record}/edit'),
             'view' => ViewLocation::route('/{record}'),
         ];
+    }
+
+    /**
+     * @return Builder<Location>
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withCount('members');
     }
 
     /**

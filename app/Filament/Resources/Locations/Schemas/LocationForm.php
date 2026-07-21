@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Locations\Schemas;
 
+use App\Helpers\Helpers;
 use App\Models\User;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -36,17 +37,27 @@ class LocationForm
                                 Select::make('country')
                                     ->label(__('app.fields.country'))
                                     ->placeholder(__('app.placeholders.select_country'))
-                                    ->options(fn (): array => User::query()->pluck('country', 'country')->filter()->unique()->sort()->toArray())
+                                    ->options(Helpers::getCountries())
                                     ->searchable()
-                                    ->preload(),
-                                TextInput::make('state')
+                                    ->preload()
+                                    ->reactive()
+                                    ->afterStateUpdated(fn ($state, callable $set) => [
+                                        $set('state', null),
+                                        $set('city', null),
+                                    ]),
+                                Select::make('state')
                                     ->label(__('app.fields.state'))
-                                    ->maxLength(255)
-                                    ->placeholder(__('app.placeholders.select_state')),
-                                TextInput::make('city')
+                                    ->placeholder(__('app.placeholders.select_state'))
+                                    ->options(fn ($get) => Helpers::getStates($get('country')))
+                                    ->searchable()
+                                    ->reactive()
+                                    ->afterStateUpdated(fn ($state, callable $set) => $set('city', null)),
+                                Select::make('city')
                                     ->label(__('app.fields.city'))
-                                    ->maxLength(255)
-                                    ->placeholder(__('app.placeholders.select_city')),
+                                    ->placeholder(__('app.placeholders.select_city'))
+                                    ->options(fn ($get) => Helpers::getCities($get('state')))
+                                    ->searchable()
+                                    ->reactive(),
                                 TextInput::make('pincode')
                                     ->label(__('app.fields.pincode'))
                                     ->maxLength(20),
