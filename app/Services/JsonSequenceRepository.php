@@ -6,6 +6,7 @@ use App\Contracts\SequenceRepository;
 use App\Contracts\SettingsRepository;
 use App\Helpers\Helpers;
 use App\Support\Data;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
@@ -36,7 +37,7 @@ class JsonSequenceRepository implements SequenceRepository
         [$start, $end] = Helpers::getFiscalSpan($date);
         $settings = $this->settingsRepository->get();
 
-        /** @var \Illuminate\Database\Eloquent\Model $model */
+        /** @var Model $model */
         $model = new $modelClass;
         $table = $model->getTable();
 
@@ -53,6 +54,7 @@ class JsonSequenceRepository implements SequenceRepository
         $match = $prefix.$separator;
 
         $lastFromDb = $modelClass::query()
+            ->withoutGlobalScopes()
             ->whereBetween($dateColumn, [$start->toDateString(), $end->toDateString()])
             ->pluck($modelColumn ?? 'number')
             ->map(

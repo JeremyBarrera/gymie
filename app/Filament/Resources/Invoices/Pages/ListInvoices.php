@@ -13,6 +13,11 @@ class ListInvoices extends ListRecords
 {
     protected static string $resource = InvoiceResource::class;
 
+    public function mount(): void
+    {
+        Invoice::markOverdue();
+    }
+
     protected function getHeaderActions(): array
     {
         return [];

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
@@ -7,6 +8,8 @@ use Illuminate\Support\Facades\Auth;
 uses(RefreshDatabase::class);
 
 it('logs in and returns a bearer token', function (): void {
+    Location::factory()->create();
+
     $user = User::factory()->create([
         'email' => 'user@example.com',
     ]);
@@ -35,6 +38,8 @@ it('logs in and returns a bearer token', function (): void {
 });
 
 it('logs out and revokes the current token', function (): void {
+    Location::factory()->create();
+
     $user = User::factory()->create();
 
     $login = $this->postJson('/api/v1/auth/login', [

@@ -3,6 +3,7 @@
 namespace App\Services\Api\Schemas;
 
 use App\Models\InvoiceTransaction;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 
 /**
@@ -13,7 +14,7 @@ final class InvoiceTransactionSchema
     private function __construct() {}
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public static function storeRules(): array
     {

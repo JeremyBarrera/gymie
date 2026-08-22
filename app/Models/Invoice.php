@@ -4,8 +4,12 @@ namespace App\Models;
 
 use App\Enums\Status;
 use App\Helpers\Helpers;
+use App\Models\Concerns\ScopedByLocation;
+use App\Support\AppConfig;
 use App\Support\Billing\InvoiceCalculator;
 use Carbon\Carbon;
+use Database\Factories\InvoiceFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,12 +33,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property float|null $due_amount
  * @property float|null $subscription_fee
  * @property-read Subscription|null $subscription
- * @property-read \Illuminate\Database\Eloquent\Collection<int, InvoiceTransaction> $transactions
+ * @property-read Collection<int, InvoiceTransaction> $transactions
  */
 class Invoice extends Model
 {
-    /** @use HasFactory<\Database\Factories\InvoiceFactory> */
-    use HasFactory, SoftDeletes;
+    /** @use HasFactory<InvoiceFactory> */
+    use HasFactory, ScopedByLocation, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -42,6 +46,7 @@ class Invoice extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'location_id',
         'number',
         'subscription_id',
         'date',
@@ -49,6 +54,7 @@ class Invoice extends Model
         'payment_method',
         'status',
         'tax',
+        'tax_percent',
         'discount',
         'discount_amount',
         'discount_note',
@@ -62,6 +68,7 @@ class Invoice extends Model
         'date' => 'date',
         'due_date' => 'date',
         'status' => Status::class,
+        'tax_percent' => 'decimal:2',
     ];
 
     /**
@@ -76,6 +83,51 @@ class Invoice extends Model
     }
 
     /**
+     * Get the status the invoice should display right now.
+     *
+     * The stored status is only refreshed on save (`syncFromTransactions`)
+     * or by the daily `gymie:invoices --mark-overdue` scheduler; this
+     * recomputes the overdue state at read time so an issued/partial invoice
+     * whose due date has passed always shows as overdue, regardless of when
+     * the stored value was last synced.
+     */
+    public function effectiveStatus(): ?Status
+    {
+        $status = $this->status;
+
+        if ($status === null) {
+            return null;
+        }
+
+        if (in_array($status, [Status::Issued, Status::Partial], true)
+            && (float) $this->due_amount > 0
+            && $this->due_date
+            && Carbon::parse($this->due_date)->lt(Carbon::today(AppConfig::timezone()))) {
+            return Status::Overdue;
+        }
+
+        return $status;
+    }
+
+    /**
+     * Mark issued/partial invoices overdue whose due date has passed.
+     *
+     * Reused by the `gymie:invoices --mark-overdue` command (and its tenants
+     * variant) and by the invoice pages on mount, so the stored status stays
+     * in sync with `effectiveStatus()` even when the daily scheduler hasn't
+     * run (e.g. dev environments).
+     */
+    public static function markOverdue(): int
+    {
+        return static::query()
+            ->whereIn('status', ['issued', 'partial'])
+            ->whereNotNull('due_date')
+            ->whereDate('due_date', '<', Carbon::today(AppConfig::timezone()))
+            ->where('due_amount', '>', 0)
+            ->update(['status' => 'overdue']);
+    }
+
+    /**
      * Get a human-friendly label for the invoice status.
      *
      * This is useful for tables and UI elements where you want a consistent
@@ -83,7 +135,7 @@ class Invoice extends Model
      */
     public function getDisplayStatusLabel(): string
     {
-        return $this->status?->getLabel() ?? '';
+        return $this->effectiveStatus()?->getLabel() ?? '';
     }
 
     /**
@@ -138,7 +190,7 @@ class Invoice extends Model
 
         $isDueOver = $due > 0
             && $this->due_date
-            && Carbon::parse($this->due_date)->lt(Carbon::today(\App\Support\AppConfig::timezone()));
+            && Carbon::parse($this->due_date)->lt(Carbon::today(AppConfig::timezone()));
 
         if ($isDueOver) {
             $status = 'overdue';
@@ -168,7 +220,7 @@ class Invoice extends Model
             }
             Helpers::updateLastNumber('invoice', $invoice->number, $invoice->date);
 
-            $taxRate = Helpers::getTaxRate() ?: 0;
+            $taxRate = $invoice->tax_percent ?? Helpers::getTaxRate();
             $summary = InvoiceCalculator::summary(
                 fee: (float) ($invoice->subscription_fee ?? 0),
                 taxRatePercent: $taxRate,
@@ -192,16 +244,16 @@ class Invoice extends Model
                 $transaction = new InvoiceTransaction([
                     'type' => 'payment',
                     'amount' => $paid,
-                    'occurred_at' => now()->timezone(\App\Support\AppConfig::timezone()),
+                    'occurred_at' => now()->timezone(AppConfig::timezone()),
                     'payment_method' => $invoice->payment_method,
                     'note' => 'Initial payment',
                     'created_by' => auth()->id(),
                 ]);
 
-                $gymId = $invoice->getAttribute('gym_id');
+                $locationId = $invoice->getAttribute('location_id');
 
-                if (filled($gymId)) {
-                    $transaction->setAttribute('gym_id', $gymId);
+                if (filled($locationId)) {
+                    $transaction->setAttribute('location_id', $locationId);
                 }
 
                 $transaction->invoice()->associate($invoice);

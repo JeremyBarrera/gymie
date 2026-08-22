@@ -1,0 +1,30 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Members are deduplicated by the all-identifiers rule at the app
+     * level (name, contact, government ID and email must all match); per-field
+     * unique indexes would wrongly reject members that only share an email
+     * or a government ID.
+     */
+    public function up(): void
+    {
+        Schema::table('members', function (Blueprint $table): void {
+            $table->dropUnique('members_email_unique');
+            $table->dropUnique('members_government_id_unique');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('members', function (Blueprint $table): void {
+            $table->unique('email', 'members_email_unique');
+            $table->unique('government_id', 'members_government_id_unique');
+        });
+    }
+};

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Services\Tables;
 
 use App\Models\Service;
+use App\Support\Dates\DeviceDateFormat;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -28,12 +29,15 @@ class ServiceTable
                     ->searchable()
                     ->label(__('app.fields.name'))
                     ->sortable(),
+                TextColumn::make('location.name')
+                    ->searchable()
+                    ->label(__('app.fields.location')),
                 TextColumn::make('description')
                     ->searchable()
                     ->label(__('app.fields.description')),
                 TextColumn::make('created_at')
                     ->searchable()
-                    ->date('d-m-Y')
+                    ->date(DeviceDateFormat::date())
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('id', 'desc')

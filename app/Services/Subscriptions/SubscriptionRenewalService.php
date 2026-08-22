@@ -6,6 +6,7 @@ use App\Helpers\Helpers;
 use App\Models\Invoice;
 use App\Models\Plan;
 use App\Models\Subscription;
+use App\Support\AppConfig;
 use App\Support\Billing\PaymentMethod;
 use App\Support\Data;
 use Carbon\Carbon;
@@ -46,14 +47,16 @@ class SubscriptionRenewalService
     {
         /** @var array{subscription: Subscription, invoice: Invoice} $result */
         $result = Subscription::query()->getConnection()->transaction(function () use ($record, $data): array {
-            $timezone = \App\Support\AppConfig::timezone();
+            $timezone = AppConfig::timezone();
             $today = Carbon::today($timezone);
 
             $plan = Plan::findOrFail(Data::int($data['plan_id']));
 
             $startDate = Carbon::parse(Data::string($data['start_date']))->toDateString();
-            $endDate = Data::string($data['end_date'] ?? null) ?: Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id));
-            $endDate = Carbon::parse($endDate)->toDateString();
+            // Evergreen plans (no day count) have no end date at all.
+            $endDate = filled($data['end_date'] ?? null)
+                ? Carbon::parse(Data::string($data['end_date']))->toDateString()
+                : ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id)));
 
             $status = Carbon::parse($startDate)->gt($today)
                 ? 'upcoming'

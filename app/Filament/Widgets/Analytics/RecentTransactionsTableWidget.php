@@ -5,7 +5,10 @@ namespace App\Filament\Widgets\Analytics;
 use App\Helpers\Helpers;
 use App\Models\InvoiceTransaction;
 use App\Support\Analytics\AnalyticsDateRange;
+use App\Support\AppConfig;
 use App\Support\Billing\PaymentMethod;
+use App\Support\Dates\DeviceDateFormat;
+use App\Support\Locations\LocationAccess;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
@@ -40,10 +43,18 @@ class RecentTransactionsTableWidget extends TableWidget
             ->heading(__('app.widgets.recent_transactions'))
             ->query(function (): Builder {
                 $range = AnalyticsDateRange::fromFilters($this->pageFilters);
+                $locationIds = LocationAccess::scopeFromFilters(auth()->user(), $this->pageFilters);
 
                 return InvoiceTransaction::query()
                     ->with(['invoice'])
                     ->whereBetween('occurred_at', [$range->start, $range->end])
+                    ->when(
+                        $locationIds !== null,
+                        fn (Builder $query): Builder => $query->whereHas(
+                            'invoice.subscription.member',
+                            fn (Builder $query): Builder => LocationAccess::applyAccessibleScope($query, 'location_id', $locationIds),
+                        ),
+                    )
                     ->latest('occurred_at')
                     ->limit(5);
             })
@@ -54,8 +65,8 @@ class RecentTransactionsTableWidget extends TableWidget
                     ->wrap(),
                 TextColumn::make('occurred_at')
                     ->label(__('app.fields.date'))
-                    ->state(fn (InvoiceTransaction $record): string => $record->occurred_at?->timezone(\App\Support\AppConfig::timezone())->translatedFormat('d M Y') ?? '—')
-                    ->description(fn (InvoiceTransaction $record): string => $record->occurred_at?->timezone(\App\Support\AppConfig::timezone())->format('h:i A') ?? '—')
+                    ->state(fn (InvoiceTransaction $record): string => DeviceDateFormat::format($record->occurred_at?->timezone(AppConfig::timezone())))
+                    ->description(fn (InvoiceTransaction $record): string => DeviceDateFormat::formatTime($record->occurred_at?->timezone(AppConfig::timezone())))
                     ->sortable(),
                 TextColumn::make('type')
                     ->label(__('app.fields.status'))

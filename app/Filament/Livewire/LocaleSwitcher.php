@@ -3,6 +3,7 @@
 namespace App\Filament\Livewire;
 
 use App\Contracts\SettingsRepository;
+use App\Support\AppConfig;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
@@ -11,20 +12,9 @@ class LocaleSwitcher extends Component
 {
     public string $locale = 'en';
 
-    /**
-     * @var array<string, string>
-     */
-    private const LOCALE_FLAGS = [
-        'en' => '🇺🇸',
-        'fr' => '🇫🇷',
-        'ar' => '🇸🇦',
-        'fa' => '🇮🇷',
-        'es' => '🇪🇸',
-    ];
-
     public function mount(): void
     {
-        $this->locale = \App\Support\AppConfig::string('app.locale', 'en');
+        $this->locale = AppConfig::string('app.locale', 'en');
     }
 
     /**
@@ -34,10 +24,10 @@ class LocaleSwitcher extends Component
     {
         $options = [];
 
-        foreach (\App\Support\AppConfig::supportedLocales() as $locale) {
+        foreach (AppConfig::supportedLocales() as $locale) {
             $options[$locale] = [
                 'label' => (string) __("app.locales.{$locale}"),
-                'flag' => self::LOCALE_FLAGS[$locale] ?? '🏳️',
+                'flag' => AppConfig::localeFlags()[$locale] ?? '🏳️',
             ];
         }
 
@@ -46,7 +36,7 @@ class LocaleSwitcher extends Component
 
     public function getCurrentFlagProperty(): string
     {
-        return self::LOCALE_FLAGS[$this->locale] ?? '🏳️';
+        return AppConfig::localeFlags()[$this->locale] ?? '🏳️';
     }
 
     public function setLocale(string $locale): mixed

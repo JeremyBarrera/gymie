@@ -6,12 +6,15 @@ use App\Filament\Resources\Subscriptions\Schemas\SubscriptionForm;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Helpers\Helpers;
 use App\Models\Subscription;
+use App\Support\AppConfig;
+use App\Support\Locations\LocationAccess;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Blade;
@@ -25,6 +28,8 @@ use Illuminate\Support\HtmlString;
  */
 class MembershipOverviewSubscriptionsTableWidget extends TableWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = -39;
 
     /**
@@ -122,14 +127,22 @@ BLADE,
      */
     protected function getExpiringSoonQuery(): Builder
     {
-        $today = CarbonImmutable::today(\App\Support\AppConfig::timezone());
+        $today = CarbonImmutable::today(AppConfig::timezone());
         $end = $today->addDays(Helpers::getSubscriptionExpiringDays());
+        $locationIds = LocationAccess::scopeFromFilters(auth()->user(), $this->pageFilters);
 
         return Subscription::query()
             ->with(['member', 'plan'])
             ->whereDate('start_date', '<=', $today->toDateString())
             ->whereDate('end_date', '>=', $today->toDateString())
             ->whereDate('end_date', '<=', $end->toDateString())
+            ->when(
+                $locationIds !== null,
+                fn (Builder $query): Builder => $query->whereHas(
+                    'member',
+                    fn (Builder $query): Builder => LocationAccess::applyAccessibleScope($query, 'location_id', $locationIds),
+                ),
+            )
             ->orderBy('end_date');
     }
 
@@ -140,17 +153,25 @@ BLADE,
      */
     protected function getExpiredQuery(): Builder
     {
-        $today = CarbonImmutable::today(\App\Support\AppConfig::timezone());
+        $today = CarbonImmutable::today(AppConfig::timezone());
+        $locationIds = LocationAccess::scopeFromFilters(auth()->user(), $this->pageFilters);
 
         return Subscription::query()
             ->with(['member', 'plan'])
             ->whereDate('end_date', '<', $today->toDateString())
+            ->when(
+                $locationIds !== null,
+                fn (Builder $query): Builder => $query->whereHas(
+                    'member',
+                    fn (Builder $query): Builder => LocationAccess::applyAccessibleScope($query, 'location_id', $locationIds),
+                ),
+            )
             ->orderByDesc('end_date');
     }
 
     public function table(Table $table): Table
     {
-        $today = CarbonImmutable::today(\App\Support\AppConfig::timezone())->toDateString();
+        $today = CarbonImmutable::today(AppConfig::timezone())->toDateString();
 
         return $table
             ->heading(null)
@@ -174,8 +195,8 @@ BLADE,
                     ->label(fn (): string => $this->activeTab === 'expired' ? __('app.widgets.days_since') : __('app.widgets.days_left'))
                     ->alignRight()
                     ->state(function (Subscription $record): string {
-                        $today = CarbonImmutable::today(\App\Support\AppConfig::timezone());
-                        $endDate = CarbonImmutable::parse($record->end_date, \App\Support\AppConfig::timezone())->startOfDay();
+                        $today = CarbonImmutable::today(AppConfig::timezone());
+                        $endDate = CarbonImmutable::parse($record->end_date, AppConfig::timezone())->startOfDay();
 
                         if ($this->activeTab === 'expired') {
                             $days = max($endDate->diffInDays($today, false), 0);

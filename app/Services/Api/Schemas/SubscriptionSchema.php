@@ -8,6 +8,7 @@ use App\Models\Member;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Rules\ModelExists;
+use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
  * Single source of truth for Subscription API validation and serialization.
@@ -46,7 +47,7 @@ final class SubscriptionSchema
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public static function storeRules(): array
     {
@@ -62,7 +63,7 @@ final class SubscriptionSchema
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public static function updateRules(): array
     {
@@ -76,7 +77,7 @@ final class SubscriptionSchema
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public static function renewRules(): array
     {
@@ -90,7 +91,7 @@ final class SubscriptionSchema
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     private static function invoiceRules(string $prefix): array
     {

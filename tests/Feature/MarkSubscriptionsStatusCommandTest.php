@@ -26,8 +26,8 @@ class MarkSubscriptionsStatusCommandTest extends TestCase
             ],
         ]);
 
-        // Ensure the super_admin role exists for the test user
-        Role::create(['name' => 'super_admin']);
+        // Ensure the owner role exists for the test user
+        Role::create(['name' => 'owner']);
     }
 
     protected function tearDown(): void
@@ -41,11 +41,11 @@ class MarkSubscriptionsStatusCommandTest extends TestCase
     public function test_it_marks_expired_and_expiring_subscriptions_and_sends_database_notification(): void
     {
         $admin = User::factory()->create([
-            'name' => 'Super Admin',
+            'name' => 'Owner',
             'email' => 'test@example.com',
         ]);
 
-        $admin->assignRole('super_admin');
+        $admin->assignRole('owner');
 
         Subscription::factory()->create([
             'start_date' => now()->subMonth(),
@@ -78,5 +78,48 @@ class MarkSubscriptionsStatusCommandTest extends TestCase
         $this->assertStringContainsString(__('app.notifications.subscription_status_update_title'), (string) ($notification->data['title'] ?? ''));
         $this->assertStringContainsString('1 expired', (string) ($notification->data['body'] ?? ''));
         $this->assertStringContainsString('1 expiring (≤ 7 days)', (string) ($notification->data['body'] ?? ''));
+    }
+
+    public function test_it_notifies_configured_roles_instead_of_owners(): void
+    {
+        Helpers::setTestSettingsOverride([
+            'subscriptions' => [
+                'expiring_days' => 7,
+            ],
+            'notifications' => [
+                'subscription_status' => [
+                    'roles' => ['manager'],
+                    'users' => [],
+                ],
+            ],
+        ]);
+
+        $owner = User::factory()->create([
+            'name' => 'Owner',
+            'email' => 'owner@example.com',
+        ]);
+        $owner->assignRole('owner');
+
+        Role::create(['name' => 'manager']);
+        $manager = User::factory()->create([
+            'name' => 'Manager',
+            'email' => 'manager@example.com',
+        ]);
+        $manager->assignRole('manager');
+
+        Subscription::factory()->create([
+            'start_date' => now()->subMonth(),
+            'end_date' => now()->addDays(3),
+            'status' => 'ongoing',
+        ]);
+
+        $this->artisan('gymie:subscriptions', [
+            '--mark-expired' => true,
+            '--mark-expiring' => true,
+        ])
+            ->assertExitCode(0);
+
+        $this->assertSame(0, $owner->notifications()->count());
+        $this->assertSame(1, $manager->notifications()->count());
     }
 }

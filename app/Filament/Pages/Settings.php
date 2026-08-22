@@ -4,18 +4,18 @@ namespace App\Filament\Pages;
 
 use App\Contracts\SettingsRepository;
 use App\Helpers\Helpers;
-use Carbon\Carbon;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\FileUpload;
+use App\Models\User;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -23,7 +23,9 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Illuminate\Database\QueryException;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 /**
  * @property-read Schema $form
@@ -51,16 +53,6 @@ class Settings extends Page implements HasForms
     {
         $settings = Helpers::getSettings();
         $this->data = $settings;
-        $general = is_array($this->data['general'] ?? null) ? $this->data['general'] : [];
-
-        // Ensure gym_logo is always set correctly
-        foreach (['gym_logo'] as $logoType) {
-            if (! empty($general[$logoType]) && is_array($general[$logoType])) {
-                $general[$logoType] = $general[$logoType];
-            }
-        }
-
-        $this->data['general'] = $general;
 
         $this->form->fill($settings);
     }
@@ -78,136 +70,22 @@ class Settings extends Page implements HasForms
     /**
      * Defines the form schema with multiple tabs.
      *
-     * @return array<int, \Filament\Schemas\Components\Component>
+     * @return array<int, Component>
      */
     protected function getFormSchema(): array
     {
         return [
             Tabs::make(__('app.settings.title'))
                 ->tabs([
-                    $this->generalTab(),
                     $this->invoiceTab(),
                     $this->memberTab(),
                     $this->chargesTab(),
                     $this->expensesTab(),
                     $this->subscriptionsTab(),
+                    $this->permissionsTab(),
+                    $this->notificationsTab(),
                 ]),
         ];
-    }
-
-    /**
-     * General Tab Schema.
-     */
-    private function generalTab(): Tab
-    {
-        return Tab::make(__('app.settings.tabs.gym_info'))
-            ->icon('heroicon-m-briefcase')
-            ->schema([
-                Section::make(__('app.settings.sections.general_information'))
-                    ->aside()
-                    ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                TextInput::make('general.gym_name')
-                                    ->label(__('app.settings.fields.gym_name')),
-                                Select::make('general.currency')
-                                    ->label(__('app.settings.fields.currency'))
-                                    ->options(Helpers::getCurrencies())
-                                    ->searchable(),
-                                FileUpload::make('general.gym_logo')
-                                    ->label(__('app.settings.fields.gym_logo'))
-                                    ->disk('public')
-                                    ->directory('images')
-                                    ->preserveFilenames()
-                                    ->imageEditor()
-                                    ->deletable()
-                                    ->visibility('public')
-                                    ->image()
-                                    ->afterStateUpdated(fn ($state, callable $set) => $this->handleFileUpload($state, 'gym_logo', $set))
-                                    ->columnSpanFull(),
-                                DatePicker::make('general.financial_year_start')
-                                    ->native(false)
-                                    ->label(__('app.settings.fields.financial_year_start'))
-                                    ->suffixIcon('heroicon-o-calendar-days')
-                                    ->displayFormat('d/m/Y')
-                                    ->helperText('Rounded to the first day of that month.')
-                                    ->reactive()
-                                    ->afterStateUpdated(function (?string $state, callable $set): void {
-                                        if (filled($state)) {
-                                            $start = Carbon::parse($state)
-                                                ->startOfMonth();
-
-                                            $set('general.financial_year_start', $start->toDateString());
-                                            $set('general.financial_year_end', $start->copy()->addYear()->subDay()->toDateString());
-
-                                            return;
-                                        }
-
-                                        $set('general.financial_year_end', null);
-                                    }),
-                                DatePicker::make('general.financial_year_end')
-                                    ->native(false)
-                                    ->label(__('app.settings.fields.financial_year_end'))
-                                    ->suffixIcon('heroicon-o-calendar-days')
-                                    ->displayFormat('d/m/Y')
-                                    ->helperText('Auto calculated based on the start month.')
-                                    ->readOnly(),
-                            ]),
-                    ])
-                    ->columnSpan(3),
-
-                Section::make(__('app.settings.sections.address'))
-                    ->aside()
-                    ->schema([
-                        Grid::make(1)
-                            ->schema([
-                                Textarea::make('general.address')
-                                    ->label(__('app.settings.fields.address')),
-                            ]),
-                        Grid::make(4)
-                            ->schema([
-                                Select::make('general.country')
-                                    ->label(__('app.settings.fields.country'))
-                                    ->options(Helpers::getCountries())
-                                    ->searchable()
-                                    ->reactive()
-                                    ->afterStateUpdated(fn ($state, callable $set) => [
-                                        $set('general.state', null),
-                                        $set('general.city', null),
-                                    ]),
-                                Select::make('general.state')
-                                    ->label(__('app.settings.fields.state'))
-                                    ->options(fn ($get) => Helpers::getStates($get('general.country')))
-                                    ->searchable()
-                                    ->reactive(),
-                                Select::make('general.city')
-                                    ->label(__('app.settings.fields.city'))
-                                    ->options(fn ($get) => Helpers::getCities($get('general.state')))
-                                    ->searchable()
-                                    ->reactive(),
-                                TextInput::make('general.zip')
-                                    ->label(__('app.settings.fields.zip'))
-                                    ->maxLength(10),
-                            ]),
-                    ])
-                    ->columnSpan(3),
-                Section::make(__('app.settings.sections.contact_information'))
-                    ->aside()
-                    ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                TextInput::make('general.gym_email')
-                                    ->label(__('app.settings.fields.email_address'))
-                                    ->email()
-                                    ->prefixIcon('heroicon-o-envelope'),
-                                TextInput::make('general.gym_contact')
-                                    ->tel()
-                                    ->prefixIcon('heroicon-o-phone')
-                                    ->label(__('app.settings.fields.contact_no')),
-                            ]),
-                    ])
-                    ->columnSpan(3),
-            ]);
     }
 
     /**
@@ -226,7 +104,8 @@ class Settings extends Page implements HasForms
                             TextInput::make('invoice.last_number')
                                 ->numeric()
                                 ->label(__('app.settings.fields.last_number'))
-                                ->maxLength(10),
+                                ->maxLength(10)
+                                ->extraAttributes(['class' => 'verify-money-input']),
                             Select::make('invoice.name_type')
                                 ->native(false)
                                 ->label(__('app.settings.fields.name_type'))
@@ -286,7 +165,8 @@ class Settings extends Page implements HasForms
                             TextInput::make('member.last_number')
                                 ->numeric()
                                 ->label(__('app.settings.fields.last_number'))
-                                ->maxLength(10),
+                                ->maxLength(10)
+                                ->extraAttributes(['class' => 'verify-money-input']),
                         ]),
                 ]);
     }
@@ -303,11 +183,13 @@ class Settings extends Page implements HasForms
                         ->schema([
                             TextInput::make('charges.admission_fee')
                                 ->numeric()
-                                ->label(__('app.settings.fields.admission_fee')),
+                                ->label(__('app.settings.fields.admission_fee'))
+                                ->extraAttributes(['class' => 'verify-money-input']),
                             TextInput::make('charges.taxes')
                                 ->numeric()
                                 ->label(__('app.settings.fields.taxes'))
-                                ->suffix('%'),
+                                ->suffix('%')
+                                ->extraAttributes(['class' => 'verify-money-input']),
                             TagsInput::make('charges.discounts')
                                 ->label(__('app.settings.fields.discount_percent_available'))
                                 ->hint(__('app.settings.hints.press_enter_to_add'))
@@ -346,8 +228,90 @@ class Settings extends Page implements HasForms
                         ->numeric()
                         ->minValue(1)
                         ->default(7)
+                        ->extraAttributes(['class' => 'verify-money-input'])
                         ->required(),
                 ]);
+    }
+
+    /**
+     * Permissions Tab Schema.
+     */
+    private function permissionsTab(): Tab
+    {
+        return
+            Tab::make(__('app.settings.tabs.permissions'))->icon('heroicon-m-lock-closed')
+                ->schema([
+                    Section::make(__('app.settings.sections.permissions'))
+                        ->aside()
+                        ->schema([
+                            Toggle::make('permissions.enabled')
+                                ->label(__('app.settings.fields.permissions_enabled'))
+                                ->helperText(__('app.settings.hints.permissions_enabled'))
+                                ->default(true),
+                            CheckboxList::make('permissions.disabled')
+                                ->label(__('app.settings.fields.disabled_permissions'))
+                                ->helperText(__('app.settings.hints.disabled_permissions'))
+                                ->options(function (): array {
+                                    try {
+                                        return Permission::query()->pluck('name', 'name')->all();
+                                    } catch (QueryException) {
+                                        return [];
+                                    }
+                                })
+                                ->searchable()
+                                ->bulkToggleable(),
+                        ]),
+                ]);
+    }
+
+    /**
+     * Notifications Tab Schema.
+     */
+    private function notificationsTab(): Tab
+    {
+        return Tab::make(__('app.settings.tabs.notifications'))->icon('heroicon-m-bell-alert')
+            ->visible(fn (): bool => (bool) auth()->user()?->can('manage_override_notifications'))
+            ->schema([
+                Section::make(__('app.settings.sections.override_notifications'))
+                    ->aside()
+                    ->schema([
+                        CheckboxList::make('notifications.override.roles')
+                            ->label(__('app.settings.fields.override_notify_roles'))
+                            ->helperText(__('app.settings.hints.override_notify_roles'))
+                            ->options(fn (): array => Role::query()->pluck('name', 'name')->all())
+                            ->searchable()
+                            ->bulkToggleable()
+                            ->default(['owner']),
+                        Select::make('notifications.override.users')
+                            ->label(__('app.settings.fields.override_notify_users'))
+                            ->helperText(__('app.settings.hints.override_notify_users'))
+                            ->options(fn (): array => User::query()->pluck('name', 'id')->all())
+                            ->multiple()
+                            ->searchable()
+                            ->preload(),
+                        Placeholder::make('override_notify_default')
+                            ->content(__('app.settings.hints.override_notify_default'))
+                            ->label(__('app.settings.hints.override_notify_default_label')),
+                    ]),
+                Section::make(__('app.settings.sections.subscription_status_notifications'))
+                    ->aside()
+                    ->schema([
+                        CheckboxList::make('notifications.subscription_status.roles')
+                            ->label(__('app.settings.fields.status_notify_roles'))
+                            ->helperText(__('app.settings.hints.status_notify_roles'))
+                            ->options(fn (): array => Role::query()->pluck('name', 'name')->all())
+                            ->searchable()
+                            ->bulkToggleable()
+                            ->default(['owner']),
+                        Select::make('notifications.subscription_status.users')
+                            ->label(__('app.settings.fields.status_notify_users'))
+                            ->helperText(__('app.settings.hints.status_notify_users'))
+                            ->options(fn (): array => User::query()->pluck('name', 'id')->all())
+                            ->multiple()
+                            ->searchable()
+                            ->preload(),
+                    ]),
+            ]);
     }
 
     /**
@@ -369,30 +333,6 @@ class Settings extends Page implements HasForms
     public function save(): void
     {
         $settings = $this->data ?? [];
-        $general = is_array($settings['general'] ?? null) ? $settings['general'] : [];
-
-        if (! empty($general['financial_year_start']) && is_string($general['financial_year_start'])) {
-            $start = Carbon::parse($general['financial_year_start'])
-                ->startOfMonth();
-
-            $general['financial_year_start'] = $start->toDateString();
-            $general['financial_year_end'] = $start->copy()->addYear()->subDay()->toDateString();
-        }
-
-        if (! empty($general['financial_year_end']) && is_string($general['financial_year_end'])) {
-            $general['financial_year_end'] =
-                Carbon::parse($general['financial_year_end'])
-                    ->toDateString();
-        }
-
-        foreach (['gym_logo'] as $logoKey) {
-            $value = $general[$logoKey] ?? null;
-            if (is_array($value)) {
-                $general[$logoKey] = $value[0] ?? null;
-            }
-        }
-
-        $settings['general'] = $general;
 
         try {
             app(SettingsRepository::class)->put($settings);
@@ -414,32 +354,5 @@ class Settings extends Page implements HasForms
             ->body(__('app.notifications.success_settings_save'))
             ->success()
             ->send();
-    }
-
-    /**
-     * Handles the file upload process and updates the settings data.
-     *
-     * @param  TemporaryUploadedFile|string|null  $state  The uploaded file state.
-     * @param  string  $key  The key to store the uploaded file path in the settings.
-     * @param  callable  $set  The callback to update the form state.
-     */
-    private function handleFileUpload(mixed $state, string $key, callable $set): void
-    {
-        if (! $state instanceof TemporaryUploadedFile) {
-            return;
-        }
-
-        $path = $state->storeAs('images', $state->getClientOriginalName(), 'public');
-        $repository = app(SettingsRepository::class);
-        $settings = $repository->get();
-        $general = is_array($settings['general'] ?? null) ? $settings['general'] : [];
-
-        $general[$key] = $path;
-        $settings['general'] = $general;
-
-        $repository->put($settings);
-
-        // Update the form state
-        $set("general.$key", [$path]);
     }
 }

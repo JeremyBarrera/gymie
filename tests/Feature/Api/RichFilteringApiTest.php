@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Location;
 use App\Models\Plan;
 use App\Models\Service;
 use App\Models\User;
@@ -12,6 +13,8 @@ uses(RefreshDatabase::class);
 
 it('supports allowlisted filters and includes', function (): void {
     app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    Location::factory()->create();
 
     $permissions = [
         'ViewAny:Plan',

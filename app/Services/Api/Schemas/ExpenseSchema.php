@@ -3,6 +3,7 @@
 namespace App\Services\Api\Schemas;
 
 use App\Models\Expense;
+use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
  * Single source of truth for Expense API validation and serialization.
@@ -39,7 +40,7 @@ final class ExpenseSchema
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public static function storeRules(): array
     {
@@ -57,7 +58,7 @@ final class ExpenseSchema
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public static function updateRules(): array
     {

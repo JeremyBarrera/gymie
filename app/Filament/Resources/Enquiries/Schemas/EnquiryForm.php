@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Enquiries\Schemas;
 use App\Helpers\Helpers;
 use App\Models\Service;
 use App\Models\User;
+use App\Support\Dates\DeviceDateFormat;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
@@ -14,6 +15,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 
 class EnquiryForm
@@ -40,16 +42,12 @@ class EnquiryForm
                             ->live()
                             ->placeholder(__('app.placeholders.example_email'))
                             ->unique('enquiries', 'email', ignoreRecord: true),
-                        TextInput::make('contact')
-                            ->label(__('app.fields.contact'))
-                            ->tel()
-                            ->required(),
+                        Helpers::phoneField('contact', required: true),
                         DatePicker::make('dob')
                             ->required()
                             ->label(__('app.fields.dob')),
                         DatePicker::make('date')
-                            ->label(__('app.fields.date'))
-                            ->default(now()),
+                            ->label(__('app.fields.date')),
                         Radio::make('gender')
                             ->options([
                                 'male' => __('app.options.gender.male'),
@@ -65,10 +63,12 @@ class EnquiryForm
                             ->label(__('app.fields.lead_owner'))
                             ->placeholder(__('app.placeholders.select_lead_owner'))
                             ->relationship('user', 'name')
+                            ->searchable()
+                            ->default(fn () => Auth::id())
                             ->required()
                             ->getOptionLabelFromRecordUsing(function (User $record): string {
                                 $name = html_entity_decode($record->name, ENT_QUOTES, 'UTF-8');
-                                $url = ! empty($record->photo) ? e($record->photo) : "https://ui-avatars.com/api/?background=000&color=fff&name={$name}";
+                                $url = ! empty($record->photo) ? e(Helpers::photoUrl($record->photo)) : "https://ui-avatars.com/api/?background=000&color=fff&name={$name}";
 
                                 return Blade::render(
                                     '<div class="flex items-center gap-2 h-9">
@@ -82,7 +82,7 @@ class EnquiryForm
                         DatePicker::make('start_by')
                             ->label(__('app.fields.start_by'))
                             ->minDate(now())
-                            ->placeholder(now()->format('d-m-Y')),
+                            ->placeholder(now()->translatedFormat(DeviceDateFormat::date())),
                     ])->columns(3)->columnSpanFull(),
                 Section::make(__('app.ui.location'))
                     ->schema([
@@ -96,6 +96,7 @@ class EnquiryForm
                                     ->label(__('app.fields.country'))
                                     ->placeholder(__('app.placeholders.select_country'))
                                     ->options(Helpers::getCountries())
+                                    ->searchable()
                                     ->required()
                                     ->reactive()
                                     ->afterStateUpdated(fn ($state, callable $set) => [
@@ -107,13 +108,15 @@ class EnquiryForm
                                     ->placeholder(__('app.placeholders.select_state'))
                                     ->options(fn ($get) => Helpers::getStates($get('country')))
                                     ->searchable()
-                                    ->reactive(),
+                                    ->reactive()
+                                    ->hidden(fn ($get) => empty(Helpers::getStates($get('country')))),
                                 Select::make('city')
                                     ->label(__('app.fields.city'))
                                     ->placeholder(__('app.placeholders.select_city'))
-                                    ->options(fn ($get) => Helpers::getCities($get('state')))
+                                    ->options(fn ($get) => Helpers::getCities($get('state'), $get('country')))
                                     ->searchable()
-                                    ->reactive(),
+                                    ->reactive()
+                                    ->hidden(fn ($get) => empty(Helpers::getCities($get('state'), $get('country')))),
                                 TextInput::make('pincode')
                                     ->label(__('app.fields.pincode'))
                                     ->required()

@@ -11,7 +11,7 @@ Artisan::command('inspire', function () {
 /**
  * Scheduler.
  *
- * When tenancy is enabled, run maintenance across all gyms.
+ * When tenancy is enabled, run maintenance across all locations.
  * Otherwise, run the single-tenant commands.
  */
 if ((bool) config('gymie-tenancy.enabled', false)) {

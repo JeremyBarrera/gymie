@@ -2,12 +2,13 @@
 
 namespace App\Http\Resources\V1;
 
+use App\Models\Expense;
 use App\Services\Api\Schemas\ExpenseSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\Expense
+ * @mixin Expense
  */
 class ExpenseResource extends JsonResource
 {
@@ -18,7 +19,7 @@ class ExpenseResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var \App\Models\Expense $expense */
+        /** @var Expense $expense */
         $expense = $this->resource;
 
         return ExpenseSchema::resource($expense);

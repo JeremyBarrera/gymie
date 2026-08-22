@@ -7,6 +7,7 @@ use App\Models\Plan;
 use App\Models\Service;
 use App\Rules\ModelExists;
 use App\Rules\ModelUnique;
+use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
  * Single source of truth for Plan API validation and serialization.
@@ -42,7 +43,7 @@ final class PlanSchema
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public static function storeRules(): array
     {
@@ -54,11 +55,13 @@ final class PlanSchema
             'amount' => ['required', 'numeric', 'min:0'],
             'days' => ['required', 'integer', 'min:1'],
             'status' => ['nullable', 'string'],
+            'track_uses' => ['nullable', 'boolean'],
+            'uses_limit' => ['nullable', 'integer', 'min:1', 'required_if:track_uses,true'],
         ];
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public static function updateRules(int|string $planId): array
     {
@@ -70,6 +73,8 @@ final class PlanSchema
             'amount' => ['sometimes', 'numeric', 'min:0'],
             'days' => ['sometimes', 'integer', 'min:1'],
             'status' => ['sometimes', 'nullable', 'string'],
+            'track_uses' => ['sometimes', 'boolean'],
+            'uses_limit' => ['nullable', 'integer', 'min:1', 'required_if:track_uses,true'],
         ];
     }
 
@@ -86,6 +91,8 @@ final class PlanSchema
             'amount' => (float) ($plan->amount ?? 0),
             'days' => (int) ($plan->days ?? 0),
             'status' => Status::valueOf($plan->status),
+            'track_uses' => (bool) $plan->track_uses,
+            'uses_limit' => $plan->track_uses ? ($plan->uses_limit !== null ? (int) $plan->uses_limit : null) : null,
             'created_at' => $plan->created_at?->toISOString(),
             'updated_at' => $plan->updated_at?->toISOString(),
             'deleted_at' => $plan->deleted_at?->toISOString(),

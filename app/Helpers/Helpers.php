@@ -4,6 +4,8 @@ namespace App\Helpers;
 
 use App\Contracts\SequenceRepository;
 use App\Contracts\SettingsRepository;
+use App\Contracts\TenantContext;
+use App\Filament\Forms\Components\PhoneField;
 use App\Models\Plan;
 use App\Services\JsonSettingsRepository;
 use App\Support\AppConfig;
@@ -13,12 +15,23 @@ use App\Support\Billing\TaxRate;
 use App\Support\Data;
 use App\Support\Dates\FiscalYear;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Nnjeim\World\WorldHelper;
+use InvalidArgumentException;
+use Throwable;
 
 class Helpers
 {
+    public const PHOTO_DISK = 'public';
+
+    public const PHOTO_DIRECTORY = 'images';
+
+    /** @var int Max decoded photo size in bytes (5 MB). */
+    public const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+
     private const DEFAULT_CURRENCY = 'INR';
 
     private const DEFAULT_EXPENSE_CATEGORIES = [
@@ -61,12 +74,28 @@ class Helpers
 
     /**
      * Get a list of all countries.
-     */
-    /**
+     *
      * @return array<string, string>
      */
     public static function getCountries(): array
     {
+        try {
+            /** @var class-string<Model> $model */
+            $model = config('world.models.countries');
+
+            $countries = $model::query()
+                ->orderBy('name')
+                ->pluck('name', 'name')
+                ->map(fn (mixed $name): string => Data::string($name))
+                ->all();
+
+            if ($countries !== []) {
+                return $countries;
+            }
+        } catch (Throwable) {
+            // fall through to the bundled dataset
+        }
+
         return collect(self::fallbackCountries())
             ->pluck('name', 'name')
             ->mapWithKeys(fn (mixed $name, mixed $key): array => [Data::string($key) => Data::string($name)])
@@ -81,6 +110,23 @@ class Helpers
      */
     public static function getCountriesWithCodes(): array
     {
+        try {
+            /** @var class-string<Model> $model */
+            $model = config('world.models.countries');
+
+            $countries = $model::query()
+                ->pluck('name', 'iso2')
+                ->filter(fn (mixed $name, mixed $code): bool => Data::string($code) !== '' && Data::string($name) !== '')
+                ->sort()
+                ->all();
+
+            if ($countries !== []) {
+                return $countries;
+            }
+        } catch (Throwable) {
+            // fall through to the bundled dataset
+        }
+
         return collect(self::fallbackCountries())
             ->mapWithKeys(fn (mixed $country): array => [
                 Data::string(data_get($country, 'iso2')) => Data::string(data_get($country, 'name')),
@@ -99,43 +145,74 @@ class Helpers
             return null;
         }
 
+        $phoneCode = self::countryPhoneCodeFromDatabase($countryName);
+
+        if ($phoneCode === null) {
+            $phoneCode = self::countryPhoneCodeFromDataset($countryName);
+        }
+
+        if ($phoneCode === null) {
+            return null;
+        }
+
+        $phoneCode = ltrim($phoneCode, '+');
+
+        return $phoneCode !== '' ? $phoneCode : null;
+    }
+
+    private static function countryPhoneCodeFromDatabase(string $countryName): ?string
+    {
         try {
-            $countryResponse = self::worldResponse('countries', [
-                'fields' => 'id,name,phone_code',
-                'filters' => ['name' => $countryName],
-            ]);
+            /** @var class-string<Model> $model */
+            $model = config('world.models.countries');
 
-            if (! $countryResponse->success || empty($countryResponse->data)) {
-                return null;
+            return Data::nullableString($model::query()->where('name', $countryName)->value('phone_code'));
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    private static function countryPhoneCodeFromDataset(string $countryName): ?string
+    {
+        $country = collect(self::fallbackCountries())
+            ->first(fn (mixed $country): bool => Data::string(data_get($country, 'name')) === $countryName);
+
+        return Data::nullableString(data_get($country, 'phone_code'));
+    }
+
+    /**
+     * Resolve the country name from the tenant location, falling back to
+     * the global settings. Returns null when nothing is configured.
+     */
+    private static function resolveCountryName(): ?string
+    {
+        try {
+            $location = app(TenantContext::class)->location();
+
+            $countryName = $location?->country;
+
+            if (blank($countryName)) {
+                $settings = self::getSettings();
+                $general = is_array($settings['general'] ?? null) ? $settings['general'] : [];
+                $countryName = Data::nullableString($general['country'] ?? null);
             }
 
-            $phoneCode = Data::nullableString(collect($countryResponse->data)->pluck('phone_code')->first());
-
-            if ($phoneCode === null) {
-                return null;
-            }
-
-            $phoneCode = ltrim($phoneCode, '+');
-
-            return $phoneCode !== '' ? $phoneCode : null;
-        } catch (\Throwable $e) {
+            return $countryName;
+        } catch (Throwable) {
             return null;
         }
     }
 
     /**
-     * Get the phone placeholder with country code based on settings, falling back to local translation.
+     * Get the phone placeholder with country code based on the current
+     * location, falling back to local translation.
      */
     public static function getPhonePlaceholder(): string
     {
         $fallback = Data::string(__('app.placeholders.example_phone'));
 
         try {
-            $settings = self::getSettings();
-            $general = is_array($settings['general'] ?? null) ? $settings['general'] : [];
-            $countryName = Data::nullableString($general['country'] ?? null);
-
-            $phoneCode = self::getCountryPhoneCode($countryName);
+            $phoneCode = self::getCountryPhoneCode(self::resolveCountryName());
 
             if (blank($phoneCode)) {
                 return $fallback;
@@ -146,138 +223,398 @@ class Helpers
             }
 
             return '+'.$phoneCode.' '.$fallback;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return $fallback;
         }
+    }
+
+    /**
+     * The bare country-code prefix (e.g. "+54") for phone placeholders.
+     * Falls back to the leading code from the translated example phone,
+     * then to the full example phone when nothing is resolvable.
+     */
+    public static function getPhoneCountryCodePlaceholder(): string
+    {
+        $phoneCode = self::getCountryPhoneCode(self::resolveCountryName());
+
+        if ($phoneCode !== null) {
+            return '+'.$phoneCode;
+        }
+
+        $fallback = Data::string(__('app.placeholders.example_phone'));
+
+        if (preg_match('/^\+\d+/', $fallback, $matches)) {
+            return $matches[0];
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * A local-number example for phone inputs that have a separate dial-code
+     * picker: the translated example phone with any leading "+<code>" prefix
+     * stripped (e.g. "+54 555-123-4567" -> "555-123-4567").
+     */
+    public static function getPhoneLocalPlaceholder(): string
+    {
+        $example = Data::string(__('app.placeholders.example_phone'));
+
+        $stripped = preg_replace('/^\+\d+\s*/', '', $example) ?? $example;
+
+        return $stripped !== '' ? $stripped : $example;
+    }
+
+    /**
+     * The full dial-code picker options: every country with a phone code,
+     * sorted by name, each as ['code' => '+54', 'name' => 'Argentina'].
+     * Reads the world tables when seeded, otherwise the bundled dataset.
+     *
+     * @return array<int, array{code: string, name: string}>
+     */
+    public static function getCountryDialOptions(): array
+    {
+        try {
+            /** @var class-string<Model> $model */
+            $model = config('world.models.countries');
+
+            $rows = $model::query()
+                ->whereNotNull('phone_code')
+                ->where('phone_code', '!=', '')
+                ->get(['name', 'phone_code']);
+
+            if ($rows->isNotEmpty()) {
+                return $rows
+                    ->map(fn (Model $country): array => [
+                        'code' => '+'.ltrim(Data::string($country->getAttribute('phone_code')), '+'),
+                        'name' => Data::string($country->getAttribute('name')),
+                    ])
+                    ->filter(fn (array $option): bool => $option['code'] !== '+' && $option['name'] !== '')
+                    ->sortBy('name')
+                    ->values()
+                    ->all();
+            }
+        } catch (Throwable) {
+            // fall through to the bundled dataset
+        }
+
+        return collect(self::fallbackCountries())
+            ->map(fn (array $country): array => [
+                'code' => '+'.ltrim(Data::string(data_get($country, 'phone_code')), '+'),
+                'name' => Data::string(data_get($country, 'name')),
+            ])
+            ->filter(fn (array $option): bool => $option['code'] !== '+' && $option['name'] !== '')
+            ->sortBy('name')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Return a Filament Group containing a dial-code Select and a phone
+     * TextInput. The Select is non-dehydrated (not saved to the DB); the
+     * caller combines them in mutateFormDataBeforeCreate / BeforeSave.
+     *
+     * @param  string  $fieldName  The model attribute (e.g. 'contact').
+     */
+    public static function phoneField(string $fieldName, bool $required = false): PhoneField
+    {
+        return PhoneField::make($fieldName)
+            ->label(__('app.fields.'.$fieldName))
+            ->required($required);
+    }
+
+    /**
+     * Combine a dial_code value with a raw phone number, returning the
+     * full prefixed, normalized string (e.g. '+54261599999'). Strips any
+     * existing +code prefix from the raw number first.
+     */
+    public static function combinePhoneField(string $dialCode, string $phone): string
+    {
+        $raw = preg_replace('/^\+\d+\s*/', '', $phone) ?? $phone;
+
+        $combined = $dialCode.' '.ltrim($raw, ' +');
+
+        return self::normalizePhone($combined) ?? $combined;
+    }
+
+    /**
+     * Parse a stored phone number (e.g. '+54261599999') into its dial-code
+     * prefix and local number, returning [dialCode, localNumber].
+     * Always strips the prefix so the local input never shows the area code,
+     * even when the code is not in the known dial list. Falls back to the
+     * default code when no prefix is found.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function parsePhoneField(?string $stored): array
+    {
+        if (blank($stored)) {
+            return [self::getPhoneCountryCodePlaceholder(), ''];
+        }
+
+        $raw = trim((string) $stored);
+
+        // Only prefixed numbers have a dial code to extract. An unprefixed
+        // value (legacy data) is local-only, so its leading digits must not
+        // be mistaken for a country code (e.g. "555..." matching +55).
+        if (! str_starts_with($raw, '+')) {
+            return [self::getPhoneCountryCodePlaceholder(), $raw];
+        }
+
+        $value = ltrim($raw, '+');
+
+        // Try matching against known dial codes (longest first to avoid
+        // partial matches like +1 before +1212).
+        $codes = collect(self::getCountryDialOptions())
+            ->map(fn (array $o): string => ltrim($o['code'], '+'))
+            ->sortByDesc(fn (string $c): int => strlen($c))
+            ->values()
+            ->all();
+
+        foreach ($codes as $code) {
+            if (str_starts_with($value, $code)) {
+                $local = ltrim(substr($value, strlen($code)));
+
+                return ['+'.$code, $local];
+            }
+        }
+
+        // No known code matched: the number starts with '+', so strip
+        // whatever leading digits it has rather than showing the code in the
+        // local input.
+        if (preg_match('/^\+\d{1,3}/', $raw, $matches)) {
+            $local = ltrim(substr($value, strlen(ltrim($matches[0], '+'))));
+
+            return [$matches[0], $local];
+        }
+
+        return [self::getPhoneCountryCodePlaceholder(), $value];
+    }
+
+    /**
+     * Normalize a phone number for storage and lookups: strip formatting
+     * (spaces, dashes, parentheses, dots) and prefix the country code when
+     * the number has no prefix of its own. Returns null for blank input.
+     */
+    public static function normalizePhone(?string $value): ?string
+    {
+        if (blank($value)) {
+            return null;
+        }
+
+        $cleaned = preg_replace('/[\s\-\(\)\.]/', '', trim($value)) ?? trim($value);
+
+        if ($cleaned === '') {
+            return null;
+        }
+
+        if (str_starts_with($cleaned, '+')) {
+            return $cleaned;
+        }
+
+        $phoneCode = self::getCountryPhoneCode(self::resolveCountryName());
+
+        if (blank($phoneCode)) {
+            return $cleaned;
+        }
+
+        return '+'.$phoneCode.$cleaned;
+    }
+
+    /**
+     * Build a public URL for a stored photo path, or pass through
+     * absolute/data URLs untouched.
+     */
+    public static function photoUrl(?string $photo): ?string
+    {
+        if (blank($photo)) {
+            return null;
+        }
+
+        if (filter_var($photo, FILTER_VALIDATE_URL) !== false || str_starts_with($photo, 'data:')) {
+            return $photo;
+        }
+
+        return Storage::disk('public')->url($photo);
+    }
+
+    /**
+     * Decode a base64 image data URL and store it on the public disk.
+     *
+     * @throws InvalidArgumentException When the data URL is not a supported image or is too large.
+     */
+    public static function storePhotoDataUrl(string $dataUrl): string
+    {
+        if (! preg_match('/^data:image\/(jpeg|png|webp);base64,/', $dataUrl, $matches)) {
+            throw new InvalidArgumentException(__('app.reception.verify_photo_invalid'));
+        }
+
+        $encoded = substr($dataUrl, strpos($dataUrl, ',') + 1);
+        $decoded = base64_decode($encoded, true);
+
+        if ($decoded === false || $decoded === '') {
+            throw new InvalidArgumentException(__('app.reception.verify_photo_invalid'));
+        }
+
+        if (strlen($decoded) > self::PHOTO_MAX_BYTES) {
+            throw new InvalidArgumentException(__('app.reception.verify_photo_invalid'));
+        }
+
+        $extension = $matches[1] === 'jpeg' ? 'jpg' : $matches[1];
+        $path = self::PHOTO_DIRECTORY.'/member-'.Str::uuid().'.'.$extension;
+
+        Storage::disk(self::PHOTO_DISK)->put($path, $decoded);
+
+        return $path;
     }
 
     /**
      * Get a list of states for a specific country.
      *
      * @param  string|null  $countryName  The name of the country
-     */
-    /**
      * @return array<string, string>
      */
     public static function getStates(?string $countryName): array
     {
-        if (app()->runningUnitTests()) {
+        if (blank($countryName)) {
             return [];
         }
 
-        if (is_null($countryName)) {
-            return [];
+        try {
+            /** @var class-string<Model> $countryModel */
+            $countryModel = config('world.models.countries');
+            /** @var class-string<Model> $stateModel */
+            $stateModel = config('world.models.states');
+
+            $countryId = $countryModel::query()->where('name', $countryName)->value('id');
+
+            if ($countryId !== null) {
+                $states = $stateModel::query()
+                    ->where('country_id', $countryId)
+                    ->orderBy('name')
+                    ->pluck('name', 'name')
+                    ->map(fn (mixed $name): string => Data::string($name))
+                    ->all();
+
+                if ($states !== []) {
+                    return $states;
+                }
+            }
+        } catch (Throwable) {
+            // fall through to the bundled dataset
         }
 
-        // Retrieve country details to get the country code
-        $countryResponse = self::worldResponse('countries', [
-            'filters' => ['name' => $countryName],
-        ]);
+        $key = mb_strtolower(trim($countryName));
 
-        if (! $countryResponse->success || empty($countryResponse->data)) {
-            return [];
-        }
-
-        $countryId = collect($countryResponse->data)->pluck('id')->first();
-
-        if (! $countryId) {
-            return [];
-        }
-
-        // Retrieve states using the country code
-        $stateResponse = self::worldResponse('states', [
-            'filters' => ['country_id' => $countryId],
-        ]);
-
-        if (! $stateResponse->success) {
-            return [];
-        }
-
-        return collect($stateResponse->data)
-            ->pluck('name', 'name')
-            ->mapWithKeys(fn (mixed $name, mixed $key): array => [Data::string($key) => Data::string($name)])
-            ->all();
+        return self::fallbackStates()[$key] ?? [];
     }
 
     /**
-     * Get a list of cities for a specific state using its name.
+     * Get a list of cities for a specific state.
      *
      * @param  string|null  $stateName  The name of the state
-     */
-    /**
+     * @param  string|null  $countryName  The name of the country to disambiguate repeated state names
      * @return array<string, string>
      */
-    public static function getCities(?string $stateName): array
+    public static function getCities(?string $stateName, ?string $countryName = null): array
     {
-        if (app()->runningUnitTests()) {
+        if (blank($stateName)) {
             return [];
         }
 
-        if (is_null($stateName)) {
+        try {
+            /** @var class-string<Model> $stateModel */
+            $stateModel = config('world.models.states');
+            /** @var class-string<Model> $cityModel */
+            $cityModel = config('world.models.cities');
+
+            $stateQuery = $stateModel::query()->where('name', $stateName);
+
+            if (! blank($countryName)) {
+                /** @var class-string<Model> $countryModel */
+                $countryModel = config('world.models.countries');
+                $countryId = $countryModel::query()->where('name', $countryName)->value('id');
+                if ($countryId !== null) {
+                    $stateQuery->where('country_id', $countryId);
+                }
+            }
+
+            $stateId = $stateQuery->value('id');
+
+            if ($stateId !== null) {
+                $cities = $cityModel::query()
+                    ->where('state_id', $stateId)
+                    ->orderBy('name')
+                    ->pluck('name', 'name')
+                    ->map(fn (mixed $name): string => Data::string($name))
+                    ->all();
+
+                if ($cities !== []) {
+                    return $cities;
+                }
+            }
+        } catch (Throwable) {
+            // fall through to the bundled dataset
+        }
+
+        $key = mb_strtolower(trim($stateName));
+        $cities = self::fallbackCities()[$key] ?? null;
+
+        if (! is_array($cities)) {
             return [];
         }
 
-        // Retrieve state details to get the state code
-        $stateResponse = self::worldResponse('states', [
-            'filters' => ['name' => $stateName],
-        ]);
+        if (blank($countryName)) {
+            $flattened = [];
+            foreach ($cities as $countryCities) {
+                foreach ($countryCities as $name => $label) {
+                    $flattened[$name] = $label;
+                }
+            }
 
-        if (! $stateResponse->success || empty($stateResponse->data)) {
-            return [];
+            return $flattened;
         }
 
-        $stateCode = collect($stateResponse->data)->pluck('id')->first();
-
-        if (! $stateCode) {
-            return [];
-        }
-
-        // Retrieve cities using the state code
-        $cityResponse = self::worldResponse('cities', [
-            'filters' => ['state_id' => $stateCode],
-        ]);
-
-        if (! $cityResponse->success || empty($cityResponse->data)) {
-            return [];
-        }
-
-        return collect($cityResponse->data)
-            ->pluck('name', 'name')
-            ->mapWithKeys(fn (mixed $name, mixed $key): array => [Data::string($key) => Data::string($name)])
-            ->all();
+        return $cities[mb_strtolower(trim($countryName))] ?? [];
     }
 
     /**
      * Get a list of currencies.
-     */
-    /**
+     *
      * @return array<string, string>
      */
     public static function getCurrencies(): array
     {
-        if (app()->runningUnitTests()) {
-            return [];
+        try {
+            /** @var class-string<Model> $model */
+            $model = config('world.models.currencies');
+
+            $currencies = $model::query()
+                ->orderBy('name')
+                ->pluck('name', 'code')
+                ->map(fn (mixed $name): string => Data::string($name))
+                ->all();
+
+            if ($currencies !== []) {
+                return $currencies;
+            }
+        } catch (Throwable) {
+            // fall through
         }
 
-        $currencyResponse = self::worldResponse('currencies', [
-            'fields' => 'name,code',
-        ]);
-
-        if (! $currencyResponse->success) {
-            return [];
-        }
-
-        return collect($currencyResponse->data)
-            ->pluck('name', 'code')
-            ->mapWithKeys(fn (mixed $name, mixed $key): array => [Data::string($key) => Data::string($name)])
-            ->all();
+        return self::fallbackCurrencies();
     }
 
     /**
-     * Get the currency code
+     * Get the currency code from the current location, falling back to settings.
      */
     public static function getCurrencyCode(): string
     {
+        $location = app(TenantContext::class)->location();
+
+        if ($location !== null && filled($location->currency)) {
+            return Data::string($location->currency, self::DEFAULT_CURRENCY);
+        }
+
         return Currency::codeFromSettings(self::getSettings(), self::DEFAULT_CURRENCY);
     }
 
@@ -416,6 +753,9 @@ class Helpers
     /**
      * Determine fiscal year start and end dates for the given date.
      *
+     * The fiscal year is configured per location, falling back to the
+     * legacy settings template.
+     *
      * @param  Carbon  $date  The date to calculate the fiscal period for.
      * @return array{0: Carbon, 1: Carbon} Array with [start, end] Carbon instances of the fiscal year.
      */
@@ -423,7 +763,23 @@ class Helpers
     {
         $generalSettings = self::getSettings()['general'] ?? [];
 
-        return FiscalYear::spanForDate($date, is_array($generalSettings) ? $generalSettings : []);
+        if (! is_array($generalSettings)) {
+            $generalSettings = [];
+        }
+
+        $location = app(TenantContext::class)->location();
+
+        if ($location !== null) {
+            if ($location->financial_year_start !== null) {
+                $generalSettings['financial_year_start'] = $location->financial_year_start->toDateString();
+            }
+
+            if ($location->financial_year_end !== null) {
+                $generalSettings['financial_year_end'] = $location->financial_year_end->toDateString();
+            }
+        }
+
+        return FiscalYear::spanForDate($date, $generalSettings);
     }
 
     /**
@@ -458,18 +814,6 @@ class Helpers
     }
 
     /**
-     * @param  array<string, mixed>  $parameters
-     * @return object{success: bool, data: array<int, array<string, mixed>>}
-     */
-    private static function worldResponse(string $method, array $parameters = []): object
-    {
-        /** @var object{success: bool, data: array<int, array<string, mixed>>} $response */
-        $response = app(WorldHelper::class)->__call($method, [$parameters]);
-
-        return $response;
-    }
-
-    /**
      * @return array<int, array<string, mixed>>
      */
     private static function fallbackCountries(): array
@@ -496,6 +840,122 @@ class Helpers
         }
 
         return $filteredCountries;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function fallbackCurrencies(): array
+    {
+        $path = base_path('vendor/nnjeim/world/resources/json/currencies.json');
+
+        if (! is_file($path)) {
+            return [];
+        }
+
+        /** @var mixed $decoded */
+        $decoded = json_decode((string) file_get_contents($path), true);
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        $currencies = [];
+
+        foreach ($decoded as $code => $currency) {
+            if (! is_array($currency)) {
+                continue;
+            }
+
+            $name = Data::string(data_get($currency, 'name'));
+            $code = Data::string($code);
+
+            if ($name !== '' && $code !== '') {
+                $currencies[$code] = $name;
+            }
+        }
+
+        asort($currencies);
+
+        return $currencies;
+    }
+
+    /**
+     * The compacted world dataset (states/cities) used when the world tables
+     * have not been seeded, mirroring the countries fallback. Decoded once
+     * and cached to keep lookups cheap.
+     *
+     * @return array{states: array<string, array<string, string>>, cities: array<string, array<string, array<string, string>>>}
+     */
+    private static function fallbackStates(): array
+    {
+        return Cache::rememberForever('gymie.world_states', function (): array {
+            $base = base_path('vendor/nnjeim/world/resources/json');
+            $states = [];
+
+            $statesPath = $base.'/states.json';
+            if (is_file($statesPath)) {
+                /** @var mixed $decoded */
+                $decoded = json_decode((string) file_get_contents($statesPath), true);
+
+                if (is_array($decoded)) {
+                    foreach ($decoded as $state) {
+                        if (! is_array($state)) {
+                            continue;
+                        }
+
+                        $country = Data::string(data_get($state, 'country_name'));
+                        $name = Data::string(data_get($state, 'name'));
+
+                        if ($country !== '' && $name !== '') {
+                            $states[mb_strtolower($country)][$name] = $name;
+                        }
+                    }
+                }
+            }
+
+            return $states;
+        });
+    }
+
+    private static function fallbackCities(): array
+    {
+        return Cache::store('file')->rememberForever('gymie.world_cities', function (): array {
+            $base = base_path('vendor/nnjeim/world/resources/json');
+            $cities = [];
+
+            $previousLimit = ini_set('memory_limit', '2048M');
+
+            try {
+                $citiesPath = $base.'/cities.json';
+                if (is_file($citiesPath)) {
+                    /** @var mixed $decoded */
+                    $decoded = json_decode((string) file_get_contents($citiesPath), true);
+
+                    if (is_array($decoded)) {
+                        foreach ($decoded as $city) {
+                            if (! is_array($city)) {
+                                continue;
+                            }
+
+                            $state = Data::string(data_get($city, 'state_name'));
+                            $country = Data::string(data_get($city, 'country_name'));
+                            $name = Data::string(data_get($city, 'name'));
+
+                            if ($state !== '' && $country !== '' && $name !== '') {
+                                $cities[mb_strtolower($state)][mb_strtolower($country)][$name] = $name;
+                            }
+                        }
+                    }
+                }
+
+                return $cities;
+            } finally {
+                if ($previousLimit !== false) {
+                    @ini_set('memory_limit', $previousLimit);
+                }
+            }
+        });
     }
 
     /**

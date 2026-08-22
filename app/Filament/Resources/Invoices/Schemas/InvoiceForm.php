@@ -8,6 +8,8 @@ use App\Models\Invoice;
 use App\Models\Subscription;
 use App\Support\Billing\InvoiceCalculator;
 use App\Support\Billing\PaymentMethod;
+use App\Support\Data;
+use App\Support\Dates\DeviceDateFormat;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
@@ -101,8 +103,7 @@ class InvoiceForm
                                 DatePicker::make('date')
                                     ->label(__('app.fields.date'))
                                     ->required()
-                                    ->reactive()
-                                    ->default(now()),
+                                    ->reactive(),
                                 DatePicker::make('due_date')
                                     ->label(__('app.fields.due_date'))
                                     ->required()
@@ -113,7 +114,7 @@ class InvoiceForm
                                     ->native(false)
                                     ->live()
                                     ->reactive()
-                                    ->placeholder(__('app.placeholders.select_discount'))
+                                    ->default(null)
                                     ->afterStateUpdated(
                                         function (Get $get, Set $set) {
                                             $fee = self::floatState($get, 'subscription_fee');
@@ -142,6 +143,7 @@ class InvoiceForm
                                     ->debounce(300)
                                     ->default(0)
                                     ->prefix(Helpers::getCurrencySymbol())
+                                    ->extraAttributes(['class' => 'verify-money-input'])
                                     ->maxValue(fn (Get $get): float => self::floatState($get, 'subscription_fee'))
                                     ->afterStateUpdated(
                                         function (Get $get, Set $set, $livewire, TextInput $component) {
@@ -190,6 +192,7 @@ class InvoiceForm
                                     ->dehydrated()
                                     ->default(0)
                                     ->prefix(Helpers::getCurrencySymbol())
+                                    ->extraAttributes(['class' => 'verify-money-input'])
                                     ->required(),
                                 TextInput::make('tax')
                                     ->label(fn (): string => __('app.fields.tax_with_rate', ['rate' => Helpers::getTaxRate()]))
@@ -198,6 +201,7 @@ class InvoiceForm
                                     ->dehydrated()
                                     ->default(0)
                                     ->prefix(Helpers::getCurrencySymbol())
+                                    ->extraAttributes(['class' => 'verify-money-input'])
                                     ->readOnly(),
                                 TextInput::make('total_amount')
                                     ->label(__('app.fields.total_amount'))
@@ -207,6 +211,7 @@ class InvoiceForm
                                     ->dehydrated()
                                     ->default(0)
                                     ->prefix(Helpers::getCurrencySymbol())
+                                    ->extraAttributes(['class' => 'verify-money-input'])
                                     ->required(),
                             ]),
                     ]),
@@ -225,8 +230,8 @@ class InvoiceForm
         $memberName = $subscription->member->name ?? '—';
         $planCode = $subscription->plan->code ?? '—';
         $planName = $subscription->plan->name ?? '—';
-        $start = $subscription->start_date?->format('d-m-Y') ?? '—';
-        $end = $subscription->end_date?->format('d-m-Y') ?? '—';
+        $start = $subscription->start_date?->translatedFormat(DeviceDateFormat::date()) ?? '—';
+        $end = $subscription->end_date?->translatedFormat(DeviceDateFormat::date()) ?? '—';
         $status = $subscription->status?->getLabel() ?? '—';
 
         return "#{$subscription->id} — {$memberCode} {$memberName} • {$planCode} {$planName} • {$start} → {$end} • {$status}";
@@ -234,16 +239,16 @@ class InvoiceForm
 
     private static function stringState(Get $get, string $path): ?string
     {
-        return \App\Support\Data::nullableString($get($path));
+        return Data::nullableString($get($path));
     }
 
     private static function intState(Get $get, string $path): int
     {
-        return \App\Support\Data::int($get($path));
+        return Data::int($get($path));
     }
 
     private static function floatState(Get $get, string $path): float
     {
-        return \App\Support\Data::float($get($path));
+        return Data::float($get($path));
     }
 }

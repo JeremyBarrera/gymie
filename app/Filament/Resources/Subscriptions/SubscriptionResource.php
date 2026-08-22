@@ -11,6 +11,7 @@ use App\Filament\Resources\Subscriptions\Schemas\SubscriptionForm;
 use App\Filament\Resources\Subscriptions\Schemas\SubscriptionInfolist;
 use App\Filament\Resources\Subscriptions\Tables\SubscriptionTable;
 use App\Models\Subscription;
+use App\Support\Dates\DeviceDateFormat;
 use App\Support\Filament\GlobalSearchBadge;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -74,11 +75,11 @@ class SubscriptionResource extends Resource
         $details = [];
 
         if ($record->start_date) {
-            $details[__('app.fields.start_date')] = $record->start_date->toDateString();
+            $details[__('app.fields.start_date')] = $record->start_date->translatedFormat(DeviceDateFormat::date());
         }
 
         if ($record->end_date) {
-            $details[__('app.fields.end_date')] = $record->end_date->toDateString();
+            $details[__('app.fields.end_date')] = $record->end_date->translatedFormat(DeviceDateFormat::date());
         }
 
         if ($record->status) {
@@ -133,5 +134,15 @@ class SubscriptionResource extends Resource
             'view' => ViewSubscription::route('/{record}'),
             'edit' => EditSubscription::route('/{record}/edit'),
         ];
+    }
+
+    /**
+     * @return Builder<Subscription>
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        // The member's own location scope restricts visibility to the
+        // account's accessible locations (derived from the member's plans).
+        return parent::getEloquentQuery()->whereHas('member');
     }
 }

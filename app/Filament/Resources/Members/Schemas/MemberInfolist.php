@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Members\Schemas;
 
 use App\Models\Member;
+use App\Support\Dates\DeviceDateFormat;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Group;
@@ -56,42 +57,19 @@ class MemberInfolist
                                 TextEntry::make('gender')->label(__('app.fields.gender')),
                                 TextEntry::make('email')->label(__('app.fields.email')),
                                 TextEntry::make('government_id')->label(__('app.fields.government_id')),
-                                TextEntry::make('location.name')->label(__('app.fields.location')),
                                 TextEntry::make('contact')->label(__('app.fields.contact')),
                                 TextEntry::make('emergency_contact')->label(__('app.fields.emergency_contact'))->placeholder(__('app.placeholders.na')),
                                 TextEntry::make('dob')
                                     ->label(__('app.fields.dob'))
-                                    ->date('d-m-Y'),
-                                TextEntry::make('source')
-                                    ->label(__('app.fields.source'))
-                                    ->placeholder(__('app.placeholders.na')),
+                                    ->date(DeviceDateFormat::date()),
                                 TextEntry::make('goal')
                                     ->label(__('app.fields.goal'))
                                     ->placeholder(__('app.placeholders.na')),
                                 TextEntry::make('health_issue')
                                     ->label(__('app.fields.health_issues'))
                                     ->placeholder(__('app.placeholders.na')),
-                            ])->columnSpan(4)->columns(3),
+                            ])->columnSpan(4)->columns(3)->extraAttributes(['class' => 'ps-4']),
                     ])->columns(5),
-                Section::make(__('app.ui.location'))
-                    ->columns(3)
-                    ->schema([
-                        TextEntry::make('address')->label(__('app.fields.address')),
-                        Group::make()
-                            ->schema([
-                                TextEntry::make('country')->label(__('app.fields.country')),
-                                TextEntry::make('state')
-                                    ->label(__('app.fields.state'))
-                                    ->placeholder(__('app.placeholders.na')),
-                                TextEntry::make('city')
-                                    ->label(__('app.fields.city'))
-                                    ->placeholder(__('app.placeholders.na')),
-                                TextEntry::make('pincode')
-                                    ->label(__('app.fields.pincode')),
-                            ])
-                            ->columnSpan(2)
-                            ->columns(4),
-                    ]),
 
             ]);
     }

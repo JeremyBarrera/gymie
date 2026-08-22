@@ -52,6 +52,7 @@ it('supports core CRUD flows for integrations', function (): void {
         'contact' => '+91 9000000000',
         'gender' => 'male',
         'status' => 'active',
+        'government_id' => 'ID-12345',
     ])->assertSuccessful()->json('data');
 
     $subscriptionResponse = $this->postJson('/api/v1/subscriptions', [

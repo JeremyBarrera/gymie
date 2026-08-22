@@ -2,6 +2,7 @@
 
 use App\Helpers\Helpers;
 use App\Models\Invoice;
+use App\Models\Location;
 use App\Models\Member;
 use App\Models\Plan;
 use App\Models\Subscription;
@@ -37,6 +38,8 @@ function makeInvoiceWithViewer(): array
 
     app(PermissionRegistrar::class)->forgetCachedPermissions();
     Permission::findOrCreate('View:Invoice', 'web');
+
+    Location::factory()->create();
 
     $user = User::factory()->create();
     $user->givePermissionTo('View:Invoice');
@@ -79,6 +82,8 @@ it('forbids invoice preview when the user lacks permission', function (): void {
             'discounts' => [],
         ],
     ]);
+
+    Location::factory()->create();
 
     $user = User::factory()->create();
 

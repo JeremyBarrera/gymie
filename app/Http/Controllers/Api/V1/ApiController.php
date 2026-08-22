@@ -82,7 +82,7 @@ abstract class ApiController extends Controller
     /**
      * Permanently delete a soft-deleted record for a given model class.
      *
-     * @param  class-string<\Illuminate\Database\Eloquent\Model>  $modelClass
+     * @param  class-string<Model>  $modelClass
      */
     protected function forceDeleteSoftDeleted(Request $request, string $permission, string $modelClass, int $id): void
     {

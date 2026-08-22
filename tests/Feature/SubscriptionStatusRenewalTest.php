@@ -18,7 +18,7 @@ beforeEach(function (): void {
         ],
     ]);
 
-    Role::findOrCreate('super_admin', 'web');
+    Role::findOrCreate('owner', 'web');
 });
 
 afterEach(function (): void {

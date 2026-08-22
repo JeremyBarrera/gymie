@@ -12,7 +12,8 @@
         "country": "",
         "state": "",
         "city": "",
-        "zip": ""
+        "zip": "",
+        "theme_color": "#2563eb"
     },
     "invoice": {
         "prefix": "",
@@ -33,5 +34,9 @@
     },
     "subscriptions": {
         "expiring_days": 7
+    },
+    "permissions": {
+        "enabled": true,
+        "disabled": []
     }
 }

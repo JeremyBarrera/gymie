@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\Plan;
 use App\Models\Service;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Plan>
+ * @extends Factory<Plan>
  */
 class PlanFactory extends Factory
 {
@@ -25,6 +26,19 @@ class PlanFactory extends Factory
             'days' => $this->faker->numberBetween(1, 365),
             'amount' => $this->faker->randomFloat(2, 10, 1000),
             'status' => $this->faker->randomElement(['active', 'inactive']),
+            'track_uses' => false,
+            'uses_limit' => null,
         ];
+    }
+
+    /**
+     * Plan that tracks a limited number of uses.
+     */
+    public function withUseLimit(int $limit = 10): static
+    {
+        return $this->state(fn (): array => [
+            'track_uses' => true,
+            'uses_limit' => $limit,
+        ]);
     }
 }

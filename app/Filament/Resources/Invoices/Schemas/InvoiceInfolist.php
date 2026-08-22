@@ -28,7 +28,7 @@ class InvoiceInfolist
                     ->schema([
                         Section::make()
                             ->heading(function (Invoice $record): HtmlString {
-                                $status = $record->status;
+                                $status = $record->effectiveStatus();
 
                                 if ($status === null) {
                                     return new HtmlString(e(__('app.ui.details')));
@@ -70,55 +70,59 @@ class InvoiceInfolist
 
                         Section::make(__('app.titles.summary'))
                             ->schema([
-                                Flex::make([
-                                    TextEntry::make('fee_label')
-                                        ->label(__('app.fields.fee').':'),
-                                    TextEntry::make('subscription_fee')
-                                        ->hiddenLabel()
-                                        ->formatStateUsing(fn (Invoice $record) => Helpers::formatCurrency($record->subscription_fee)),
-                                ]),
-                                Flex::make([
-                                    TextEntry::make('tax_label')
-                                        ->label(__('app.fields.tax_with_rate', ['rate' => Helpers::getTaxRate()]).':'),
-                                    TextEntry::make('tax')
-                                        ->hiddenLabel()
-                                        ->formatStateUsing(fn (Invoice $record) => Helpers::formatCurrency($record->tax)),
-                                ])->hidden(fn ($record) => empty($record->tax)),
-                                Flex::make([
-                                    TextEntry::make('discount_label')
-                                        ->label(fn (Invoice $record) => $record->discount
-                                            ? __('app.fields.discount_with_rate', ['rate' => $record->discount]).':'
-                                            : __('app.fields.discount').':'),
-                                    TextEntry::make('discount_amount')
-                                        ->hiddenLabel()
-                                        ->formatStateUsing(fn (Invoice $record) => Helpers::formatCurrency($record->discount_amount)),
-                                ])->hidden(fn ($record) => empty($record->discount_amount)),
-                                Flex::make([
-                                    TextEntry::make('total_label')
-                                        ->label(__('app.fields.total').':'),
-                                    TextEntry::make('total_amount')
-                                        ->hiddenLabel()
-                                        ->formatStateUsing(fn (Invoice $record) => Helpers::formatCurrency($record->total_amount)),
-                                ]),
-                                Flex::make([
-                                    TextEntry::make('paid_label')
-                                        ->label(__('app.fields.paid').':'),
-                                    TextEntry::make('paid_amount')
-                                        ->hiddenLabel()
-                                        ->formatStateUsing(fn (Invoice $record) => Helpers::formatCurrency($record->paid_amount)),
-                                ])->hidden(fn ($record) => empty($record->paid_amount)),
-                                Flex::make([
-                                    TextEntry::make('due_label')
-                                        ->label(__('app.fields.due').':'),
-                                    TextEntry::make('due_amount')
-                                        ->hiddenLabel()
-                                        ->formatStateUsing(fn (Invoice $record) => Helpers::formatCurrency($record->due_amount)),
-                                ])->hidden(fn ($record) => empty($record->due_amount)),
-
+                                self::summaryRow(__('app.fields.fee').':', 'subscription_fee'),
+                                self::summaryRow(
+                                    fn (): string => __('app.fields.tax_with_rate', ['rate' => Helpers::getTaxRate()]).':',
+                                    'tax',
+                                    fn (Invoice $record) => empty($record->tax),
+                                ),
+                                self::summaryRow(
+                                    fn (Invoice $record) => $record->discount
+                                        ? __('app.fields.discount_with_rate', ['rate' => $record->discount]).':'
+                                        : __('app.fields.discount').':',
+                                    'discount_amount',
+                                    fn (Invoice $record) => empty($record->discount_amount),
+                                ),
+                                self::summaryRow(__('app.fields.total').':', 'total_amount'),
+                                self::summaryRow(
+                                    __('app.fields.paid').':',
+                                    'paid_amount',
+                                    fn (Invoice $record) => empty($record->paid_amount),
+                                ),
+                                self::summaryRow(
+                                    __('app.fields.due').':',
+                                    'due_amount',
+                                    fn (Invoice $record) => empty($record->due_amount),
+                                ),
                             ])
                             ->columns(1)
                             ->columnSpan(1),
                     ]),
             ]);
+    }
+
+    /**
+     * One compact "Label: amount" line. Both sides stay on a single line so
+     * amounts never wrap inside the summary column.
+     *
+     * @param  string|callable  $label
+     */
+    private static function summaryRow(string|callable $label, string $key, ?\Closure $hidden = null): Flex
+    {
+        $row = Flex::make([
+            TextEntry::make("{$key}_summary_label")
+                ->label($label)
+                ->extraAttributes(['class' => 'whitespace-nowrap']),
+            TextEntry::make($key)
+                ->hiddenLabel()
+                ->formatStateUsing(fn (Invoice $record) => Helpers::formatCurrency($record->{$key}))
+                ->extraAttributes(['class' => 'whitespace-nowrap']),
+        ]);
+
+        if ($hidden !== null) {
+            $row->hidden($hidden);
+        }
+
+        return $row;
     }
 }

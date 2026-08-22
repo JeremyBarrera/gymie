@@ -3,23 +3,26 @@
 namespace App\Models;
 
 use App\Enums\Status;
+use App\Helpers\Helpers;
+use App\Models\Concerns\ScopedByLocation;
+use App\Support\Permissions\PermissionFeatureFlags;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasAvatar;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, HasAvatar
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable, ScopedByLocation, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -40,6 +43,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         'city',
         'state',
         'pincode',
+        'sound_alerts',
     ];
 
     /**
@@ -64,6 +68,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
             'password' => 'hashed',
             'dob' => 'date',
             'status' => Status::class,
+            'sound_alerts' => 'boolean',
         ];
     }
 
@@ -92,7 +97,25 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
      */
     public function getFilamentAvatarUrl(): ?string
     {
-        return $this->photo ? Storage::disk('public')->url((string) $this->photo) : null;
+        return $this->photo ? Helpers::photoUrl($this->photo) : null;
+    }
+
+    /**
+     * Get the locations this user has access to.
+     */
+    public function locations(): BelongsToMany
+    {
+        return $this->belongsToMany(Location::class, 'user_locations')
+            ->withTimestamps();
+    }
+
+    /**
+     * Whether the user is the top-level owner that provisions locations and
+     * may access data across every location.
+     */
+    public function isOwner(): bool
+    {
+        return $this->hasRole(PermissionFeatureFlags::OWNER_ROLE);
     }
 
     /**

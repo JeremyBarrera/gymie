@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CheckInController;
 use App\Http\Controllers\Api\V1\EnquiriesController;
 use App\Http\Controllers\Api\V1\EnquiryFollowUpsController;
 use App\Http\Controllers\Api\V1\ExpensesController;
@@ -27,6 +28,12 @@ Route::prefix('v1')
     ->group(function (): void {
         Route::post('/auth/login', [AuthController::class, 'login'])
             ->middleware('throttle:api-login');
+
+        Route::middleware(['throttle:api-checkin', 'honeypot'])
+            ->group(function (): void {
+                Route::post('/checkin/lookup', [CheckInController::class, 'lookup']);
+                Route::post('/signup/apply', [CheckInController::class, 'apply']);
+            });
 
         Route::middleware('auth:sanctum')
             ->group(function (): void {

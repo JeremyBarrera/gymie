@@ -5,6 +5,7 @@ namespace App\Rules;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Translation\PotentiallyTranslatedString;
 
 /**
  * Eloquent-based "unique" rule (respects global scopes like tenancy / soft deletes).
@@ -23,7 +24,7 @@ final class ModelUnique implements ValidationRule
     ) {}
 
     /**
-     * @param  Closure(string, string|null=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
+     * @param  Closure(string, string|null=): PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {

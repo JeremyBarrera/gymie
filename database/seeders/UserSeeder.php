@@ -13,14 +13,21 @@ class UserSeeder extends Seeder
 
     /**
      * Run the database seeds.
+     *
+     * Bootstrap-only: creates the owner account from `.env`
+     * (`OWNER_NAME` / `OWNER_EMAIL` / `OWNER_PASSWORD`) when one with that
+     * email does not exist yet. It never modifies an existing account — the
+     * env credentials are not re-applied to a running install.
      */
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => Hash::make('test'),
-            'status' => 'active',
-        ])->assignRole('super_admin');
+        User::query()->firstOrCreate(
+            ['email' => config('gymie.owner.email')],
+            [
+                'name' => config('gymie.owner.name'),
+                'password' => Hash::make(config('gymie.owner.password')),
+                'status' => 'active',
+            ],
+        )->syncRoles('owner');
     }
 }

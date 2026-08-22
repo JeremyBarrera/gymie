@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopedByLocation;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
  * @property int|null $invoice_id
  * @property string $type
  * @property float|int|string|null $amount
- * @property \Illuminate\Support\Carbon|null $occurred_at
+ * @property Carbon|null $occurred_at
  * @property string|null $payment_method
  * @property string|null $note
  * @property string|null $reference_id
@@ -20,13 +23,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class InvoiceTransaction extends Model
 {
-    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory<static>> */
-    use HasFactory;
+    /** @use HasFactory<Factory<static>> */
+    use HasFactory, ScopedByLocation;
 
     /**
      * @var list<string>
      */
     protected $fillable = [
+        'location_id',
         'invoice_id',
         'type',
         'amount',

@@ -16,4 +16,11 @@ class CreateLocation extends CreateRecord
             LocationResource::getUrl('index') => LocationResource::getNavigationLabel(),
         ];
     }
+
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction(),
+        ];
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Services\Api\Schemas;
 use App\Enums\Status;
 use App\Models\Member;
 use App\Rules\ModelUnique;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -46,7 +47,7 @@ final class MemberSchema
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public static function storeRules(): array
     {
@@ -55,9 +56,8 @@ final class MemberSchema
             'code' => ['nullable', 'string', 'max:255', new ModelUnique(Member::class, 'code')],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'string', 'email', 'max:255', new ModelUnique(Member::class, 'email')],
-            'government_id' => ['required', 'string', 'max:255', new ModelUnique(Member::class, 'government_id')],
+            'government_id' => ['required', 'string', 'max:255'],
             'contact' => ['required', 'string', 'max:20'],
-            'location_id' => ['required', 'integer', 'exists:locations,id'],
             'emergency_contact' => ['nullable', 'string', 'max:20'],
             'health_issue' => ['nullable', 'string', 'max:500'],
             'gender' => ['nullable', 'string', Rule::in(['male', 'female', 'other'])],
@@ -74,7 +74,7 @@ final class MemberSchema
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public static function updateRules(int|string $memberId): array
     {
@@ -83,9 +83,8 @@ final class MemberSchema
             'code' => ['sometimes', 'nullable', 'string', 'max:255', new ModelUnique(Member::class, 'code', $memberId)],
             'name' => ['sometimes', 'string', 'max:255'],
             'email' => ['sometimes', 'nullable', 'string', 'email', 'max:255', new ModelUnique(Member::class, 'email', $memberId)],
-            'government_id' => ['sometimes', 'string', 'max:255', new ModelUnique(Member::class, 'government_id', $memberId)],
+            'government_id' => ['sometimes', 'string', 'max:255'],
             'contact' => ['sometimes', 'string', 'max:20'],
-            'location_id' => ['sometimes', 'nullable', 'integer', 'exists:locations,id'],
             'emergency_contact' => ['sometimes', 'nullable', 'string', 'max:20'],
             'health_issue' => ['sometimes', 'nullable', 'string', 'max:500'],
             'gender' => ['sometimes', 'nullable', 'string', Rule::in(['male', 'female', 'other'])],
@@ -122,11 +121,6 @@ final class MemberSchema
             'dob' => $member->dob?->toDateString(),
             'photo' => $member->photo ? (string) $member->photo : null,
             'photo_url' => $member->photo ? $disk->url((string) $member->photo) : null,
-            'location_id' => $member->location_id ? (int) $member->location_id : null,
-            'location' => $member->location ? [
-                'id' => $member->location->id,
-                'name' => $member->location->name,
-            ] : null,
             'address' => $member->address ? (string) $member->address : null,
             'country' => $member->country ? (string) $member->country : null,
             'state' => $member->state ? (string) $member->state : null,

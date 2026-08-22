@@ -35,7 +35,15 @@ class SetAppLocale
         $headerLocale = $request->getPreferredLanguage($supportedLocales);
         $headerLocale = is_string($headerLocale) ? trim($headerLocale) : null;
 
-        $locale = $queryLocale ?: ($settingsLocale ?: ($headerLocale ?: AppConfig::string('app.locale', 'en')));
+        $isPublicRoute = str_starts_with($request->path(), 'checkin')
+            || str_starts_with($request->path(), 'signup')
+            || str_starts_with($request->path(), 'waiting');
+
+        if ($isPublicRoute) {
+            $locale = $queryLocale ?: ($headerLocale ?: AppConfig::string('app.locale', 'en'));
+        } else {
+            $locale = $queryLocale ?: ($settingsLocale ?: ($headerLocale ?: AppConfig::string('app.locale', 'en')));
+        }
 
         if (! in_array($locale, $supportedLocales, true)) {
             $locale = in_array($fallbackLocale, $supportedLocales, true)

@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Middleware\EnsureFeatureIsActive;
 use App\Http\Middleware\ForceJsonResponse;
+use App\Http\Middleware\Honeypot;
 use App\Http\Middleware\SetAppLocale;
+use App\Http\Middleware\SetCurrentLocation;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,16 +19,34 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
+        channels: __DIR__.'/../routes/channels.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Plain cookies written by resources/js/device-locale.js must not be
+        // encrypted by the framework's EncryptCookies middleware.
+        $middleware->encryptCookies(except: [
+            'gymie_date_order',
+            'gymie_hour12',
+        ]);
+
         $middleware->web(prepend: [
             SetAppLocale::class,
+        ]);
+
+        $middleware->web(append: [
+            SetCurrentLocation::class,
         ]);
 
         $middleware->api(prepend: [
             SetAppLocale::class,
             ForceJsonResponse::class,
+            SetCurrentLocation::class,
+        ]);
+
+        $middleware->alias([
+            'honeypot' => Honeypot::class,
+            'feature' => EnsureFeatureIsActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

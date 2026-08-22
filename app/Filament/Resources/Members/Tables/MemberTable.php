@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Members\Tables;
 
 use App\Models\Member;
+use App\Support\Dates\DeviceDateFormat;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -11,7 +12,6 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
@@ -22,6 +22,10 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
+use Throwable;
 
 class MemberTable
 {
@@ -50,9 +54,6 @@ class MemberTable
                 TextColumn::make('government_id')
                     ->searchable()
                     ->label(__('app.fields.government_id')),
-                TextColumn::make('location.name')
-                    ->searchable()
-                    ->label(__('app.fields.location')),
                 TextColumn::make('gender')
                     ->searchable()
                     ->label(__('app.fields.gender')),
@@ -65,7 +66,7 @@ class MemberTable
                     ->label(__('app.fields.emergency_contact')),
                 TextColumn::make('created_at')
                     ->sortable()
-                    ->date('d-m-Y')
+                    ->date(DeviceDateFormat::date())
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label(__('app.fields.date')),
                 TextColumn::make('status')
@@ -110,8 +111,8 @@ class MemberTable
                         : __('app.empty.create_to_get_started', ['resource' => $record]);
                 }
 
-                $from = $fromRaw ? Carbon::parse($fromRaw)->format('d-m-Y') : (string) __('app.common.the_beginning');
-                $to = $toRaw ? Carbon::parse($toRaw)->format('d-m-Y') : (string) __('app.common.today');
+                $from = $fromRaw ? Carbon::parse($fromRaw)->translatedFormat(DeviceDateFormat::date()) : (string) __('app.common.the_beginning');
+                $to = $toRaw ? Carbon::parse($toRaw)->translatedFormat(DeviceDateFormat::date()) : (string) __('app.common.today');
 
                 if ($tab === 'all') {
                     return __('app.empty.found_none_between', ['records' => $records, 'from' => $from, 'to' => $to]);
@@ -193,14 +194,26 @@ class MemberTable
                             ->color('gray'),
                         ViewAction::make(),
                         EditAction::make()->hiddenLabel(),
-                        DeleteAction::make()->hiddenLabel(),
+                        DeleteAction::make()
+                            ->hiddenLabel()
+                            ->using(fn (Member $record): bool => $record->forceDelete()),
                     ])->dropdown(false),
                 ]),
             ])->recordUrl(fn ($record): string => route('filament.admin.resources.members.view', $record->id))
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->using(function (DeleteBulkAction $action, EloquentCollection|Collection|LazyCollection $records): void {
+                            $records->each(static function (Member $record) use ($action): void {
+                                try {
+                                    $record->forceDelete() || $action->reportBulkProcessingFailure();
+                                } catch (Throwable $exception) {
+                                    $action->reportBulkProcessingFailure();
+
+                                    report($exception);
+                                }
+                            });
+                        }),
                     RestoreBulkAction::make(),
                 ]),
             ]);

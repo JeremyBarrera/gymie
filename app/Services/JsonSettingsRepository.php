@@ -134,6 +134,7 @@ class JsonSettingsRepository implements SettingsRepository
             'subscriptions',
             'payments',
             'notifications',
+            'permissions',
         ] as $key) {
             if (! array_key_exists($key, $settings) || ! is_array($settings[$key])) {
                 $settings[$key] = [];
@@ -147,6 +148,9 @@ class JsonSettingsRepository implements SettingsRepository
             (! is_string($general['locale']) && $general['locale'] !== null)
         ) {
             $general['locale'] = null;
+        }
+        if (! array_key_exists('theme_color', $general) || ! is_string($general['theme_color'])) {
+            $general['theme_color'] = '#2563eb';
         }
         $settings['general'] = $general;
 
@@ -176,6 +180,24 @@ class JsonSettingsRepository implements SettingsRepository
         }
         $settings['notifications']['email'] = $emailSettings;
 
+        foreach (['override', 'subscription_status'] as $topic) {
+            $topicSettings = $settings['notifications'][$topic] ?? [];
+            if (
+                ! array_key_exists('roles', $topicSettings) ||
+                ! is_array($topicSettings['roles']) ||
+                $topicSettings['roles'] === []
+            ) {
+                $topicSettings['roles'] = ['owner'];
+            }
+            if (
+                ! array_key_exists('users', $topicSettings) ||
+                ! is_array($topicSettings['users'])
+            ) {
+                $topicSettings['users'] = [];
+            }
+            $settings['notifications'][$topic] = $topicSettings;
+        }
+
         /** @var array<string, mixed> $payments */
         $payments = $settings['payments'];
         if (
@@ -186,6 +208,22 @@ class JsonSettingsRepository implements SettingsRepository
             $payments['provider'] = 'stripe';
         }
         $settings['payments'] = $payments;
+
+        /** @var array<string, mixed> $permissions */
+        $permissions = $settings['permissions'];
+        if (
+            ! array_key_exists('enabled', $permissions) ||
+            ! is_bool($permissions['enabled'])
+        ) {
+            $permissions['enabled'] = true;
+        }
+        if (
+            ! array_key_exists('disabled', $permissions) ||
+            ! is_array($permissions['disabled'])
+        ) {
+            $permissions['disabled'] = [];
+        }
+        $settings['permissions'] = $permissions;
 
         return $settings;
     }

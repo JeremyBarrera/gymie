@@ -3,30 +3,34 @@
 namespace App\Models;
 
 use App\Enums\Status;
+use App\Models\Concerns\ScopedByLocation;
+use Database\Factories\SubscriptionFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
  * @property int|null $renewed_from_subscription_id
  * @property int|null $member_id
  * @property int|null $plan_id
- * @property \Illuminate\Support\Carbon|null $start_date
- * @property \Illuminate\Support\Carbon|null $end_date
+ * @property Carbon|null $start_date
+ * @property Carbon|null $end_date
  * @property Status|null $status
  * @property-read Member|null $member
  * @property-read Plan|null $plan
  * @property-read Subscription|null $renewedFrom
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Subscription> $renewals
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Invoice> $invoices
+ * @property-read Collection<int, Subscription> $renewals
+ * @property-read Collection<int, Invoice> $invoices
  */
 class Subscription extends Model
 {
-    /** @use HasFactory<\Database\Factories\SubscriptionFactory> */
-    use HasFactory, SoftDeletes;
+    /** @use HasFactory<SubscriptionFactory> */
+    use HasFactory, ScopedByLocation, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -34,6 +38,7 @@ class Subscription extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'location_id',
         'renewed_from_subscription_id',
         'member_id',
         'plan_id',

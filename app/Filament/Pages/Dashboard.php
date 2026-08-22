@@ -8,6 +8,8 @@ use App\Filament\Widgets\Analytics\FinancialMetricsWidget;
 use App\Filament\Widgets\Analytics\MembershipMetricsWidget;
 use App\Filament\Widgets\Analytics\MembershipOverviewSubscriptionsTableWidget;
 use App\Filament\Widgets\Analytics\RecentTransactionsTableWidget;
+use App\Support\AppConfig;
+use App\Support\Locations\LocationAccess;
 use Carbon\CarbonImmutable;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -17,6 +19,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Main application dashboard.
@@ -115,6 +118,18 @@ class Dashboard extends \Filament\Pages\Dashboard
                     ->extraFieldWrapperAttributes([
                         'class' => 'w-full sm:w-40',
                     ]),
+                Select::make('location_ids')
+                    ->hiddenLabel()
+                    ->options(fn (): array => LocationAccess::locationOptions(Auth::user()))
+                    ->multiple()
+                    ->prefixIcon('heroicon-o-map-pin')
+                    ->placeholder(__('app.dashboard.filters.locations_all'))
+                    ->default(fn (): array => $this->defaultLocationFilterIds())
+                    ->visible(fn (): bool => LocationAccess::accessibleLocationCount(Auth::user()) > 1)
+                    ->grow(false)
+                    ->extraFieldWrapperAttributes([
+                        'class' => 'w-full sm:w-64',
+                    ]),
             ]);
     }
 
@@ -184,7 +199,7 @@ class Dashboard extends \Filament\Pages\Dashboard
         }
 
         if (! is_array($this->filters) || ! isset($this->filters['period'])) {
-            $today = CarbonImmutable::today(\App\Support\AppConfig::timezone());
+            $today = CarbonImmutable::today(AppConfig::timezone());
             $this->filters = array_merge([
                 'period' => '7days',
                 'startDate' => $today->subDays(6)->toDateString(),
@@ -214,7 +229,7 @@ class Dashboard extends \Filament\Pages\Dashboard
     public function setPeriod(string $period): void
     {
         if ($period === 'custom') {
-            $today = CarbonImmutable::today(\App\Support\AppConfig::timezone());
+            $today = CarbonImmutable::today(AppConfig::timezone());
             $startDate = is_string($this->filters['startDate'] ?? null) ? $this->filters['startDate'] : null;
             $endDate = is_string($this->filters['endDate'] ?? null) ? $this->filters['endDate'] : null;
 
@@ -255,7 +270,7 @@ class Dashboard extends \Filament\Pages\Dashboard
      */
     private function applyPresetRange(string $preset): void
     {
-        $today = CarbonImmutable::today(\App\Support\AppConfig::timezone());
+        $today = CarbonImmutable::today(AppConfig::timezone());
 
         [$start, $end, $period] = match ($preset) {
             '30days' => [$today->subDays(29), $today, '30days'],
@@ -274,6 +289,7 @@ class Dashboard extends \Filament\Pages\Dashboard
             'period' => $period,
             'startDate' => $start->toDateString(),
             'endDate' => $end->toDateString(),
+            'location_ids' => $this->filters['location_ids'] ?? $this->defaultLocationFilterIds(),
         ];
 
         $this->updatedFilters();
@@ -284,7 +300,7 @@ class Dashboard extends \Filament\Pages\Dashboard
      */
     private function applyCustomRange(string $startDate, string $endDate): void
     {
-        $timezone = \App\Support\AppConfig::timezone();
+        $timezone = AppConfig::timezone();
 
         $start = CarbonImmutable::parse($startDate, $timezone)->startOfDay();
         $end = CarbonImmutable::parse($endDate, $timezone)->endOfDay();
@@ -297,8 +313,22 @@ class Dashboard extends \Filament\Pages\Dashboard
             'period' => 'custom',
             'startDate' => $start->toDateString(),
             'endDate' => $end->toDateString(),
+            'location_ids' => $this->filters['location_ids'] ?? $this->defaultLocationFilterIds(),
         ];
 
         $this->updatedFilters();
+    }
+
+    /**
+     * Default location selection: all accessible locations.
+     *
+     * @return list<int>
+     */
+    private function defaultLocationFilterIds(): array
+    {
+        return array_map(
+            'intval',
+            LocationAccess::accessibleLocationIds(Auth::user()) ?? [],
+        );
     }
 }

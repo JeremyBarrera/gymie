@@ -5,11 +5,15 @@ namespace App\Models;
 use App\Enums\Status;
 use App\Helpers\Helpers;
 use App\Models\Concerns\CascadesSoftDeletes;
+use App\Models\Concerns\ScopedByLocation;
+use Database\Factories\MemberFactory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -21,7 +25,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $emergency_contact
  * @property string|null $health_issue
  * @property string|null $gender
- * @property \Illuminate\Support\Carbon|null $dob
+ * @property Carbon|null $dob
  * @property string|null $address
  * @property string|null $country
  * @property string|null $state
@@ -30,12 +34,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $source
  * @property string|null $goal
  * @property Status|null $status
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Subscription> $subscriptions
+ * @property-read Collection<int, Subscription> $subscriptions
+ * @property-read Collection<int, PlanCheckIn> $checkIns
+ * @property-read Location|null $currentLocation
  */
 class Member extends Model
 {
-    /** @use HasFactory<\Database\Factories\MemberFactory> */
-    use CascadesSoftDeletes, HasFactory, SoftDeletes;
+    /** @use HasFactory<MemberFactory> */
+    use CascadesSoftDeletes, HasFactory, ScopedByLocation, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -49,7 +55,6 @@ class Member extends Model
         'email',
         'contact',
         'emergency_contact',
-        'location_id',
         'health_issue',
         'gender',
         'dob',
@@ -89,11 +94,103 @@ class Member extends Model
     }
 
     /**
-     * Get the assigned location for the member.
+     * The jurisdiction location of the member's most recent subscription.
+     *
+     * The member's location is not stored — it is derived from the plan of
+     * the member's latest subscription. `null` means an "All Locations" plan
+     * (or no subscriptions yet), i.e. the member is visible and check-in-able
+     * at every location.
      */
-    public function location(): BelongsTo
+    public function currentLocation(): ?Location
     {
-        return $this->belongsTo(Location::class);
+        return $this->subscriptions()
+            ->whereHas('plan.location')
+            ->with('plan.location')
+            ->orderByDesc('start_date')
+            ->orderByDesc('id')
+            ->first()
+            ?->plan
+            ?->location;
+    }
+
+    /**
+     * Location scoping for members: the member's location is never stored or
+     * auto-assigned — it is derived from the plan of the member's
+     * subscriptions (a plan with no location means an "All Locations"
+     * jurisdiction that is visible to every location-scoped account).
+     * Members without any subscription yet have no jurisdiction and stay
+     * visible to every location-scoped account, like legacy records.
+     */
+    protected static function bootScopedByLocation(): void
+    {
+        static::addGlobalScope('location', function (Builder $builder): void {
+            $locationIds = self::currentLocationIds();
+
+            if ($locationIds === null) {
+                return;
+            }
+
+            $builder->where(function (Builder $query) use ($locationIds): void {
+                $query->whereHas('subscriptions.plan', function (Builder $plan) use ($locationIds): void {
+                    $plan->whereIn('plans.location_id', $locationIds)
+                        ->orWhereNull('plans.location_id');
+                })->orWhereDoesntHave('subscriptions', function (Builder $query): void {
+                    $query->withoutGlobalScopes();
+                });
+            });
+        });
+    }
+
+    /**
+     * Find a member that is a duplicate of the given identifiers: the
+     * member's name, contact, government ID and email must ALL match the
+     * submitted values (empty values only match empty values). `contact`
+     * may be an array of accepted values, e.g. the normalized and raw
+     * phone forms.
+     *
+     * @param  array{name?: string|null, contact?: string|list<string>|null, government_id?: string|null, email?: string|null}  $identifiers
+     */
+    public static function findDuplicateByIdentifiers(array $identifiers): ?self
+    {
+        $name = $identifiers['name'] ?? null;
+        $contact = $identifiers['contact'] ?? null;
+        $governmentId = $identifiers['government_id'] ?? null;
+
+        if (blank($name) && blank($contact) && blank($governmentId)) {
+            return null;
+        }
+
+        $contactValues = array_values(array_filter((array) $contact, fn ($value): bool => filled($value)));
+
+        return static::query()
+            ->where(function (Builder $query) use ($name): void {
+                filled($name)
+                    ? $query->where('name', $name)
+                    : $query->whereNull('name');
+            })
+            ->where(function (Builder $query) use ($contactValues): void {
+                if (empty($contactValues)) {
+                    $query->whereNull('contact');
+
+                    return;
+                }
+
+                $query->whereIn('contact', $contactValues);
+            })
+            ->where(function (Builder $query) use ($governmentId): void {
+                filled($governmentId)
+                    ? $query->where('government_id', $governmentId)
+                    : $query->whereNull('government_id');
+            })
+            ->first();
+    }
+
+    /**
+     * @return HasMany<PlanCheckIn, $this>
+     */
+    public function checkIns(): HasMany
+    {
+        return $this->hasMany(PlanCheckIn::class);
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Enquiries\Tables;
 
 use App\Filament\Resources\Members\MemberResource;
 use App\Models\Enquiry;
+use App\Support\Dates\DeviceDateFormat;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -33,8 +34,8 @@ class EnquiryTable
                 TextColumn::make('name')->searchable()->sortable()->label(__('app.fields.name')),
                 TextColumn::make('email')->searchable()->toggleable(isToggledHiddenByDefault: false)->label(__('app.fields.email')),
                 TextColumn::make('contact')->toggleable(isToggledHiddenByDefault: true)->label(__('app.fields.contact')),
-                TextColumn::make('date')->sortable()->date('d-m-Y')->toggleable(isToggledHiddenByDefault: true)->label(__('app.fields.date')),
-                TextColumn::make('start_by')->date('d-m-Y')->toggleable(isToggledHiddenByDefault: true)->label(__('app.fields.start_by')),
+                TextColumn::make('date')->sortable()->date(DeviceDateFormat::date())->toggleable(isToggledHiddenByDefault: true)->label(__('app.fields.date')),
+                TextColumn::make('start_by')->date(DeviceDateFormat::date())->toggleable(isToggledHiddenByDefault: true)->label(__('app.fields.start_by')),
                 TextColumn::make('status')
                     ->badge()
                     ->label(__('app.fields.status'))
@@ -77,8 +78,8 @@ class EnquiryTable
                         : __('app.empty.create_to_get_started', ['resource' => $record]);
                 }
 
-                $from = $fromRaw ? Carbon::parse($fromRaw)->format('d-m-Y') : (string) __('app.common.the_beginning');
-                $to = $toRaw ? Carbon::parse($toRaw)->format('d-m-Y') : (string) __('app.common.today');
+                $from = $fromRaw ? Carbon::parse($fromRaw)->translatedFormat(DeviceDateFormat::date()) : (string) __('app.common.the_beginning');
+                $to = $toRaw ? Carbon::parse($toRaw)->translatedFormat(DeviceDateFormat::date()) : (string) __('app.common.today');
 
                 if ($tab === 'all') {
                     return __('app.empty.found_none_between', ['records' => $records, 'from' => $from, 'to' => $to]);

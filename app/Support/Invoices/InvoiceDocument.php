@@ -4,6 +4,11 @@ namespace App\Support\Invoices;
 
 use App\Helpers\Helpers;
 use App\Models\Invoice;
+use App\Models\Location;
+use App\Models\Member;
+use App\Models\Plan;
+use App\Models\Subscription;
+use App\Support\AppConfig;
 use Illuminate\Support\Carbon;
 
 /**
@@ -91,9 +96,9 @@ final class InvoiceDocument
      *
      * @return array{
      *   invoice: Invoice,
-     *   member: \App\Models\Member|null,
-     *   subscription: \App\Models\Subscription|null,
-     *   plan: \App\Models\Plan|null,
+     *   member: Member|null,
+     *   subscription: Subscription|null,
+     *   plan: Plan|null,
      *   settings: array<string, mixed>,
      *   missing: list<string>,
      *   generated_at: string,
@@ -113,8 +118,8 @@ final class InvoiceDocument
             'plan' => $invoice->subscription?->plan,
             'settings' => $settings,
             'missing' => $missing,
-            'generated_at' => Carbon::now(\App\Support\AppConfig::timezone())->toDateTimeString(),
-            'logo_data_uri' => self::logoDataUriFromSettings($settings),
+            'generated_at' => Carbon::now(AppConfig::timezone())->toDateTimeString(),
+            'logo_data_uri' => self::logoDataUri($invoice),
         ];
     }
 
@@ -130,13 +135,21 @@ final class InvoiceDocument
     }
 
     /**
-     * Resolve the configured gym logo into a data URI (best for PDF rendering).
-     *
-     * @param  array<string, mixed>  $settings
+     * Resolve the location's logo into a data URI (best for PDF rendering),
+     * falling back to the legacy settings logo.
      */
-    private static function logoDataUriFromSettings(array $settings): ?string
+    private static function logoDataUri(Invoice $invoice): ?string
     {
-        $raw = data_get($settings, 'general.gym_logo');
+        $raw = null;
+
+        if (filled($invoice->location_id)) {
+            $location = Location::query()->find($invoice->location_id);
+            $raw = $location?->logo;
+        }
+
+        if (blank($raw)) {
+            $raw = data_get(Helpers::getSettings(), 'general.gym_logo');
+        }
 
         $path = null;
         if (is_string($raw) && filled($raw)) {

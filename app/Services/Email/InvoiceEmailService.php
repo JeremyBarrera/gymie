@@ -10,10 +10,12 @@ use App\Mail\InvoiceIssuedMail;
 use App\Mail\InvoicePaymentReceiptMail;
 use App\Models\Invoice;
 use App\Models\InvoiceTransaction;
+use App\Models\Location;
 use App\Support\AppConfig;
 use App\Support\Data;
 use App\Support\Invoices\InvoiceDocument;
 use App\Support\Invoices\InvoicePdfRenderer;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -80,8 +82,8 @@ final class InvoiceEmailService
         $settings = $this->settingsRepository->get();
 
         $this->withLocaleFromSettings($settings, function () use ($settings, $invoice, $toEmail, $note, $memberName): void {
-            $gym = $this->gymIdentityFromSettings($settings);
-            $gymName = $gym['name'] !== '' ? $gym['name'] : 'Gymie';
+            $location = $this->locationIdentity($invoice, $settings);
+            $gymName = $location['name'] !== '' ? $location['name'] : 'Gymie';
             $subjectTemplate = Data::string(data_get($settings,
                 'notifications.email.invoice_subject_template',
                 'Invoice {invoice_number} - {status}',
@@ -97,15 +99,15 @@ final class InvoiceEmailService
                 invoice: $invoice,
                 subjectLine: $subject,
                 gymName: $gymName,
-                gymEmail: $gym['email'],
-                gymContact: $gym['contact'],
+                gymEmail: $location['email'],
+                gymContact: $location['contact'],
                 memberName: $memberName,
                 note: $note,
                 pdfBytes: $pdfBytes,
             );
 
-            if (filled($gym['email'])) {
-                $mailable->replyTo($gym['email'], $gymName);
+            if (filled($location['email'])) {
+                $mailable->replyTo($location['email'], $gymName);
             }
 
             Mail::to($toEmail)->send($mailable);
@@ -137,8 +139,8 @@ final class InvoiceEmailService
         $settings = $this->settingsRepository->get();
 
         $this->withLocaleFromSettings($settings, function () use ($settings, $invoice, $transaction, $toEmail, $note, $memberName): void {
-            $gym = $this->gymIdentityFromSettings($settings);
-            $gymName = $gym['name'] !== '' ? $gym['name'] : 'Gymie';
+            $location = $this->locationIdentity($invoice, $settings);
+            $gymName = $location['name'] !== '' ? $location['name'] : 'Gymie';
             $subjectTemplate = Data::string(data_get($settings,
                 'notifications.email.receipt_subject_template',
                 'Payment received - {invoice_number}',
@@ -148,7 +150,6 @@ final class InvoiceEmailService
             $subject = $this->renderSubjectTemplate(
                 $subjectTemplate,
                 [
-                    ...$this->invoiceSubjectTokens($invoice, $gym['name'], $memberName),
                     ...$this->invoiceSubjectTokens($invoice, $gymName, $memberName),
                     'payment_amount' => Helpers::formatCurrency((float) ($transaction->amount ?? 0)),
                 ],
@@ -159,15 +160,15 @@ final class InvoiceEmailService
                 transaction: $transaction,
                 subjectLine: $subject,
                 gymName: $gymName,
-                gymEmail: $gym['email'],
-                gymContact: $gym['contact'],
+                gymEmail: $location['email'],
+                gymContact: $location['contact'],
                 memberName: $memberName,
                 note: $note,
                 pdfBytes: $pdfBytes,
             );
 
-            if (filled($gym['email'])) {
-                $mailable->replyTo($gym['email'], $gymName);
+            if (filled($location['email'])) {
+                $mailable->replyTo($location['email'], $gymName);
             }
 
             Mail::to($toEmail)->send($mailable);
@@ -191,12 +192,14 @@ final class InvoiceEmailService
 
         if ($desiredLocale !== '' && in_array($desiredLocale, $supportedLocales, true)) {
             app()->setLocale($desiredLocale);
+            Carbon::setLocale($desiredLocale);
         }
 
         try {
             return $callback();
         } finally {
             app()->setLocale($originalLocale);
+            Carbon::setLocale($originalLocale);
         }
     }
 
@@ -220,17 +223,22 @@ final class InvoiceEmailService
     }
 
     /**
-     * Derive gym identity fields from settings.
+     * Derive the invoice's location identity, falling back to the legacy
+     * settings template.
      *
      * @param  array<string, mixed>  $settings
      * @return array{name: string, email: string, contact: string}
      */
-    private function gymIdentityFromSettings(array $settings): array
+    private function locationIdentity(Invoice $invoice, array $settings): array
     {
+        $location = filled($invoice->location_id)
+            ? Location::query()->find($invoice->location_id)
+            : null;
+
         return [
-            'name' => Data::string(data_get($settings, 'general.gym_name', AppConfig::string('app.name'))),
-            'email' => Data::string(data_get($settings, 'general.gym_email', '')),
-            'contact' => Data::string(data_get($settings, 'general.gym_contact', '')),
+            'name' => $location?->name ?: Data::string(data_get($settings, 'general.gym_name', AppConfig::string('app.name'))),
+            'email' => $location?->email ?: Data::string(data_get($settings, 'general.gym_email', '')),
+            'contact' => $location?->phone ?: Data::string(data_get($settings, 'general.gym_contact', '')),
         ];
     }
 

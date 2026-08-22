@@ -5,6 +5,8 @@ namespace App\Filament\Widgets\Analytics;
 use App\Helpers\Helpers;
 use App\Services\Analytics\AnalyticsService;
 use App\Support\Analytics\AnalyticsDateRange;
+use App\Support\AppConfig;
+use App\Support\Locations\LocationAccess;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Carbon\CarbonPeriod;
@@ -72,7 +74,7 @@ class CashflowTrendChartWidget extends ChartWidget
     {
         $rangeKey = $this->filter ?? '7days';
 
-        $today = CarbonImmutable::today(\App\Support\AppConfig::timezone());
+        $today = CarbonImmutable::today(AppConfig::timezone());
 
         [$start, $end] = match ($rangeKey) {
             '30days' => [$today->subDays(29), $today],
@@ -171,10 +173,11 @@ JS);
         $useDaily = in_array($rangeKey, ['7days', '30days'], true);
 
         $service = app(AnalyticsService::class);
+        $locationIds = LocationAccess::scopeFromFilters(auth()->user(), $this->pageFilters);
 
         $collectedTrend = $useDaily
-            ? $service->collectedTrendByDate($range)
-            : $service->collectedTrendByMonth($range);
+            ? $service->collectedTrendByDate($range, $locationIds)
+            : $service->collectedTrendByMonth($range, $locationIds);
 
         $expenseTrend = $useDaily
             ? $service->expenseTrendByDate($range)

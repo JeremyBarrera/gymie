@@ -11,7 +11,7 @@ use App\Contracts\TenantContext;
  */
 class NullTenantContext implements TenantContext
 {
-    public function gymId(): ?int
+    public function locationId(): ?int
     {
         return null;
     }

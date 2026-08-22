@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Invoices\Pages;
 
+use App\Filament\Resources\Invoices\Actions\RecordPaymentAction;
 use App\Filament\Resources\Invoices\InvoiceResource;
 use App\Models\Invoice;
 use Filament\Actions\EditAction;
@@ -14,6 +15,13 @@ class ViewInvoice extends ViewRecord
 {
     protected static string $resource = InvoiceResource::class;
 
+    public function mount(int|string $record): void
+    {
+        Invoice::markOverdue();
+
+        parent::mount($record);
+    }
+
     public function getTitle(): string
     {
         return __('app.titles.invoice_number', ['number' => $this->record->number]);
@@ -22,8 +30,9 @@ class ViewInvoice extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            RecordPaymentAction::make(),
             EditAction::make()
-                ->hidden(fn (): bool => $this->record->status?->value !== 'issued'),
+                ->hidden(fn (): bool => ! in_array($this->record->status?->value, ['issued', 'overdue'], true)),
         ];
     }
 

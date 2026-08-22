@@ -4,6 +4,7 @@ namespace App\Rules;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Translation\PotentiallyTranslatedString;
 
 /**
  * Eloquent-based "exists" rule (respects global scopes like tenancy / soft deletes).
@@ -18,7 +19,7 @@ final class ModelExists implements ValidationRule
     public function __construct(private string $modelClass) {}
 
     /**
-     * @param  Closure(string, string|null=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
+     * @param  Closure(string, string|null=): PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {

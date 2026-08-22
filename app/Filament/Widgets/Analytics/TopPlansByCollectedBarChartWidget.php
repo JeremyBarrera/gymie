@@ -4,6 +4,7 @@ namespace App\Filament\Widgets\Analytics;
 
 use App\Services\Analytics\AnalyticsService;
 use App\Support\Analytics\AnalyticsDateRange;
+use App\Support\Locations\LocationAccess;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Contracts\Support\Htmlable;
@@ -45,7 +46,11 @@ class TopPlansByCollectedBarChartWidget extends ChartWidget
         $range = AnalyticsDateRange::fromFilters($this->pageFilters);
 
         $rows = app(AnalyticsService::class)
-            ->topPlansByCollected($range, 7);
+            ->topPlansByCollected(
+                $range,
+                7,
+                LocationAccess::scopeFromFilters(auth()->user(), $this->pageFilters),
+            );
 
         $labels = $rows->pluck('plan_name')->values()->all();
         $values = $rows->pluck('collected')->values()->all();

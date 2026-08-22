@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Service;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Service>
+ * @extends Factory<Service>
  */
 class ServiceFactory extends Factory
 {
@@ -16,7 +17,7 @@ class ServiceFactory extends Factory
      */
     public function definition(): array
     {
-        return [  
+        return [
             'name' => $this->faker->word(),
             'description' => $this->faker->sentence(),
         ];

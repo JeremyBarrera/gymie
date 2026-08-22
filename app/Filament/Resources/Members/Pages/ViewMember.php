@@ -19,7 +19,8 @@ class ViewMember extends ViewRecord
     {
         return [
             EditAction::make(),
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->using(fn (Member $record): bool => $record->forceDelete()),
         ];
     }
 

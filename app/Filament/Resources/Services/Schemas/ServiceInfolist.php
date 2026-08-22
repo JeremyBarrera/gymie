@@ -18,6 +18,9 @@ class ServiceInfolist
             ->components([
                 Section::make('')
                     ->schema([
+                        TextEntry::make('location.name')
+                            ->label(__('app.fields.location'))
+                            ->placeholder(__('app.fields.unassigned')),
                         TextEntry::make('name')
                             ->label(__('app.fields.name')),
                         TextEntry::make('description')

@@ -1,0 +1,13 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Shield\Pages;
+
+use App\Filament\Shield\RoleResource;
+use BezhanSalleh\FilamentShield\Resources\Roles\Pages\ListRoles as ShieldListRoles;
+
+class ListRoles extends ShieldListRoles
+{
+    protected static string $resource = RoleResource::class;
+}

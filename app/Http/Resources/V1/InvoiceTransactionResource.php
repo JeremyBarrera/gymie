@@ -2,12 +2,13 @@
 
 namespace App\Http\Resources\V1;
 
+use App\Models\InvoiceTransaction;
 use App\Services\Api\Schemas\InvoiceTransactionSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\InvoiceTransaction
+ * @mixin InvoiceTransaction
  */
 class InvoiceTransactionResource extends JsonResource
 {
@@ -18,7 +19,7 @@ class InvoiceTransactionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var \App\Models\InvoiceTransaction $transaction */
+        /** @var InvoiceTransaction $transaction */
         $transaction = $this->resource;
 
         return InvoiceTransactionSchema::resource($transaction);

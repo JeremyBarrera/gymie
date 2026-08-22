@@ -2,22 +2,21 @@
 
 namespace App\Filament\Resources\Members\Schemas;
 
+use App\Filament\Forms\Components\CameraUploadField;
 use App\Filament\Resources\Subscriptions\Schemas\SubscriptionForm;
 use App\Helpers\Helpers;
 use App\Models\Member;
+use App\Models\Plan;
+use App\Support\Billing\PaymentMethod;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Livewire\Component;
 
 class MemberForm
 {
@@ -29,22 +28,11 @@ class MemberForm
         return $schema
             ->columns(1)
             ->components([
-                Section::make()
+                Section::make(__('app.ui.member_details'))
                     ->schema([
-                        FileUpload::make('photo')
-                            ->imageEditor()
-                            ->preserveFilenames()
-                            ->maxSize(1024 * 1024 * 10)
-                            ->disk('public')
-                            ->directory('images')
-                            ->image()
-                            ->placeholder(__('app.placeholders.upload_logo'))
-                            ->loadingIndicatorPosition('left')
-                            ->panelAspectRatio('6:7')
-                            ->panelLayout('integrated')
-                            ->removeUploadedFileButtonPosition('right')
-                            ->uploadButtonPosition('left')
-                            ->uploadProgressIndicatorPosition('left'),
+                        CameraUploadField::make('photo')
+                            ->label(__('app.fields.photo'))
+                            ->required(fn (CameraUploadField $component): bool => $component->getRecord() === null),
 
                         Grid::make()
                             ->schema([
@@ -79,23 +67,9 @@ class MemberForm
                                     ->label(__('app.fields.government_id'))
                                     ->maxLength(255)
                                     ->required()
-                                    ->placeholder(__('app.placeholders.government_id'))
-                                    ->unique('members', 'government_id', ignoreRecord: true),
-                                TextInput::make('contact')
-                                    ->label(__('app.fields.contact'))
-                                    ->tel()
-                                    ->maxLength(20)
-                                    ->regex('/^\+?[0-9\s\-\(\)]+$/') // Allows +, digits, spaces, dashes, and parentheses
-                                    ->required()
-                                    ->hintIcon('heroicon-m-question-mark-circle')
-                                    ->hintIconTooltip(__('app.help.phone_format')),
-                                TextInput::make('emergency_contact')
-                                    ->label(__('app.fields.emergency_contact'))
-                                    ->tel()
-                                    ->maxLength(20)
-                                    ->regex('/^\+?[0-9\s\-\(\)]+$/') // Allows +, digits, spaces, dashes, and parentheses
-                                    ->hintIcon('heroicon-m-question-mark-circle')
-                                    ->hintIconTooltip(__('app.help.phone_format')),
+                                    ->placeholder(__('app.placeholders.government_id')),
+                                Helpers::phoneField('contact', required: true),
+                                Helpers::phoneField('emergency_contact'),
                                 Select::make('gender')
                                     ->options([
                                         'male' => __('app.options.gender.male'),
@@ -113,14 +87,6 @@ class MemberForm
                                     ->label(__('app.fields.health_issues'))
                                     ->maxLength(500)
                                     ->placeholder(__('app.placeholders.health_issues')),
-                                Select::make('source')
-                                    ->options([
-                                        'promotions' => __('app.options.source.promotions'),
-                                        'word_of_mouth' => __('app.options.source.word_of_mouth'),
-                                        'others' => __('app.options.source.others'),
-                                    ])->default('promotions')
-                                    ->label(__('app.fields.source'))
-                                    ->selectablePlaceholder(false),
                                 Select::make('goal')
                                     ->options([
                                         'fitness' => __('app.options.goal.fitness'),
@@ -133,31 +99,72 @@ class MemberForm
                                     ->selectablePlaceholder(false),
                             ])->columns(3)->columnSpan(3),
                     ])->columns(4),
-                Section::make(__('app.ui.location'))
-                    ->columns(2)
+                Section::make(__('app.titles.membership_plan'))
+                    ->hiddenOn('edit')
                     ->schema([
-                        Select::make('location_id')
-                            ->label(__('app.fields.location'))
-                            ->relationship('location', 'name')
-                            ->searchable()
-                            ->required()
-                            ->placeholder(__('app.placeholders.select_location')),
-                    ]),
-                Section::make(__('app.titles.subscription_and_invoice'))
-                    ->visibleOn('create')
-                    ->schema([
-                        Repeater::make('subscriptions')
-                            ->relationship('subscriptions')
-                            ->itemLabel('')
-                            ->hiddenLabel()
-                            ->columnSpanFull()
-                            ->maxItems(1)
-                            ->deletable(false)
-                            ->extraAttributes(['class' => 'rmv_rept-space'])
-                            ->columns(3)
-                            ->schema(fn (HasSchemas&Component $livewire): array => SubscriptionForm::configure(Schema::make($livewire))
-                                ->getComponents(withActions: false)),
-                    ]),
+                        Grid::make()
+                            ->schema([
+                                Select::make('plan_id')
+                                    ->label(__('app.fields.plan'))
+                                    ->options(fn (): array => Plan::query()
+                                        ->orderBy('name')
+                                        ->get()
+                                        ->mapWithKeys(fn (Plan $plan): array => [
+                                            $plan->id => SubscriptionForm::formatPlanOptionLabel($plan),
+                                        ])
+                                        ->all())
+                                    ->searchable()
+                                    ->live()
+                                    ->default(fn () => Plan::query()->orderBy('name')->first()?->id)
+                                    ->required()
+                                    ->afterStateUpdated(fn (Get $get, Set $set) => $set('end_date', Helpers::calculateSubscriptionEndDate(
+                                        (string) $get('start_date'),
+                                        (int) $get('plan_id'),
+                                    )))
+                                    ->columnSpan(2),
+                                DatePicker::make('start_date')
+                                    ->label(__('app.fields.start_date'))
+                                    ->live()
+                                    ->required()
+                                    ->afterStateUpdated(fn (Get $get, Set $set) => $set('end_date', Helpers::calculateSubscriptionEndDate(
+                                        (string) $get('start_date'),
+                                        (int) $get('plan_id'),
+                                    ))),
+                                DatePicker::make('end_date')
+                                    ->label(__('app.fields.end_date'))
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->default(fn (Get $get): string => Helpers::calculateSubscriptionEndDate(
+                                        (string) $get('start_date'),
+                                        (int) $get('plan_id'),
+                                    )),
+                                Radio::make('payment_method')
+                                    ->label(__('app.fields.payment_method'))
+                                    ->options(SubscriptionForm::paymentMethodOptions())
+                                    ->default('cash')
+                                    ->inline()
+                                    ->live()
+                                    ->afterStateUpdated(fn (Get $get, Set $set) => PaymentMethod::isOnline((string) $get('payment_method'))
+                                        ? $set('paid_amount', 0)
+                                        : null)
+                                    ->required()
+                                    ->columnSpan(2),
+                                TextInput::make('discount_amount')
+                                    ->label(__('app.fields.discount_amount'))
+                                    ->numeric()
+                                    ->default(0)
+                                    ->prefix(Helpers::getCurrencySymbol())
+                                    ->extraAttributes(['class' => 'verify-money-input'])
+                                    ->afterStateUpdated(fn (Get $get, Set $set) => $set('discount_amount', min(max((float) $get('discount_amount'), 0), (float) Plan::find((int) $get('plan_id'))?->amount ?? 0))),
+                                TextInput::make('paid_amount')
+                                    ->label(__('app.fields.paid_amount'))
+                                    ->numeric()
+                                    ->default(0)
+                                    ->prefix(Helpers::getCurrencySymbol())
+                                    ->extraAttributes(['class' => 'verify-money-input'])
+                                    ->visible(fn (Get $get): bool => ! PaymentMethod::isOnline((string) $get('payment_method'))),
+                            ])->columns(3)->columnSpan(3),
+                    ])->columns(4),
             ]);
     }
 }

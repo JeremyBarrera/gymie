@@ -4,11 +4,12 @@ namespace Database\Factories;
 
 use App\Enums\Status;
 use App\Helpers\Helpers;
+use App\Models\Expense;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Expense>
+ * @extends Factory<Expense>
  */
 class ExpenseFactory extends Factory
 {
@@ -51,4 +52,3 @@ class ExpenseFactory extends Factory
         ];
     }
 }
-

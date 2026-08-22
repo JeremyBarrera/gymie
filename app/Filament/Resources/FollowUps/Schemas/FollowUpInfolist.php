@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\FollowUps\Schemas;
 
 use App\Models\FollowUp;
+use App\Support\Dates\DeviceDateFormat;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Schema;
@@ -60,7 +61,7 @@ class FollowUpInfolist
                             ->label(__('app.fields.method')),
                         TextEntry::make('schedule_date')
                             ->label(__('app.fields.schedule_date'))
-                            ->date('d-m-Y'),
+                            ->date(DeviceDateFormat::date()),
                         TextEntry::make('outcome')
                             ->label(__('app.fields.outcome'))
                             ->placeholder(__('app.placeholders.na'))

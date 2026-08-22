@@ -3,17 +3,19 @@
 namespace App\Models;
 
 use App\Enums\Status;
+use App\Models\Concerns\ScopedByLocation;
 use Database\Factories\FollowUpFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
  * @property int|null $enquiry_id
  * @property int|null $user_id
- * @property \Illuminate\Support\Carbon|null $schedule_date
+ * @property Carbon|null $schedule_date
  * @property string|null $method
  * @property string|null $outcome
  * @property Status|null $status
@@ -23,7 +25,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class FollowUp extends Model
 {
     /** @use HasFactory<FollowUpFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, ScopedByLocation, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -31,6 +33,7 @@ class FollowUp extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'location_id',
         'enquiry_id',
         'user_id',
         'schedule_date',

@@ -7,6 +7,8 @@ use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Models\Member;
 use App\Models\Plan;
 use App\Models\Subscription;
+use App\Support\AppConfig;
+use App\Support\Dates\DeviceDateFormat;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -117,8 +119,8 @@ class SubscriptionTable
                         : __('app.empty.create_to_get_started', ['resource' => $record]);
                 }
 
-                $from = $fromRaw ? Carbon::parse($fromRaw)->format('d-m-Y') : (string) __('app.common.the_beginning');
-                $to = $toRaw ? Carbon::parse($toRaw)->format('d-m-Y') : (string) __('app.common.today');
+                $from = $fromRaw ? Carbon::parse($fromRaw)->translatedFormat(DeviceDateFormat::date()) : (string) __('app.common.the_beginning');
+                $to = $toRaw ? Carbon::parse($toRaw)->translatedFormat(DeviceDateFormat::date()) : (string) __('app.common.today');
 
                 if ($tab === 'all') {
                     return __('app.empty.found_none_between', ['records' => $records, 'from' => $from, 'to' => $to]);
@@ -143,7 +145,7 @@ class SubscriptionTable
                 Action::make('create_plan')
                     ->icon('heroicon-o-plus')
                     ->label(__('app.actions.new', ['resource' => __('app.resources.plans.singular')]))
-                    ->url(fn () => route('filament.admin.resources.plans.create'))
+                    ->url(fn () => route('filament.admin.resources.plans.index'))
                     ->hidden(fn () => Plan::exists()),
             ])
             ->filters([
@@ -226,7 +228,7 @@ class SubscriptionTable
                                     return false;
                                 }
 
-                                $today = Carbon::today(\App\Support\AppConfig::timezone());
+                                $today = Carbon::today(AppConfig::timezone());
 
                                 return ! Subscription::query()
                                     ->where('member_id', $record->member_id)

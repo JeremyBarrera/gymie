@@ -15,4 +15,3 @@ class ExpenseSeeder extends Seeder
         Expense::factory()->count(20)->create();
     }
 }
-

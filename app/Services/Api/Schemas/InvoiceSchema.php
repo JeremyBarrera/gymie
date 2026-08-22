@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\Subscription;
 use App\Rules\ModelExists;
 use App\Rules\ModelUnique;
+use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
  * Single source of truth for Invoice API validation and serialization.
@@ -45,7 +46,7 @@ final class InvoiceSchema
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public static function storeRules(): array
     {
@@ -65,7 +66,7 @@ final class InvoiceSchema
     }
 
     /**
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public static function updateRules(int|string $invoiceId): array
     {

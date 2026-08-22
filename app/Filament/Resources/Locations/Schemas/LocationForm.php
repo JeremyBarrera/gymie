@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Locations\Schemas;
 
 use App\Helpers\Helpers;
 use App\Models\User;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -24,10 +25,7 @@ class LocationForm
                             ->label(__('app.fields.name'))
                             ->required()
                             ->maxLength(255),
-                        TextInput::make('phone')
-                            ->label(__('app.fields.phone'))
-                            ->tel()
-                            ->maxLength(20),
+                        Helpers::phoneField('phone'),
                         Textarea::make('address')
                             ->label(__('app.fields.address'))
                             ->rows(4)
@@ -51,23 +49,32 @@ class LocationForm
                                     ->options(fn ($get) => Helpers::getStates($get('country')))
                                     ->searchable()
                                     ->reactive()
+                                    ->hidden(fn ($get) => blank($get('country')))
                                     ->afterStateUpdated(fn ($state, callable $set) => $set('city', null)),
                                 Select::make('city')
                                     ->label(__('app.fields.city'))
                                     ->placeholder(__('app.placeholders.select_city'))
                                     ->options(fn ($get) => Helpers::getCities($get('state')))
                                     ->searchable()
-                                    ->reactive(),
+                                    ->reactive()
+                                    ->hidden(fn ($get) => blank($get('state'))),
                                 TextInput::make('pincode')
                                     ->label(__('app.fields.pincode'))
                                     ->maxLength(20),
                             ])->columns(4),
                         Select::make('managed_by')
                             ->label(__('app.fields.managed_by'))
-                            ->options(fn (): array => User::role('super_admin')->orderBy('name')->pluck('name', 'id')->toArray())
+                            ->options(fn (): array => User::orderBy('name')->pluck('name', 'id')->toArray())
                             ->searchable()
-                            ->placeholder(__('app.placeholders.select_super_admin'))
+                            ->placeholder(__('app.placeholders.select_user'))
                             ->nullable(),
+                        Grid::make()
+                            ->schema([
+                                ColorPicker::make('background_color')
+                                    ->label(__('app.fields.background_color')),
+                                ColorPicker::make('accent_color')
+                                    ->label(__('app.fields.accent_color')),
+                            ])->columns(2),
                     ]),
             ]);
     }

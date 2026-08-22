@@ -47,6 +47,9 @@ class PlanInfolist
                         TextEntry::make('name')
                             ->label(__('app.fields.name'))
                             ->columnSpan(2),
+                        TextEntry::make('location.name')
+                            ->label(__('app.fields.location'))
+                            ->formatStateUsing(fn ($state): string => (string) ($state ?? __('app.options.all_locations'))),
                         TextEntry::make('service.name')
                             ->label(__('app.fields.service')),
                         TextEntry::make('days')
@@ -54,6 +57,16 @@ class PlanInfolist
                         TextEntry::make('amount')
                             ->label(__('app.fields.amount'))
                             ->money(Helpers::getCurrencyCode()),
+                        TextEntry::make('track_uses')
+                            ->label(__('app.fields.track_uses'))
+                            ->formatStateUsing(fn (Plan $record): string => $record->track_uses
+                                ? __('app.common.yes')
+                                : __('app.common.no')),
+                        TextEntry::make('uses_limit')
+                            ->label(__('app.fields.uses_limit'))
+                            ->formatStateUsing(fn (Plan $record): string => $record->track_uses
+                                ? (string) ($record->uses_limit ?? 0)
+                                : __('app.fields.unlimited')),
                         TextEntry::make('description')
                             ->label(__('app.fields.description'))
                             ->columnSpanFull(),

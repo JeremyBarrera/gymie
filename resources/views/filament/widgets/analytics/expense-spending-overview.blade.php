@@ -23,7 +23,7 @@
             </x-slot>
 
             <div class="grid gap-4">
-                <div class="text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">
+                <div class="truncate text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">
                     {{ $totalExpense }}
                 </div>
 

@@ -31,7 +31,7 @@ class MemberCodeGeneratorTest extends TestCase
 
     #[Test]
     #[TestDox('Step 1: Given no existing members → returns GY-1')]
-    public function noExistingMembersReturnsGY1(): void
+    public function no_existing_members_returns_g_y1(): void
     {
         $next = Helpers::generateLastNumber(
             'member',
@@ -49,13 +49,13 @@ class MemberCodeGeneratorTest extends TestCase
 
     #[Test]
     #[TestDox('Step 2: Given two members in the fiscal year → returns GY-3')]
-    public function twoInRangeMembersReturnsGY3(): void
+    public function two_in_range_members_returns_g_y3(): void
     {
         Member::factory()->create([
-            'code' => 'GY-1'
+            'code' => 'GY-1',
         ]);
         Member::factory()->create([
-            'code' => 'GY-2'
+            'code' => 'GY-2',
         ]);
 
         $next = Helpers::generateLastNumber(
@@ -74,7 +74,7 @@ class MemberCodeGeneratorTest extends TestCase
 
     #[Test]
     #[TestDox('Step 3: Given only out-of-range members → returns GY-1')]
-    public function outOfRangeMembersReturnsGY1(): void
+    public function out_of_range_members_returns_g_y1(): void
     {
         // This one is dated before the FY start, so should be ignored
         Member::factory()->create([

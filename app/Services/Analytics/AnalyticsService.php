@@ -25,6 +25,45 @@ use Illuminate\Support\Collection;
 class AnalyticsService
 {
     /**
+     * Scope a member query to the given location ids (null = no scoping).
+     *
+     * A member's location is derived from the plans of its subscriptions:
+     * a member is counted at a location when any of its plans is offered
+     * there (or everywhere via an "All Locations" plan).
+     *
+     * @param  list<int>|null  $locationIds
+     */
+    private function scopeMembersByLocation(Builder $query, ?array $locationIds): Builder
+    {
+        return $query->when(
+            $locationIds !== null,
+            fn (Builder $q): Builder => $q->whereHas('subscriptions.plan', function (Builder $plan) use ($locationIds): void {
+                $plan->whereIn('plans.location_id', $locationIds)
+                    ->orWhereNull('plans.location_id');
+            }),
+        );
+    }
+
+    /**
+     * Scope a query through a `member` (or `...->member`) relation chain.
+     *
+     * @param  list<int>|null  $locationIds
+     */
+    private function scopeByMemberLocation(Builder $query, ?array $locationIds, string $memberPath = 'member'): Builder
+    {
+        return $query->when(
+            $locationIds !== null,
+            fn (Builder $q): Builder => $q->whereHas(
+                $memberPath,
+                fn (Builder $mq): Builder => $mq->whereHas('subscriptions.plan', function (Builder $plan) use ($locationIds): void {
+                    $plan->whereIn('plans.location_id', $locationIds)
+                        ->orWhereNull('plans.location_id');
+                }),
+            ),
+        );
+    }
+
+    /**
      * Build a SQL expression that groups a date/datetime column by month.
      */
     private function monthGroupExpression(string $column, string $driver): string
@@ -50,14 +89,19 @@ class AnalyticsService
      *
      * @return array{net_revenue: float, collected: float, refunds: float, discounts: float, outstanding: float, expenses: float, profit: float}
      */
-    public function financialMetrics(AnalyticsDateRange $range): array
+    public function financialMetrics(AnalyticsDateRange $range, ?array $locationIds = null): array
     {
-        $salesTotal = (float) Invoice::query()
-            ->whereBetween('date', [$range->start->toDateString(), $range->end->toDateString()])
-            ->sum('total_amount');
+        $salesTotal = (float) $this->scopeByMemberLocation(
+            Invoice::query()->whereBetween('date', [$range->start->toDateString(), $range->end->toDateString()]),
+            $locationIds,
+            'subscription.member',
+        )->sum('total_amount');
 
-        $transactions = InvoiceTransaction::query()
-            ->whereBetween('occurred_at', [$range->start, $range->end])
+        $transactions = $this->scopeByMemberLocation(
+            InvoiceTransaction::query()->whereBetween('occurred_at', [$range->start, $range->end]),
+            $locationIds,
+            'invoice.subscription.member',
+        )
             ->selectRaw("SUM(CASE WHEN type = 'payment' THEN amount ELSE 0 END) as payments_total")
             ->selectRaw("SUM(CASE WHEN type = 'refund' THEN amount ELSE 0 END) as refunds_total")
             ->first();
@@ -67,15 +111,20 @@ class AnalyticsService
         $collected = max($paymentsTotal - $refundsTotal, 0);
         $netRevenue = max($salesTotal - $refundsTotal, 0);
 
-        $discounts = (float) Invoice::query()
-            ->whereBetween('date', [$range->start->toDateString(), $range->end->toDateString()])
-            ->sum('discount_amount');
+        $discounts = (float) $this->scopeByMemberLocation(
+            Invoice::query()->whereBetween('date', [$range->start->toDateString(), $range->end->toDateString()]),
+            $locationIds,
+            'subscription.member',
+        )->sum('discount_amount');
 
-        $outstanding = (float) Invoice::query()
-            ->whereDate('date', '<=', $range->referenceDateString())
-            ->where('due_amount', '>', 0)
-            ->whereIn('status', ['issued', 'partial', 'overdue'])
-            ->sum('due_amount');
+        $outstanding = (float) $this->scopeByMemberLocation(
+            Invoice::query()
+                ->whereDate('date', '<=', $range->referenceDateString())
+                ->where('due_amount', '>', 0)
+                ->whereIn('status', ['issued', 'partial', 'overdue']),
+            $locationIds,
+            'subscription.member',
+        )->sum('due_amount');
 
         $expenses = (float) Expense::query()
             ->whereBetween('date', [$range->start->toDateString(), $range->end->toDateString()])
@@ -97,11 +146,14 @@ class AnalyticsService
      *
      * @return array<string, float> Map of `Y-m-d` => amount
      */
-    public function revenueTrendByDate(AnalyticsDateRange $range): array
+    public function revenueTrendByDate(AnalyticsDateRange $range, ?array $locationIds = null): array
     {
         /** @var Collection<string, float> $rows */
-        $rows = Invoice::query()
-            ->whereBetween('date', [$range->start->toDateString(), $range->end->toDateString()])
+        $rows = $this->scopeByMemberLocation(
+            Invoice::query()->whereBetween('date', [$range->start->toDateString(), $range->end->toDateString()]),
+            $locationIds,
+            'subscription.member',
+        )
             ->selectRaw('date as day')
             ->selectRaw('SUM(total_amount) as total')
             ->groupBy('day')
@@ -120,31 +172,37 @@ class AnalyticsService
      *
      * @return array{active_members: int, new_signups: int, renewals: int, expired_not_renewed: int}
      */
-    public function membershipMetrics(AnalyticsDateRange $range): array
+    public function membershipMetrics(AnalyticsDateRange $range, ?array $locationIds = null): array
     {
         $referenceDate = $range->referenceDateString();
 
-        $activeMembers = Member::query()
-            ->whereHas('subscriptions', function (Builder $query) use ($referenceDate): void {
+        $activeMembers = $this->scopeMembersByLocation(
+            Member::query()->whereHas('subscriptions', function (Builder $query) use ($referenceDate): void {
                 $query
                     ->whereDate('start_date', '<=', $referenceDate)
                     ->whereDate('end_date', '>=', $referenceDate);
-            })
-            ->count();
+            }),
+            $locationIds,
+        )->count();
 
-        $newSignups = Member::query()
-            ->whereBetween('created_at', [$range->start, $range->end])
-            ->count();
+        $newSignups = $this->scopeMembersByLocation(
+            Member::query()->whereBetween('created_at', [$range->start, $range->end]),
+            $locationIds,
+        )->count();
 
-        $renewals = Subscription::query()
-            ->whereNotNull('renewed_from_subscription_id')
-            ->whereBetween('start_date', [$range->start->toDateString(), $range->end->toDateString()])
-            ->count();
+        $renewals = $this->scopeByMemberLocation(
+            Subscription::query()
+                ->whereNotNull('renewed_from_subscription_id')
+                ->whereBetween('start_date', [$range->start->toDateString(), $range->end->toDateString()]),
+            $locationIds,
+        )->count();
 
-        $expiredNotRenewed = Subscription::query()
-            ->whereBetween('end_date', [$range->start->toDateString(), $range->end->toDateString()])
-            ->whereDoesntHave('renewals')
-            ->count();
+        $expiredNotRenewed = $this->scopeByMemberLocation(
+            Subscription::query()
+                ->whereBetween('end_date', [$range->start->toDateString(), $range->end->toDateString()])
+                ->whereDoesntHave('renewals'),
+            $locationIds,
+        )->count();
 
         return [
             'active_members' => $activeMembers,
@@ -160,28 +218,33 @@ class AnalyticsService
      * This is based on dates (not status), so it works even if status syncing
      * hasn't run yet.
      */
-    public function expiringSubscriptionsCount(?CarbonImmutable $today = null): int
+    public function expiringSubscriptionsCount(?CarbonImmutable $today = null, ?array $locationIds = null): int
     {
         $today ??= CarbonImmutable::today(AppConfig::timezone());
         $expiringDays = Helpers::getSubscriptionExpiringDays();
         $end = $today->addDays($expiringDays);
 
-        return Subscription::query()
-            ->whereDate('start_date', '<=', $today->toDateString())
-            ->whereDate('end_date', '>=', $today->toDateString())
-            ->whereDate('end_date', '<=', $end->toDateString())
-            ->count();
+        return $this->scopeByMemberLocation(
+            Subscription::query()
+                ->whereDate('start_date', '<=', $today->toDateString())
+                ->whereDate('end_date', '>=', $today->toDateString())
+                ->whereDate('end_date', '<=', $end->toDateString()),
+            $locationIds,
+        )->count();
     }
 
     /**
      * Count invoices that are currently overdue and still have due amount.
      */
-    public function overdueInvoicesCount(): int
+    public function overdueInvoicesCount(?array $locationIds = null): int
     {
-        return Invoice::query()
-            ->where('status', 'overdue')
-            ->where('due_amount', '>', 0)
-            ->count();
+        return $this->scopeByMemberLocation(
+            Invoice::query()
+                ->where('status', 'overdue')
+                ->where('due_amount', '>', 0),
+            $locationIds,
+            'subscription.member',
+        )->count();
     }
 
     /**
@@ -189,11 +252,14 @@ class AnalyticsService
      *
      * @return array<string, float> Map of `Y-m-d` => amount
      */
-    public function collectedTrendByDate(AnalyticsDateRange $range): array
+    public function collectedTrendByDate(AnalyticsDateRange $range, ?array $locationIds = null): array
     {
         /** @var Collection<string, float> $rows */
-        $rows = InvoiceTransaction::query()
-            ->whereBetween('occurred_at', [$range->start, $range->end])
+        $rows = $this->scopeByMemberLocation(
+            InvoiceTransaction::query()->whereBetween('occurred_at', [$range->start, $range->end]),
+            $locationIds,
+            'invoice.subscription.member',
+        )
             ->selectRaw('DATE(occurred_at) as day')
             ->selectRaw("SUM(CASE WHEN type = 'payment' THEN amount WHEN type = 'refund' THEN -amount ELSE 0 END) as net")
             ->groupBy('day')
@@ -212,14 +278,17 @@ class AnalyticsService
      *
      * @return array<string, float> Map of `Y-m` => amount
      */
-    public function collectedTrendByMonth(AnalyticsDateRange $range): array
+    public function collectedTrendByMonth(AnalyticsDateRange $range, ?array $locationIds = null): array
     {
         $driver = InvoiceTransaction::query()->getModel()->getConnection()->getDriverName();
         $monthExpression = $this->monthGroupExpression('occurred_at', $driver);
 
         /** @var Collection<string, float> $rows */
-        $rows = InvoiceTransaction::query()
-            ->whereBetween('occurred_at', [$range->start, $range->end])
+        $rows = $this->scopeByMemberLocation(
+            InvoiceTransaction::query()->whereBetween('occurred_at', [$range->start, $range->end]),
+            $locationIds,
+            'invoice.subscription.member',
+        )
             ->selectRaw("{$monthExpression} as month")
             ->selectRaw("SUM(CASE WHEN type = 'payment' THEN amount WHEN type = 'refund' THEN -amount ELSE 0 END) as net")
             ->groupBy('month')
@@ -289,10 +358,20 @@ class AnalyticsService
      *
      * @return Collection<int, array{key: string, plan_id: int, plan_name: string, collected: float, subscriptions: int}>
      */
-    public function topPlansByCollected(AnalyticsDateRange $range, int $limit = 5): Collection
+    public function topPlansByCollected(AnalyticsDateRange $range, int $limit = 5, ?array $locationIds = null): Collection
     {
         /** @var Collection<int, object{plan_id:int, plan_name:string, collected: float, subscriptions:int}> $rows */
         $rows = Plan::query()
+            ->when(
+                $locationIds !== null,
+                fn (Builder $query): Builder => $query->whereHas(
+                    'subscriptions.member',
+                    fn (Builder $mq): Builder => $mq->whereHas('subscriptions.plan', function (Builder $plan) use ($locationIds): void {
+                        $plan->whereIn('plans.location_id', $locationIds)
+                            ->orWhereNull('plans.location_id');
+                    }),
+                ),
+            )
             ->select('plans.id as plan_id', 'plans.name as plan_name')
             ->leftJoin('subscriptions', 'subscriptions.plan_id', '=', 'plans.id')
             ->leftJoin('invoices', 'invoices.subscription_id', '=', 'subscriptions.id')

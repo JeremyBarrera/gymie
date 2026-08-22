@@ -2,6 +2,10 @@
 
 namespace App\Support\Invoices;
 
+use App\Models\Invoice;
+use App\Models\Member;
+use App\Models\Plan;
+use App\Models\Subscription;
 use RuntimeException;
 
 /**
@@ -12,10 +16,10 @@ final class InvoiceDocumentNotRenderable extends RuntimeException
     /**
      * @param  array{
      *   missing: list<string>,
-     *   invoice: \App\Models\Invoice,
-     *   member?: \App\Models\Member|null,
-     *   subscription?: \App\Models\Subscription|null,
-     *   plan?: \App\Models\Plan|null,
+     *   invoice: Invoice,
+     *   member?: Member|null,
+     *   subscription?: Subscription|null,
+     *   plan?: Plan|null,
      *   settings?: array<string, mixed>,
      *   generated_at?: string,
      *   logo_data_uri?: string|null,

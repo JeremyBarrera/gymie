@@ -2,7 +2,11 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\CheckInActivity;
 use App\Filament\Pages\Dashboard;
+use App\Filament\Pages\PlanCheckIn;
+use App\Filament\Pages\PrintQrCodes;
+use App\Filament\Pages\Reception;
 use App\Filament\Pages\Settings;
 use App\Filament\Resources\Enquiries\EnquiryResource;
 use App\Filament\Resources\Expenses\ExpenseResource;
@@ -14,10 +18,12 @@ use App\Filament\Resources\Plans\PlanResource;
 use App\Filament\Resources\Services\ServiceResource;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Filament\Resources\Users\UserResource;
+use App\Filament\Shield\RoleResource;
 use App\Http\Middleware\SetAppLocale;
+use App\Http\Middleware\SetCurrentLocation;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
-use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Enums\ThemeMode;
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -72,12 +78,18 @@ class AdminPanelProvider extends PanelProvider
             ->unsavedChangesAlerts()
             ->colors($this->colors())
             ->defaultThemeMode(ThemeMode::Light)
-            ->sidebarWidth('12rem')
+            ->sidebarWidth('15rem')
+            ->sidebarFullyCollapsibleOnDesktop()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
+            ->resources([RoleResource::class])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Dashboard::class,
                 Settings::class,
+                PlanCheckIn::class,
+                Reception::class,
+                CheckInActivity::class,
+                PrintQrCodes::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([])
@@ -89,6 +101,7 @@ class AdminPanelProvider extends PanelProvider
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
+                SetCurrentLocation::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
@@ -106,6 +119,24 @@ class AdminPanelProvider extends PanelProvider
                 fn (): HtmlString => new HtmlString(
                     Blade::render('@livewire(\\App\\Filament\\Livewire\\LocaleSwitcher::class, [], key(\'locale-switcher\'))')
                 ),
+            )
+            ->renderHook(
+                PanelsRenderHook::HEAD_START,
+                fn (): HtmlString => new HtmlString(
+                    Blade::render('@vite([\'resources/js/app.js\'])')
+                ),
+            )
+            ->renderHook(
+                PanelsRenderHook::BODY_START,
+                function (): HtmlString {
+                    if (Filament::auth()->guest()) {
+                        return new HtmlString('');
+                    }
+
+                    return new HtmlString(
+                        Blade::render('@livewire(\\App\\Filament\\Livewire\\LiveSignupPopup::class, [], key(\'live-signup-popup\'))')
+                    );
+                },
             );
     }
 
@@ -132,40 +163,63 @@ class AdminPanelProvider extends PanelProvider
         ];
 
         $memberships = [
-            ...MemberResource::getNavigationItems(),
+            NavigationItem::make(__('app.onboarding.step1_title'))
+                ->icon('heroicon-o-user-plus')
+                ->url(fn () => MemberResource::getUrl('create'))
+                ->isActiveWhen(fn () => request()->routeIs('filament.admin.resources.members.create'))
+                ->sort(1),
+            ...SubscriptionResource::getNavigationItems(),
+            NavigationItem::make(MemberResource::getNavigationLabel())
+                ->icon(MemberResource::getNavigationIcon())
+                ->url(fn () => MemberResource::getUrl('index'))
+                ->isActiveWhen(fn () => request()->routeIs('filament.admin.resources.members.index'))
+                ->sort(MemberResource::getNavigationSort()),
             ...PlanResource::getNavigationItems(),
             ...ServiceResource::getNavigationItems(),
-            ...SubscriptionResource::getNavigationItems(),
+        ];
+
+        $topLevel = [
+            NavigationItem::make(__('app.navigation.dashboard'))
+                ->icon('heroicon-o-chart-bar')
+                ->url(fn () => Dashboard::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs('filament.admin.pages.dashboard'))
+                ->sort(-2),
+            NavigationItem::make(__('app.navigation.reception'))
+                ->icon('heroicon-o-clipboard-document-check')
+                ->url(fn () => Reception::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs('filament.admin.pages.reception'))
+                ->sort(-1),
+            NavigationItem::make(__('app.navigation.activity'))
+                ->icon('heroicon-o-clock')
+                ->url(fn () => CheckInActivity::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs('filament.admin.pages.activity'))
+                ->sort(0),
+            NavigationItem::make(__('app.reception.qr_codes'))
+                ->icon('heroicon-o-qr-code')
+                ->url(fn () => PrintQrCodes::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs('filament.admin.pages.qr-codes'))
+                ->sort(1),
         ];
 
         return $builder
             ->groups([
-                NavigationGroup::make(__('app.navigation.groups.sales'))
-                    ->icon('heroicon-o-shopping-cart')
-                    ->items($sales)
-                    ->collapsed(false),
-
                 NavigationGroup::make(__('app.navigation.groups.memberships'))
-                    ->icon('heroicon-o-user-group')
                     ->items($memberships)
                     ->collapsed(false),
 
-                NavigationGroup::make(__('app.navigation.groups.billing'))
-                    ->icon('heroicon-o-document-text')
-                    ->items($billing)
-                    ->collapsed(false),
-
                 NavigationGroup::make(__('app.navigation.groups.administration'))
-                    ->icon('heroicon-o-wrench-screwdriver')
                     ->items($administration)
                     ->collapsed(false),
+
+                NavigationGroup::make(__('app.navigation.groups.sales'))
+                    ->items($sales)
+                    ->collapsed(false),
+
+                NavigationGroup::make(__('app.navigation.groups.billing'))
+                    ->items($billing)
+                    ->collapsed(false),
             ])
-            ->item(
-                NavigationItem::make(__('app.navigation.dashboard'))
-                    ->icon('heroicon-o-chart-bar')
-                    ->url(fn () => Dashboard::getUrl())
-                    ->isActiveWhen(fn () => request()->routeIs('filament.admin.pages.dashboard'))
-            );
+            ->items($topLevel);
     }
 
     /**

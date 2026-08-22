@@ -1,0 +1,55 @@
+<?php
+
+namespace App\Filament\Livewire;
+
+use App\Events\SoundAlertsToggled;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+
+/**
+ * Per-user sound-alerts toggle for the panel topbar.
+ *
+ * The preference lives on the user record. The acting tab flips instantly
+ * via the "sound-alerts-updated" Livewire event; every other open tab of
+ * the same user follows over the private "user.{id}" websocket channel.
+ */
+class SoundAlertToggle extends Component
+{
+    public bool $soundAlerts = false;
+
+    public function mount(): void
+    {
+        $this->soundAlerts = (bool) Auth::user()?->sound_alerts;
+    }
+
+    public function toggleSoundAlerts(): void
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return;
+        }
+
+        $this->soundAlerts = ! $this->soundAlerts;
+        $user->update(['sound_alerts' => $this->soundAlerts]);
+
+        // Fast path for the acting tab; the websocket copy (below) keeps
+        // every other open tab of this user in sync live.
+        $this->dispatch('sound-alerts-updated', enabled: $this->soundAlerts);
+
+        broadcast(new SoundAlertsToggled($user->id, $this->soundAlerts));
+
+        $this->dispatch('notify',
+            type: 'success',
+            message: $this->soundAlerts
+                ? __('app.reception.sound_enabled_toast')
+                : __('app.reception.sound_disabled_toast'),
+        );
+    }
+
+    public function render(): View
+    {
+        return view('livewire.sound-alert-toggle');
+    }
+}

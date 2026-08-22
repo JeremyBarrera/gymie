@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Plans\Tables;
 use App\Helpers\Helpers;
 use App\Models\Plan;
 use App\Models\Service;
+use App\Support\Dates\DeviceDateFormat;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -16,6 +17,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Notifications\Notification;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -40,6 +42,10 @@ class PlanTable
                 TextColumn::make('name')
                     ->searchable()
                     ->label(__('app.fields.name')),
+                TextColumn::make('location.name')
+                    ->searchable()
+                    ->label(__('app.fields.location'))
+                    ->formatStateUsing(fn ($state): string => (string) ($state ?? __('app.options.all_locations'))),
                 TextColumn::make('description')
                     ->searchable()
                     ->label(__('app.fields.description')),
@@ -53,6 +59,15 @@ class PlanTable
                     ->searchable()
                     ->label(__('app.fields.amount'))
                     ->money(Helpers::getCurrencyCode()),
+                IconColumn::make('track_uses')
+                    ->label(__('app.fields.track_uses'))
+                    ->boolean(),
+                TextColumn::make('uses_limit')
+                    ->label(__('app.fields.uses_limit'))
+                    ->formatStateUsing(fn (Plan $record): string => $record->track_uses
+                        ? (string) ($record->uses_limit ?? 0)
+                        : __('app.fields.unlimited'))
+                    ->placeholder(__('app.fields.unlimited')),
                 TextColumn::make('status')
                     ->badge()
                     ->label(__('app.fields.status')),
@@ -108,8 +123,8 @@ class PlanTable
                         : __('app.empty.create_to_get_started', ['resource' => $record]);
                 }
 
-                $from = $fromRaw ? Carbon::parse($fromRaw)->format('d-m-Y') : (string) __('app.common.the_beginning');
-                $to = $toRaw ? Carbon::parse($toRaw)->format('d-m-Y') : (string) __('app.common.today');
+                $from = $fromRaw ? Carbon::parse($fromRaw)->translatedFormat(DeviceDateFormat::date()) : (string) __('app.common.the_beginning');
+                $to = $toRaw ? Carbon::parse($toRaw)->translatedFormat(DeviceDateFormat::date()) : (string) __('app.common.today');
 
                 if ($tab === 'all') {
                     return __('app.empty.found_none_between', ['records' => $records, 'from' => $from, 'to' => $to]);

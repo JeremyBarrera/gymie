@@ -2,12 +2,13 @@
 
 namespace App\Http\Resources\V1;
 
+use App\Models\FollowUp;
 use App\Services\Api\Schemas\FollowUpSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\FollowUp
+ * @mixin FollowUp
  */
 class FollowUpResource extends JsonResource
 {
@@ -18,7 +19,7 @@ class FollowUpResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var \App\Models\FollowUp $followUp */
+        /** @var FollowUp $followUp */
         $followUp = $this->resource;
 
         return FollowUpSchema::resource($followUp);

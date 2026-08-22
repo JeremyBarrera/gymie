@@ -8,13 +8,18 @@ use App\Contracts\TenantContext;
 use App\Helpers\Helpers;
 use App\Models\Invoice;
 use App\Models\InvoiceTransaction;
+use App\Models\Location;
+use App\Models\User;
 use App\Observers\InvoiceObserver;
 use App\Observers\InvoiceTransactionObserver;
+use App\Observers\LocationObserver;
 use App\Services\Api\Docs\AddIndexQueryParametersTransformer;
 use App\Services\JsonSequenceRepository;
 use App\Services\JsonSettingsRepository;
-use App\Services\NullTenantContext;
+use App\Services\LocationTenantContext;
 use App\Support\Data;
+use App\Support\Dates\DeviceDateFormat;
+use App\Support\Permissions\PermissionFeatureFlags;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Filament\Actions\Action;
@@ -36,15 +41,20 @@ use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Livewire\Component as LivewireComponent;
+use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -55,7 +65,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(SettingsRepository::class, JsonSettingsRepository::class);
         $this->app->singleton(SequenceRepository::class, JsonSequenceRepository::class);
-        $this->app->singletonIf(TenantContext::class, NullTenantContext::class);
+        $this->app->singletonIf(TenantContext::class, LocationTenantContext::class);
     }
 
     /**
@@ -63,6 +73,30 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(Request $request): void
     {
+        $this->configureTenantAwareAuthProvider();
+
+        // Resolve the public disk URL from the current request so stored-file
+        // previews (member photos, etc.) work on any host/port (e.g. `php
+        // artisan serve` on :8000) instead of a port-less APP_URL.
+        config(['filesystems.disks.public.url' => url('storage')]);
+
+        // Override the built-in 'date' validation rule to enforce a sensible
+        // year range (1900–2100). Laravel's default rule accepts any value
+        // strtotime() can parse, including 5-digit years like 10000-01-01.
+        Validator::extend('date', function (string $attribute, mixed $value): bool {
+            if (! is_string($value) && ! $value instanceof \DateTimeInterface) {
+                return false;
+            }
+
+            try {
+                $date = \Carbon\Carbon::parse($value);
+            } catch (\Throwable) {
+                return false;
+            }
+
+            return $date->year >= 1900 && $date->year <= 3000;
+        }, 'The :attribute must be a valid date between 1900 and 3000.');
+
         if (str_starts_with(Data::string(config('app.url')), 'https://') || $request->isSecure()) {
             URL::forceScheme('https');
         }
@@ -135,24 +169,28 @@ class AppServiceProvider extends ServiceProvider
         });
 
         /**
-         * Configure the DatePicker component globally to use a specific format and placeholder.
+         * Configure the DatePicker component globally to use the device's
+         * date convention and a matching placeholder.
          */
         DatePicker::configureUsing(function (DatePicker $datePicker) {
             $datePicker
                 ->native(false)
                 ->placeholder(__('app.placeholders.date_example'))
-                ->displayFormat('d/m/Y')
-                ->prefixIcon('heroicon-o-calendar-days');
+                ->displayFormat(DeviceDateFormat::date())
+                ->prefixIcon('heroicon-o-calendar-days')
+                ->minDate(now()->subYears(120))
+                ->maxDate(now()->addYears(1000));
         });
 
         /**
-         * Configure the DateTimePicker component globally to use a specific format and placeholder.
+         * Configure the DateTimePicker component globally to use the device's
+         * date/time conventions and a matching placeholder.
          */
         DateTimePicker::configureUsing(function (DateTimePicker $datePicker) {
             $datePicker
                 ->native(false)
                 ->placeholder(__('app.placeholders.date_time_example'))
-                ->displayFormat('d/m/Y H:i A')
+                ->displayFormat(DeviceDateFormat::dateTime())
                 ->prefixIcon('heroicon-o-calendar-days');
         });
 
@@ -178,6 +216,25 @@ class AppServiceProvider extends ServiceProvider
 
         $this->configureDeletionPrevention();
         $this->registerModelObservers();
+        $this->registerPermissionFeatureFlags();
+    }
+
+    /**
+     * Register an auth provider whose lookups never apply the tenant scope.
+     *
+     * The session guard resolves the logged-in user by id. Running the User
+     * model's "location" global scope during that lookup would re-enter
+     * Auth::user() before the guard has cached the user, recursing until
+     * memory is exhausted on the first authenticated request of each
+     * process. Authentication is global; tenant scoping applies to business
+     * data, not to resolving who is logged in.
+     */
+    private function configureTenantAwareAuthProvider(): void
+    {
+        Auth::provider('eloquent-tenant-aware', function (mixed $app, array $config): EloquentUserProvider {
+            return (new EloquentUserProvider($app['hash'], $config['model']))
+                ->withQuery(static fn ($query) => $query->withoutGlobalScope('location'));
+        });
     }
 
     /**
@@ -229,6 +286,14 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api-login', function (Request $request): Limit {
             return Limit::perMinute(10)->by((string) $request->ip());
         });
+
+        RateLimiter::for('api-checkin', function (Request $request): Limit {
+            return Limit::perMinute(30)->by((string) $request->ip());
+        });
+
+        RateLimiter::for('api-signup', function (Request $request): Limit {
+            return Limit::perMinute(10)->by((string) $request->ip());
+        });
     }
 
     /**
@@ -238,6 +303,54 @@ class AppServiceProvider extends ServiceProvider
     {
         Invoice::observe(InvoiceObserver::class);
         InvoiceTransaction::observe(InvoiceTransactionObserver::class);
+        Location::observe(LocationObserver::class);
+    }
+
+    /**
+     * Enforce permission feature flags on the gate and protect the owner role.
+     *
+     * Spatie's built-in gate callback is disabled via `config/permission.php`
+     * (`register_permission_check_method`), so this single callback owns every
+     * permission check and can apply the flags before any access is granted.
+     *
+     * - Users with the `owner` role bypass every gate check.
+     * - When the permissions master switch is off, every permission check is denied.
+     * - Individual permissions can be flagged off to deny only those checks.
+     * - The `owner` role can never be deleted.
+     */
+    private function registerPermissionFeatureFlags(): void
+    {
+        Gate::before(function (mixed $user, string $ability, array $arguments): ?bool {
+            if (! $user instanceof User) {
+                return null;
+            }
+
+            if (PermissionFeatureFlags::isProtectedRoleDeletion($ability, $arguments)) {
+                return false;
+            }
+
+            if ($user->hasRole(PermissionFeatureFlags::OWNER_ROLE)) {
+                return true;
+            }
+
+            if (! PermissionFeatureFlags::isPermissionAbility($ability)) {
+                return null;
+            }
+
+            if (! PermissionFeatureFlags::isMasterEnabled()) {
+                return false;
+            }
+
+            if (PermissionFeatureFlags::isDisabled($ability)) {
+                return false;
+            }
+
+            return $user->checkPermissionTo($ability) ?: null;
+        });
+
+        Role::deleting(function (Role $role): bool {
+            return ! PermissionFeatureFlags::isProtectedRoleName((string) $role->getAttribute('name'));
+        });
     }
 
     /**

@@ -2,14 +2,17 @@
 
 namespace App\Filament\Resources\Invoices\Tables;
 
+use App\Enums\Status;
 use App\Filament\Resources\Invoices\InvoiceResource;
 use App\Helpers\Helpers;
 use App\Models\Invoice;
 use App\Models\InvoiceTransaction;
 use App\Models\Subscription;
 use App\Services\Email\InvoiceEmailService;
+use App\Support\AppConfig;
 use App\Support\Billing\PaymentMethod;
 use App\Support\Data;
+use App\Support\Dates\DeviceDateFormat;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
@@ -68,7 +71,8 @@ class InvoiceTable
                     ->label(__('app.fields.due'))
                     ->formatStateUsing(fn ($state): string => Helpers::formatCurrency($state)),
                 TextColumn::make('status')
-                    ->badge(),
+                    ->badge()
+                    ->getStateUsing(fn (Invoice $record): ?Status => $record->effectiveStatus()),
             ])
             ->filters([
                 Filter::make('date')
@@ -141,8 +145,8 @@ class InvoiceTable
                         : __('app.empty.create_to_get_started', ['resource' => $record]);
                 }
 
-                $from = $fromRaw ? Carbon::parse($fromRaw)->format('d-m-Y') : (string) __('app.common.the_beginning');
-                $to = $toRaw ? Carbon::parse($toRaw)->format('d-m-Y') : (string) __('app.common.today');
+                $from = $fromRaw ? Carbon::parse($fromRaw)->translatedFormat(DeviceDateFormat::date()) : (string) __('app.common.the_beginning');
+                $to = $toRaw ? Carbon::parse($toRaw)->translatedFormat(DeviceDateFormat::date()) : (string) __('app.common.today');
 
                 if ($tab === 'all') {
                     return __('app.empty.found_none_between', ['records' => $records, 'from' => $from, 'to' => $to]);
@@ -181,6 +185,7 @@ class InvoiceTable
                                     ->label(__('app.fields.amount_with_currency', ['currency' => Helpers::getCurrencyCode()]))
                                     ->required()
                                     ->numeric()
+                                    ->extraAttributes(['class' => 'verify-money-input'])
                                     ->reactive()
                                     ->default(fn (Invoice $record): float => (float) ($record->due_amount ?? 0))
                                     ->placeholder(__('app.placeholders.enter_amount'))
@@ -194,8 +199,8 @@ class InvoiceTable
                                 DateTimePicker::make('occurred_at')
                                     ->label(__('app.fields.paid_at'))
                                     ->seconds(false)
-                                    ->timezone(\App\Support\AppConfig::timezone())
-                                    ->default(fn (): string => now()->timezone(\App\Support\AppConfig::timezone())->format('Y-m-d H:i:s'))
+                                    ->timezone(AppConfig::timezone())
+                                    ->default(fn (): string => now()->timezone(AppConfig::timezone())->format('Y-m-d H:i:s'))
                                     ->required(),
                                 Select::make('payment_method')
                                     ->label(__('app.fields.payment_method'))
@@ -223,7 +228,7 @@ class InvoiceTable
                                 $record->transactions()->create([
                                     'type' => 'payment',
                                     'amount' => $amount,
-                                    'occurred_at' => $data['occurred_at'] ?? now()->timezone(\App\Support\AppConfig::timezone()),
+                                    'occurred_at' => $data['occurred_at'] ?? now()->timezone(AppConfig::timezone()),
                                     'payment_method' => $data['payment_method'] ?? null,
                                     'note' => $data['note'] ?? null,
                                     'created_by' => auth()->id(),
@@ -250,6 +255,7 @@ class InvoiceTable
                                     ->label(__('app.fields.refund_amount_with_currency', ['currency' => Helpers::getCurrencyCode()]))
                                     ->required()
                                     ->numeric()
+                                    ->extraAttributes(['class' => 'verify-money-input'])
                                     ->reactive()
                                     ->placeholder(__('app.placeholders.enter_amount'))
                                     ->helperText(fn (Invoice $record): string => __('app.help.refundable_amount', ['amount' => Helpers::formatCurrency($record->paid_amount)]))
@@ -261,8 +267,8 @@ class InvoiceTable
                                 DateTimePicker::make('occurred_at')
                                     ->label(__('app.fields.refunded_at'))
                                     ->seconds(false)
-                                    ->timezone(\App\Support\AppConfig::timezone())
-                                    ->default(fn (): string => now()->timezone(\App\Support\AppConfig::timezone())->format('Y-m-d H:i:s'))
+                                    ->timezone(AppConfig::timezone())
+                                    ->default(fn (): string => now()->timezone(AppConfig::timezone())->format('Y-m-d H:i:s'))
                                     ->required(),
                                 Textarea::make('note')
                                     ->label(__('app.fields.note'))
@@ -285,7 +291,7 @@ class InvoiceTable
                                 $record->transactions()->create([
                                     'type' => 'refund',
                                     'amount' => $amount,
-                                    'occurred_at' => $data['occurred_at'] ?? now()->timezone(\App\Support\AppConfig::timezone()),
+                                    'occurred_at' => $data['occurred_at'] ?? now()->timezone(AppConfig::timezone()),
                                     'note' => $data['note'] ?? null,
                                     'created_by' => auth()->id(),
                                 ]);
@@ -401,7 +407,7 @@ class InvoiceTable
                                             ->limit(5)
                                             ->get()
                                             ->mapWithKeys(function (InvoiceTransaction $transaction): array {
-                                                $occurredAt = $transaction->occurred_at?->timezone(\App\Support\AppConfig::timezone())->format('d/m/Y H:i') ?? '—';
+                                                $occurredAt = $transaction->occurred_at?->timezone(AppConfig::timezone())->translatedFormat(DeviceDateFormat::dateTime()) ?? '—';
 
                                                 return [
                                                     Data::int($transaction->getKey()) => "{$occurredAt} - ".Helpers::formatCurrency((float) ($transaction->amount ?? 0)),
@@ -484,7 +490,7 @@ class InvoiceTable
                         ViewAction::make()
                             ->url(fn ($record) => InvoiceResource::getUrl('view', ['record' => $record])),
                         EditAction::make()
-                            ->hidden(fn ($record): bool => $record->status?->value !== 'issued')
+                            ->hidden(fn ($record): bool => ! in_array($record->status?->value, ['issued', 'overdue'], true))
                             ->url(fn ($record) => InvoiceResource::getUrl('edit', ['record' => $record])),
                     ])->dropdown(false),
                 ]),

@@ -4,11 +4,15 @@ namespace App\Models;
 
 use App\Enums\Status;
 use App\Models\Concerns\CascadesSoftDeletes;
+use App\Models\Concerns\ScopedByLocation;
+use Database\Factories\EnquiryFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -16,9 +20,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $name
  * @property string|null $email
  * @property string|null $contact
- * @property \Illuminate\Support\Carbon|null $date
+ * @property Carbon|null $date
  * @property string|null $gender
- * @property \Illuminate\Support\Carbon|null $dob
+ * @property Carbon|null $dob
  * @property Status|null $status
  * @property string|null $address
  * @property string|null $country
@@ -28,14 +32,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property array<int, mixed>|null $interested_in
  * @property string|null $source
  * @property string|null $goal
- * @property \Illuminate\Support\Carbon|null $start_by
+ * @property Carbon|null $start_by
  * @property-read User|null $user
- * @property-read \Illuminate\Database\Eloquent\Collection<int, FollowUp> $followUps
+ * @property-read Collection<int, FollowUp> $followUps
  */
 class Enquiry extends Model
 {
-    /** @use HasFactory<\Database\Factories\EnquiryFactory> */
-    use CascadesSoftDeletes, HasFactory, SoftDeletes;
+    /** @use HasFactory<EnquiryFactory> */
+    use CascadesSoftDeletes, HasFactory, ScopedByLocation, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.

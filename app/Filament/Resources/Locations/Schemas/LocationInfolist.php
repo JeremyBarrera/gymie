@@ -60,6 +60,18 @@ class LocationInfolist
                                     ->placeholder(__('app.placeholders.dash')),
                             ])
                             ->columns(4),
+                        Group::make()
+                            ->schema([
+                                TextEntry::make('background_color')
+                                    ->label(__('app.fields.background_color'))
+                                    ->placeholder(__('app.placeholders.dash'))
+                                    ->color(fn ($state): ?string => $state),
+                                TextEntry::make('accent_color')
+                                    ->label(__('app.fields.accent_color'))
+                                    ->placeholder(__('app.placeholders.dash'))
+                                    ->color(fn ($state): ?string => $state),
+                            ])
+                            ->columns(2),
                     ]),
             ]);
     }

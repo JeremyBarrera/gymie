@@ -5,6 +5,7 @@ namespace App\Filament\Widgets\Analytics;
 use App\Helpers\Helpers;
 use App\Services\Analytics\AnalyticsService;
 use App\Support\Analytics\AnalyticsDateRange;
+use App\Support\AppConfig;
 use Carbon\CarbonImmutable;
 use Filament\Support\Facades\FilamentColor;
 use Filament\Widgets\Widget;
@@ -63,7 +64,7 @@ class ExpenseCategoriesDoughnutChartWidget extends Widget
     {
         $rangeKey = $this->filter ?: '6months';
 
-        $today = CarbonImmutable::today(\App\Support\AppConfig::timezone());
+        $today = CarbonImmutable::today(AppConfig::timezone());
         $monthStart = $today->startOfMonth();
 
         [$start, $end] = match ($rangeKey) {

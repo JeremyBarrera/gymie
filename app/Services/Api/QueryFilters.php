@@ -3,6 +3,7 @@
 namespace App\Services\Api;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -22,7 +23,7 @@ final class QueryFilters
      * Apply all common index filters for a resource using allowlisted rules.
      *
      * This consolidates controller boilerplate while keeping query rules explicit
-     * (see {@see \App\Services\Api\ResourceQueryRules}).
+     * (see {@see ResourceQueryRules}).
      */
     /**
      * @template TModel of \Illuminate\Database\Eloquent\Model
@@ -272,9 +273,9 @@ final class QueryFilters
             : $model->getTable().'.deleted_at';
 
         return match ($value) {
-            'with' => $query->withoutGlobalScope(\Illuminate\Database\Eloquent\SoftDeletingScope::class),
+            'with' => $query->withoutGlobalScope(SoftDeletingScope::class),
             'only' => $query
-                ->withoutGlobalScope(\Illuminate\Database\Eloquent\SoftDeletingScope::class)
+                ->withoutGlobalScope(SoftDeletingScope::class)
                 ->whereNotNull($deletedAtColumn),
             default => $query,
         };

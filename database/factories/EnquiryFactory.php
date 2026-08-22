@@ -2,13 +2,14 @@
 
 namespace Database\Factories;
 
+use App\Models\Enquiry;
 use App\Models\Service;
 use App\Models\User;
 use Database\Factories\Concerns\WithSynchronizedLocation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Enquiry>
+ * @extends Factory<Enquiry>
  */
 class EnquiryFactory extends Factory
 {

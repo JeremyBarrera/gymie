@@ -3,11 +3,11 @@
 namespace Database\Factories;
 
 use App\Contracts\TenantContext;
+use App\Models\Location;
 use App\Models\User;
 use Database\Factories\Concerns\WithSynchronizedLocation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 /**
@@ -37,7 +37,7 @@ class UserFactory extends Factory
         $this->gender = $this->faker->randomElement(['male', 'female', 'other']);
         $location = $this->synchronizedLocation();
 
-        $attributes = [
+        return [
             'name' => $this->faker->company,
             'contact' => $location['contact'],
             'address' => $location['address'],
@@ -53,14 +53,28 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
+    }
 
-        if (Schema::hasColumn('users', 'gym_id')) {
-            $attributes['gym_id'] = app()->bound(TenantContext::class)
-                ? app(TenantContext::class)->gymId()
+    /**
+     * Grant the user access to the current tenant location unless they were
+     * given explicit locations, so location-scoped queries keep working for
+     * factory-created accounts.
+     */
+    public function configure(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            if ($user->locations()->exists()) {
+                return;
+            }
+
+            $locationId = app()->bound(TenantContext::class)
+                ? app(TenantContext::class)->locationId()
                 : null;
-        }
 
-        return $attributes;
+            if ($locationId !== null && Location::query()->whereKey($locationId)->exists()) {
+                $user->locations()->attach($locationId);
+            }
+        });
     }
 
     /**

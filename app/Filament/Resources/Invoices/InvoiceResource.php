@@ -11,6 +11,7 @@ use App\Filament\Resources\Invoices\Schemas\InvoiceInfolist;
 use App\Filament\Resources\Invoices\Tables\InvoiceTable;
 use App\Helpers\Helpers;
 use App\Models\Invoice;
+use App\Support\Dates\DeviceDateFormat;
 use App\Support\Filament\GlobalSearchBadge;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -71,11 +72,11 @@ class InvoiceResource extends Resource
         }
 
         if ($record->date) {
-            $details[__('app.fields.invoice_date')] = $record->date->toDateString();
+            $details[__('app.fields.invoice_date')] = $record->date->translatedFormat(DeviceDateFormat::date());
         }
 
         if ($record->status) {
-            $details[__('app.fields.status')] = GlobalSearchBadge::status($record->status);
+            $details[__('app.fields.status')] = GlobalSearchBadge::status($record->effectiveStatus());
         }
 
         if (! is_null($record->total_amount)) {
@@ -138,9 +139,12 @@ class InvoiceResource extends Resource
      */
     public static function getEloquentQuery(): Builder
     {
+        // The member's own location scope restricts visibility to the
+        // account's accessible locations (derived from the member's plans).
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->whereHas('subscription.member');
     }
 }

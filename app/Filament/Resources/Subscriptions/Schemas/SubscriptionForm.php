@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Models\Member;
 use App\Models\Plan;
 use App\Models\Subscription;
+use App\Support\AppConfig;
 use App\Support\Billing\InvoiceCalculator;
 use App\Support\Billing\PaymentMethod;
 use App\Support\Data;
@@ -20,6 +21,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
@@ -35,7 +37,7 @@ class SubscriptionForm
      *
      * @return array<string, string>
      */
-    private static function paymentMethodOptions(): array
+    public static function paymentMethodOptions(): array
     {
         return PaymentMethod::options();
     }
@@ -113,7 +115,6 @@ class SubscriptionForm
                             ->label(__('app.fields.start_date'))
                             ->live()
                             ->required()
-                            ->default(now())
                             ->afterStateUpdated(function (Get $get, Set $set) {
                                 $set('end_date', Helpers::calculateSubscriptionEndDate(
                                     self::stringState($get, 'start_date'),
@@ -170,11 +171,10 @@ class SubscriptionForm
                                                     Invoice::class,
                                                     self::stringState($get, 'date')
                                                 )),
-                                            DatePicker::make('date')
-                                                ->label(__('app.fields.date'))
-                                                ->required()
-                                                ->live()
-                                                ->default(now()),
+                                                DatePicker::make('date')
+                                                    ->label(__('app.fields.date'))
+                                                    ->required()
+                                                    ->live(),
                                             DatePicker::make('due_date')
                                                 ->label(__('app.fields.due_date'))
                                                 ->required()
@@ -183,7 +183,7 @@ class SubscriptionForm
                                                 ->label(__('app.fields.discount'))
                                                 ->options(Helpers::getDiscounts())
                                                 ->live()
-                                                ->placeholder(__('app.placeholders.select_discount'))
+                                                ->default(null)
                                                 ->afterStateUpdated(
                                                     function (Get $get, Set $set) {
                                                         $fee = self::floatState($get, 'subscription_fee');
@@ -200,6 +200,7 @@ class SubscriptionForm
                                                 ->debounce(300)
                                                 ->default(0)
                                                 ->prefix(Helpers::getCurrencySymbol())
+                                                ->extraAttributes(['class' => 'verify-money-input'])
                                                 ->maxValue(fn (Get $get): float => self::floatState($get, 'subscription_fee'))
                                                 ->afterStateUpdated(
                                                     function (Get $get, Set $set, $livewire, TextInput $component) {
@@ -223,6 +224,7 @@ class SubscriptionForm
                                                 ->debounce(300)
                                                 ->default(0)
                                                 ->prefix(Helpers::getCurrencySymbol())
+                                                ->extraAttributes(['class' => 'verify-money-input'])
                                                 ->visible(fn (Get $get): bool => ! PaymentMethod::isOnline(self::stringState($get, 'payment_method')))
                                                 ->afterStateUpdated(function (Get $get, Set $set, $livewire, TextInput $component) {
                                                     $livewire->validateOnly($component->getStatePath());
@@ -256,6 +258,7 @@ class SubscriptionForm
                                                 ->dehydrated()
                                                 ->default(0)
                                                 ->prefix(Helpers::getCurrencySymbol())
+                                                ->extraAttributes(['class' => 'verify-money-input'])
                                                 ->required(),
                                             TextInput::make('tax')
                                                 ->label(fn (): string => __('app.fields.tax_with_rate', ['rate' => Helpers::getTaxRate()]))
@@ -264,6 +267,7 @@ class SubscriptionForm
                                                 ->dehydrated()
                                                 ->default(0)
                                                 ->prefix(Helpers::getCurrencySymbol())
+                                                ->extraAttributes(['class' => 'verify-money-input'])
                                                 ->readOnly(),
                                             TextInput::make('total_amount')
                                                 ->label(__('app.fields.total_amount'))
@@ -273,6 +277,7 @@ class SubscriptionForm
                                                 ->dehydrated()
                                                 ->default(0)
                                                 ->prefix(Helpers::getCurrencySymbol())
+                                                ->extraAttributes(['class' => 'verify-money-input'])
                                                 ->required(),
                                             TextInput::make('due_amount')
                                                 ->label(__('app.fields.due_amount'))
@@ -281,7 +286,8 @@ class SubscriptionForm
                                                 ->disabled()
                                                 ->dehydrated()
                                                 ->default(0)
-                                                ->prefix(Helpers::getCurrencySymbol()),
+                                                ->prefix(Helpers::getCurrencySymbol())
+                                                ->extraAttributes(['class' => 'verify-money-input']),
                                         ]),
                                 ]),
                         ]
@@ -290,11 +296,11 @@ class SubscriptionForm
     }
 
     /**
-     * @return array<int, \Filament\Schemas\Components\Component>
+     * @return array<int, Component>
      */
     public static function renewSchema(Subscription $record): array
     {
-        $today = Carbon::today(\App\Support\AppConfig::timezone())->toDateString();
+        $today = Carbon::today(AppConfig::timezone())->toDateString();
         $defaultStartDate = max(
             $today,
             $record->end_date?->copy()->addDay()->toDateString() ?? $today,
@@ -381,7 +387,6 @@ class SubscriptionForm
                                 ->label(__('app.fields.invoice_date'))
                                 ->native(false)
                                 ->suffixIcon('heroicon-m-calendar-days')
-                                ->default($today)
                                 ->live()
                                 ->afterStateUpdated(function (Get $get, Set $set, ?string $state): void {
                                     $set('invoice_number', Helpers::generateLastNumber(
@@ -399,13 +404,12 @@ class SubscriptionForm
                                 ->label(__('app.fields.due_date'))
                                 ->native(false)
                                 ->suffixIcon('heroicon-m-calendar-days')
-                                ->default($today)
                                 ->required(),
                             Select::make('discount')
                                 ->label(__('app.fields.discount'))
                                 ->options(Helpers::getDiscounts())
                                 ->live()
-                                ->placeholder(__('app.placeholders.select_discount'))
+                                ->default(null)
                                 ->afterStateUpdated(function (Get $get, Set $set): void {
                                     $plan = self::planFromState($get);
                                     $fee = round(Data::float($plan?->amount));
@@ -427,6 +431,7 @@ class SubscriptionForm
                                 ->debounce(300)
                                 ->default(0)
                                 ->prefix(Helpers::getCurrencySymbol())
+                                ->extraAttributes(['class' => 'verify-money-input'])
                                 ->afterStateUpdated(function (Get $get, Set $set): void {
                                     self::recalculateRenewInvoiceSummary($get, $set);
                                 }),
@@ -514,7 +519,7 @@ class SubscriptionForm
     public static function handleRenew(Subscription $record, array $data): void
     {
         Subscription::query()->getConnection()->transaction(function () use ($record, $data): void {
-            $timezone = \App\Support\AppConfig::timezone();
+            $timezone = AppConfig::timezone();
             $today = Carbon::today($timezone);
 
             $plan = Plan::findOrFail(Data::int($data['plan_id'] ?? null));
@@ -533,6 +538,7 @@ class SubscriptionForm
                 'start_date' => $startDate,
                 'end_date' => $endDate,
                 'status' => $status,
+                'location_id' => $plan->location_id,
             ]);
 
             if ($record->end_date && $record->end_date->lt($today)) {
@@ -570,6 +576,7 @@ class SubscriptionForm
                 'paid_amount' => $paidAmount,
                 'subscription_fee' => $fee,
                 'status' => 'issued',
+                'location_id' => $plan->location_id,
             ]);
 
             Notification::make()
@@ -626,7 +633,7 @@ class SubscriptionForm
     /**
      * Format the plan option label for the select input.
      */
-    private static function formatPlanOptionLabel(Plan $plan): string
+    public static function formatPlanOptionLabel(Plan $plan): string
     {
         return sprintf(
             '%s – %s (%s%s | %s)',
@@ -640,7 +647,7 @@ class SubscriptionForm
 
     private static function stringState(Get $get, string $path): ?string
     {
-        return \App\Support\Data::nullableString($get($path));
+        return Data::nullableString($get($path));
     }
 
     private static function intState(Get $get, string $path): ?int
@@ -652,7 +659,7 @@ class SubscriptionForm
 
     private static function floatState(Get $get, string $path): float
     {
-        return \App\Support\Data::float($get($path));
+        return Data::float($get($path));
     }
 
     private static function planFromState(Get $get): ?Plan

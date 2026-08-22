@@ -4,8 +4,8 @@ namespace App\Console\Commands;
 
 use App\Helpers\Helpers;
 use App\Models\Subscription;
-use App\Models\User;
 use App\Support\AppConfig;
+use App\Support\Notifications\NotificationRecipients;
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Illuminate\Console\Command;
@@ -97,7 +97,9 @@ class MarkSubscriptionsStatus extends Command
         if ($runAll) {
             $ongoingCount = Subscription::query()
                 ->whereDate('start_date', '<=', $today)
-                ->whereDate('end_date', '>', $expiringThreshold)
+                ->where(fn ($query) => $query
+                    ->whereNull('end_date')
+                    ->orWhereDate('end_date', '>', $expiringThreshold))
                 ->whereNotIn('status', ['ongoing', 'expired', 'renewed'])
                 ->update(['status' => 'ongoing']);
 
@@ -116,13 +118,12 @@ class MarkSubscriptionsStatus extends Command
             $this->info("• {$line}");
         }
 
-        $admin = User::role('super_admin')->first();
-        if ($admin) {
+        foreach (NotificationRecipients::resolve('subscription_status') as $recipient) {
             Notification::make()
                 ->title(__('app.notifications.subscription_status_update_title'))
                 ->body(__('app.notifications.subscription_status_update_body', ['summary' => implode(', ', $summary)]))
                 ->info()
-                ->sendToDatabase($admin);
+                ->sendToDatabase($recipient);
         }
 
         return self::SUCCESS;

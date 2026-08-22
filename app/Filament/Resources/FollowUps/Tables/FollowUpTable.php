@@ -3,9 +3,12 @@
 namespace App\Filament\Resources\FollowUps\Tables;
 
 use App\Filament\Resources\FollowUps\FollowUpResource;
+use App\Helpers\Helpers;
 use App\Models\Enquiry;
 use App\Models\FollowUp;
 use App\Models\User;
+use App\Support\Data;
+use App\Support\Dates\DeviceDateFormat;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -20,11 +23,13 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\Column;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 
 class FollowUpTable
@@ -35,7 +40,7 @@ class FollowUpTable
      * This is used by both the Follow Ups index table and any relation managers
      * that want to reuse the same column set.
      *
-     * @return array<int, \Filament\Tables\Columns\Column>
+     * @return array<int, Column>
      */
     public static function getColumns(): array
     {
@@ -57,7 +62,7 @@ class FollowUpTable
                 ->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('schedule_date')
                 ->searchable()
-                ->date('d-m-Y')
+                ->date(DeviceDateFormat::date())
                 ->label(__('app.fields.schedule_date'))
                 ->toggleable(isToggledHiddenByDefault: false),
             TextColumn::make('status')
@@ -68,7 +73,7 @@ class FollowUpTable
                 ->placeholder(__('app.placeholders.na'))
                 ->limit(40)
                 ->tooltip(function (TextColumn $column): ?string {
-                    $state = \App\Support\Data::nullableString($column->getState());
+                    $state = Data::nullableString($column->getState());
 
                     if ($state === null || strlen($state) <= $column->getCharacterLimit()) {
                         return null;
@@ -134,8 +139,8 @@ class FollowUpTable
                         : __('app.empty.create_to_get_started', ['resource' => $record]);
                 }
 
-                $from = $fromRaw ? Carbon::parse($fromRaw)->format('d-m-Y') : (string) __('app.common.the_beginning');
-                $to = $toRaw ? Carbon::parse($toRaw)->format('d-m-Y') : (string) __('app.common.today');
+                $from = $fromRaw ? Carbon::parse($fromRaw)->translatedFormat(DeviceDateFormat::date()) : (string) __('app.common.the_beginning');
+                $to = $toRaw ? Carbon::parse($toRaw)->translatedFormat(DeviceDateFormat::date()) : (string) __('app.common.today');
 
                 if ($tab === 'all') {
                     return __('app.empty.found_none_between', ['records' => $records, 'from' => $from, 'to' => $to]);
@@ -226,9 +231,10 @@ class FollowUpTable
                                 ->label(__('app.fields.handled_by'))
                                 ->relationship(name: 'user', titleAttribute: 'name')
                                 ->placeholder(__('app.placeholders.select_handler'))
+                                ->default(fn () => Auth::id())
                                 ->getOptionLabelFromRecordUsing(function (User $record): string {
                                     $name = html_entity_decode($record->name, ENT_QUOTES, 'UTF-8');
-                                    $url = ! empty($record->photo) ? e($record->photo) : "https://ui-avatars.com/api/?background=000&color=fff&name={$name}";
+                                    $url = ! empty($record->photo) ? e(Helpers::photoUrl($record->photo)) : "https://ui-avatars.com/api/?background=000&color=fff&name={$name}";
 
                                     return Blade::render(
                                         '<div class="flex items-center gap-2 h-9">

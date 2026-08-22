@@ -2,6 +2,7 @@
 
 namespace App\Support\Analytics;
 
+use App\Support\AppConfig;
 use Carbon\CarbonImmutable;
 
 /**
@@ -30,7 +31,7 @@ final readonly class AnalyticsDateRange
     public static function fromFilters(?array $filters, ?string $timezone = null): self
     {
         $filters ??= [];
-        $timezone ??= \App\Support\AppConfig::timezone();
+        $timezone ??= AppConfig::timezone();
         $today = CarbonImmutable::today($timezone);
 
         $period = is_string($filters['period'] ?? null) ? $filters['period'] : '7days';

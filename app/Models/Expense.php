@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use App\Enums\Status;
+use App\Models\Concerns\ScopedByLocation;
+use Database\Factories\ExpenseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Expense extends Model
 {
-    /** @use HasFactory<\Database\Factories\ExpenseFactory> */
-    use HasFactory;
+    /** @use HasFactory<ExpenseFactory> */
+    use HasFactory, ScopedByLocation;
 
     protected $attributes = [
         'status' => 'pending',
@@ -19,6 +21,7 @@ class Expense extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'location_id',
         'name',
         'amount',
         'date',

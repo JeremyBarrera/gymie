@@ -57,7 +57,7 @@ it('persists settings via the settings repository when saving', function (): voi
 
     expect($repository->lastPut)
         ->toHaveKey('general')
-        ->and($repository->lastPut['general']['financial_year_start'])->toBe('2026-04-01')
-        ->and($repository->lastPut['general']['financial_year_end'])->toBe('2027-03-31')
-        ->and($repository->lastPut['general']['gym_logo'])->toBe('images/logo.png');
+        ->and($repository->lastPut['general']['financial_year_start'])->toBe('2026-04-15')
+        ->and($repository->lastPut['general']['financial_year_end'])->toBeNull()
+        ->and($repository->lastPut['general']['gym_logo'])->toBe(['images/logo.png']);
 });

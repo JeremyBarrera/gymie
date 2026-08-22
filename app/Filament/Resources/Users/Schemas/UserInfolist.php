@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Enums\Status;
 use App\Models\User;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -24,7 +25,7 @@ class UserInfolist
             ->components([
                 Section::make()
                     ->heading(function (User $record): HtmlString {
-                        $status = $record->status ?? \App\Enums\Status::Inactive;
+                        $status = $record->status ?? Status::Inactive;
                         $html = Blade::render(
                             '<x-filament::badge class="inline-flex ml-2" :color="$color">
                                 {{ $label }}
@@ -60,24 +61,17 @@ class UserInfolist
                                         fn ($state): string => Str::headline($state)
                                     )
                                     ->badge(),
-                            ])->columnSpan(4)->columns(3),
-                    ])->columns(5),
+                            ])->columnSpan(2)->columns(3),
+                    ])->columns(3),
                 Section::make(__('app.ui.location'))
                     ->schema([
-                        TextEntry::make('address')->label(__('app.fields.address')),
-                        Group::make()
-                            ->schema([
-                                TextEntry::make('country')->label(__('app.fields.country')),
-                                TextEntry::make('state')
-                                    ->label(__('app.fields.state'))
-                                    ->placeholder(__('app.placeholders.na')),
-                                TextEntry::make('city')
-                                    ->label(__('app.fields.city'))
-                                    ->placeholder(__('app.placeholders.na')),
-                                TextEntry::make('pincode')
-                                    ->label(__('app.fields.pincode')),
-                            ])
-                            ->columns(4),
+                        TextEntry::make('locations.name')
+                            ->label(__('app.fields.location'))
+                            ->badge()
+                            ->placeholder(__('app.placeholders.na')),
+                        TextEntry::make('locations.city')
+                            ->label(__('app.fields.city'))
+                            ->placeholder(__('app.placeholders.na')),
                     ]),
 
             ]);

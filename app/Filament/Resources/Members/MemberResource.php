@@ -6,6 +6,7 @@ use App\Filament\Resources\Members\Pages\CreateMember;
 use App\Filament\Resources\Members\Pages\EditMember;
 use App\Filament\Resources\Members\Pages\ListMembers;
 use App\Filament\Resources\Members\Pages\ViewMember;
+use App\Filament\Resources\Members\RelationManagers\PlanCheckInsRelationManager;
 use App\Filament\Resources\Members\RelationManagers\SubscriptionsRelationManager;
 use App\Filament\Resources\Members\Schemas\MemberForm;
 use App\Filament\Resources\Members\Schemas\MemberInfolist;
@@ -104,6 +105,7 @@ class MemberResource extends Resource
     {
         return [
             SubscriptionsRelationManager::class,
+            PlanCheckInsRelationManager::class,
         ];
     }
 

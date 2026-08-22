@@ -3,10 +3,11 @@
 namespace App\Filament\Resources\Users\Schemas;
 
 use App\Helpers\Helpers;
+use App\Models\User;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -59,13 +60,7 @@ class UserForm
                                             ->unique(ignorable: fn ($record) => $record)
                                             ->prefixIcon('heroicon-m-envelope'),
                                     ])->columns(2)->columnSpanFull(),
-                                TextInput::make('contact')
-                                    ->label(__('app.fields.contact'))
-                                    ->prefixIcon('heroicon-m-phone')
-                                    ->tel()
-                                    ->maxLength(20)
-                                    ->regex('/^\+?[0-9\s\-\(\)]+$/') // Allows +, digits, spaces, dashes, and parentheses
-                                    ->required(),
+                                Helpers::phoneField('contact', required: true),
                                 Select::make('gender')
                                     ->label(__('app.fields.gender'))
                                     ->options([
@@ -84,7 +79,14 @@ class UserForm
                                     ->relationship('roles', 'name')
                                     ->getOptionLabelFromRecordUsing(
                                         fn ($record): string => Str::headline($record->name)
-                                    ),
+                                    )
+                                    ->visible(fn (?User $record) => ! $record?->isOwner()),
+                                Placeholder::make('role_display')
+                                    ->label(__('app.fields.role'))
+                                    ->content(fn (?User $record) => $record?->roles->first()?->name
+                                        ? Str::headline($record->roles->first()->name)
+                                        : '—')
+                                    ->visible(fn (?User $record) => $record?->isOwner()),
                                 TextInput::make('password')
                                     ->label(__('app.fields.password'))
                                     ->password()
@@ -104,40 +106,14 @@ class UserForm
                     ]),
                 Section::make(__('app.ui.location'))
                     ->schema([
-                        Textarea::make('address')
-                            ->label(__('app.fields.address'))
+                        Select::make('locations')
+                            ->label(__('app.fields.location'))
+                            ->relationship('locations', 'name')
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
                             ->required()
-                            ->placeholder(__('app.placeholders.address_example')),
-                        Group::make()
-                            ->schema([
-                                Select::make('country')
-                                    ->label(__('app.fields.country'))
-                                    ->placeholder(__('app.placeholders.select_country'))
-                                    ->options(Helpers::getCountries())
-                                    ->searchable()
-                                    ->preload()
-                                    ->required()
-                                    ->reactive()
-                                    ->afterStateUpdated(fn (callable $set) => [
-                                        $set('state', null),
-                                        $set('city', null),
-                                    ]),
-                                Select::make('state')
-                                    ->label(__('app.fields.state'))
-                                    ->placeholder(__('app.placeholders.select_state'))
-                                    ->options(fn ($get) => Helpers::getStates($get('country')))
-                                    ->searchable()
-                                    ->reactive(),
-                                Select::make('city')
-                                    ->label(__('app.fields.city'))
-                                    ->placeholder(__('app.placeholders.select_city'))
-                                    ->options(fn ($get) => Helpers::getCities($get('state')))
-                                    ->searchable()
-                                    ->reactive(),
-                                TextInput::make('pincode')
-                                    ->label(__('app.fields.pincode'))
-                                    ->placeholder(__('app.placeholders.pincode')),
-                            ])->columns(4),
+                            ->placeholder(__('app.placeholders.select_location')),
                     ]),
             ]);
     }

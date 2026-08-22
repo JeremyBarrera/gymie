@@ -45,4 +45,18 @@ final class AppConfig
 
         return $values !== [] ? $values : [self::string('app.locale', 'en')];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function localeFlags(): array
+    {
+        return [
+            'en' => '🇺🇸',
+            'fr' => '🇫🇷',
+            'ar' => '🇸🇦',
+            'fa' => '🇮🇷',
+            'es' => '🇪🇸',
+        ];
+    }
 }

@@ -7,6 +7,7 @@ use App\Http\Resources\V1\InvoiceTransactionResource;
 use App\Models\Invoice;
 use App\Models\InvoiceTransaction;
 use App\Services\Api\QueryFilters;
+use App\Support\AppConfig;
 use App\Support\Data;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -45,7 +46,7 @@ class InvoiceTransactionsController extends ApiController
         $transaction = $invoice->transactions()->create([
             'type' => $data['type'],
             'amount' => $data['amount'],
-            'occurred_at' => $data['occurred_at'] ?? now()->timezone(\App\Support\AppConfig::timezone()),
+            'occurred_at' => $data['occurred_at'] ?? now()->timezone(AppConfig::timezone()),
             'payment_method' => $data['payment_method'] ?? $invoice->payment_method,
             'note' => $data['note'] ?? null,
             'reference_id' => $data['reference_id'] ?? null,

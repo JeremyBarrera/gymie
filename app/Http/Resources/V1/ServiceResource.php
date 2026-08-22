@@ -2,12 +2,13 @@
 
 namespace App\Http\Resources\V1;
 
+use App\Models\Service;
 use App\Services\Api\Schemas\ServiceSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\Service
+ * @mixin Service
  */
 class ServiceResource extends JsonResource
 {
@@ -18,7 +19,7 @@ class ServiceResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var \App\Models\Service $service */
+        /** @var Service $service */
         $service = $this->resource;
 
         return ServiceSchema::resource($service);

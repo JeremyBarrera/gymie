@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Users\Pages;
 
 use App\Filament\Resources\Users\UserResource;
 use App\Models\User;
-use Filament\Actions\DeleteAction;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -27,7 +27,16 @@ class ViewUser extends ViewRecord
     {
         return [
             EditAction::make(),
-            DeleteAction::make(),
+            Action::make('ownerDeleteWarning')
+                ->label(__('app.deletion_prevention.owner_delete_warning'))
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->visible(fn (): bool => $this->record->isOwner() && ! $this->hasOtherOwners())
+                ->modalIcon('heroicon-o-exclamation-triangle')
+                ->modalHeading(__('app.deletion_prevention.cannot_delete_last_owner'))
+                ->modalDescription(__('app.deletion_prevention.cannot_delete_last_owner_description'))
+                ->modalCancelAction(false)
+                ->modalSubmitAction(false),
         ];
     }
 
@@ -38,5 +47,13 @@ class ViewUser extends ViewRecord
             UserResource::getUrl('index') => UserResource::getNavigationLabel(),
             $this->record->name,
         ];
+    }
+
+    private function hasOtherOwners(): bool
+    {
+        return User::query()
+            ->where('id', '!=', $this->record->id)
+            ->whereHas('roles', fn ($q) => $q->where('name', 'owner'))
+            ->exists();
     }
 }

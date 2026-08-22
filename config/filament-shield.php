@@ -1,6 +1,10 @@
 <?php
 
 declare(strict_types=1);
+use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
+use Filament\Pages\Dashboard;
+use Filament\Widgets\AccountWidget;
+use Filament\Widgets\FilamentInfoWidget;
 
 return [
 
@@ -58,16 +62,18 @@ return [
     | Super Admin
     |--------------------------------------------------------------------------
     |
-    | Here you may define a super admin that has unrestricted access to your
-    | application. You can choose to implement this via Laravel's gate system
-    | or as a traditional role with all permissions explicitly assigned.
+    | The legacy `super_admin` role is not used anywhere in this application:
+    | permissions and scoping flow through location-based roles and
+    | `user_locations`, with the `owner` role as the only unrestricted account.
+    | Keep this disabled so Shield does not register its implicit super admin
+    | gate (the package default would enable it).
     |
     */
 
     'super_admin' => [
-        'enabled' => true,
+        'enabled' => false,
         'name' => 'super_admin',
-        'define_via_gate' => true,
+        'define_via_gate' => false,
         'intercept_gate' => 'before',
     ],
 
@@ -174,7 +180,7 @@ return [
     'resources' => [
         'subject' => 'model',
         'manage' => [
-            \BezhanSalleh\FilamentShield\Resources\Roles\RoleResource::class => [
+            RoleResource::class => [
                 'viewAny',
                 'view',
                 'create',
@@ -202,8 +208,8 @@ return [
         'subject' => 'class',
         'prefix' => 'view',
         'exclude' => [
-            \Filament\Pages\Dashboard::class,
-            \App\Filament\Pages\Dashboard::class,
+            Dashboard::class,
+            App\Filament\Pages\Dashboard::class,
         ],
     ],
 
@@ -222,8 +228,8 @@ return [
         'subject' => 'class',
         'prefix' => 'view',
         'exclude' => [
-            \Filament\Widgets\AccountWidget::class,
-            \Filament\Widgets\FilamentInfoWidget::class,
+            AccountWidget::class,
+            FilamentInfoWidget::class,
         ],
     ],
 
