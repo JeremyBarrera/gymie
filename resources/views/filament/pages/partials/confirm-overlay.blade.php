@@ -28,7 +28,6 @@
     >
         <x-filament::modal
             id="confirm-overlay"
-            x-init="$nextTick(() => open())"
             width="lg"
             :close-by-clicking-away="false"
             :close-by-escaping="false"

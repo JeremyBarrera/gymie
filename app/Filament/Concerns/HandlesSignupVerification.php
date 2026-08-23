@@ -150,6 +150,7 @@ trait HandlesSignupVerification
 
         $this->selectedQueueEntryId = $entry->id;
         $this->showVerifyOverlay = true;
+        $this->dispatch('open-modal', id: 'verify-overlay');
         $this->verifyStep = 1;
         $this->verifyPhoto = null;
         $this->verifyCheckIn = false;
@@ -205,6 +206,11 @@ trait HandlesSignupVerification
 
     private function resetVerifyOverlay(): void
     {
+        // Close through Filament's modal manager BEFORE the state clear can
+        // morph the modal out of the DOM — an unmount while open leaves a
+        // stuck semi-transparent window stacked on top of the next modal.
+        $this->dispatch('close-modal', id: 'verify-overlay');
+
         $closedId = (int) $this->selectedQueueEntryId;
 
         $this->showVerifyOverlay = false;

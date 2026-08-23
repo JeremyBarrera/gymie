@@ -676,6 +676,71 @@ it('recalculates the sale summary when the plan changes', function (): void {
         ->assertSet('verifyForm.sale.due', $summary['due']);
 });
 
+it('opens and closes every overlay through modal dispatches only', function (): void {
+    $location = Location::factory()->create();
+    $signupEntry = liveReceptionSignupEntry($location);
+    $checkInEntry = QueueEntry::create([
+        'uuid' => (string) Str::uuid(),
+        'location_id' => $location->id,
+        'kind' => 'checkin',
+        'payload' => [
+            'member_id' => liveCheckInOverlayMember()->id,
+            'identifier_type' => 'contact',
+            'identifier_value' => '5559876543',
+        ],
+        'identifier_type' => 'contact',
+        'status' => 'waiting',
+        'expires_at' => now()->addMinutes(10),
+    ]);
+
+    Livewire::actingAs(liveReceptionStaff())
+        ->test(Reception::class)
+        ->call('openVerifyOverlay', $signupEntry->id)
+        ->assertDispatched('open-modal', id: 'verify-overlay')
+        ->call('closeVerifyOverlay')
+        ->assertDispatched('close-modal', id: 'verify-overlay')
+        ->call('openCheckInOverlay', $checkInEntry->id)
+        ->assertDispatched('open-modal', id: 'checkin-overlay')
+        ->call('closeCheckInOverlay')
+        ->assertDispatched('close-modal', id: 'checkin-overlay')
+        ->call('openConfirmOverlay', $signupEntry->id, 'approve')
+        ->assertDispatched('open-modal', id: 'confirm-overlay')
+        ->call('closeConfirmOverlay')
+        ->assertDispatched('close-modal', id: 'confirm-overlay');
+});
+
+it('closes every open overlay by dispatch when the active tab changes', function (): void {
+    $location = Location::factory()->create();
+    $signupEntry = liveReceptionSignupEntry($location);
+
+    Livewire::actingAs(liveReceptionStaff())
+        ->test(Reception::class)
+        ->call('openVerifyOverlay', $signupEntry->id)
+        ->call('openConfirmOverlay', $signupEntry->id, 'deny')
+        ->call('setActiveTab', 'checkin')
+        ->assertDispatched('close-modal', id: 'verify-overlay')
+        ->assertDispatched('close-modal', id: 'confirm-overlay')
+        ->assertSet('showVerifyOverlay', false)
+        ->assertSet('showConfirmOverlay', false);
+});
+
+it('never auto-opens overlays with x-init', function (): void {
+    foreach (['verify-overlay', 'checkin-overlay', 'confirm-overlay'] as $overlay) {
+        $view = file_get_contents(resource_path("views/filament/pages/partials/{$overlay}.blade.php"));
+
+        expect($view)->not->toContain('$nextTick(() => open())');
+    }
+});
+
+function liveCheckInOverlayMember(): Member
+{
+    return Member::factory()->create([
+        'status' => Status::Active,
+        'contact' => '5559876543',
+    ]);
+}
+
+
 it('removes resolved and claimed entries from the pending queue', function (): void {
     $location = Location::factory()->create();
     $resolved = liveReceptionSignupEntry($location, ['name' => 'Resolved Person']);

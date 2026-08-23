@@ -363,6 +363,21 @@ class Reception extends Page
     public function setActiveTab(string $tab): void
     {
         $this->activeTab = $tab;
+
+        // Any open overlay must be closed through Filament's modal manager
+        // before this state teardown morphs it out of the DOM (Modals-1).
+        if ($this->showConfirmOverlay) {
+            $this->dispatch('close-modal', id: 'confirm-overlay');
+        }
+
+        if ($this->showVerifyOverlay) {
+            $this->dispatch('close-modal', id: 'verify-overlay');
+        }
+
+        if ($this->showCheckInOverlay) {
+            $this->dispatch('close-modal', id: 'checkin-overlay');
+        }
+
         $this->selectedQueueEntryId = null;
         $this->showConfirmOverlay = false;
         $this->showVerifyOverlay = false;
@@ -447,10 +462,16 @@ class Reception extends Page
         $this->confirmAction = $action;
         $this->denyReason = '';
         $this->showConfirmOverlay = true;
+        $this->dispatch('open-modal', id: 'confirm-overlay');
     }
 
     public function closeConfirmOverlay(): void
     {
+        // Close through Filament's modal manager BEFORE the state clear can
+        // morph the modal out of the DOM — an unmount while open leaves a
+        // stuck semi-transparent window stacked on top of the next modal.
+        $this->dispatch('close-modal', id: 'confirm-overlay');
+
         $this->showConfirmOverlay = false;
         $this->selectedQueueEntryId = null;
         $this->confirmAction = null;

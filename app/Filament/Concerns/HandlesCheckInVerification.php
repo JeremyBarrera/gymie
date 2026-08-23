@@ -130,6 +130,7 @@ trait HandlesCheckInVerification
         $this->checkInManualMode = true;
         $this->manualCheckInCandidates = $candidates->map(fn (Member $member): int => (int) $member->id)->values()->all();
         $this->showCheckInOverlay = true;
+        $this->dispatch('open-modal', id: 'checkin-overlay');
 
         if ($candidates->count() === 1) {
             $this->selectedCheckInMemberId = (int) $candidates->first()->id;
@@ -174,6 +175,7 @@ trait HandlesCheckInVerification
         $this->checkInOverrideReason = '';
         $this->checkInOverrideRecipients = [];
         $this->showCheckInOverlay = true;
+        $this->dispatch('open-modal', id: 'checkin-overlay');
 
         $this->checkInPopupQueue = array_values(array_diff($this->checkInPopupQueue, [$entry->id]));
 
@@ -190,6 +192,11 @@ trait HandlesCheckInVerification
 
     private function resetCheckInOverlay(): void
     {
+        // Close through Filament's modal manager BEFORE the state clear can
+        // morph the modal out of the DOM — an unmount while open leaves a
+        // stuck semi-transparent window stacked on top of the next modal.
+        $this->dispatch('close-modal', id: 'checkin-overlay');
+
         $closedId = (int) $this->selectedCheckInEntryId;
 
         $this->showCheckInOverlay = false;

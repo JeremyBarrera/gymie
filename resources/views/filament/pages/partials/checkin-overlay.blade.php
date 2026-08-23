@@ -134,7 +134,6 @@
     >
         <x-filament::modal
             id="checkin-overlay"
-            x-init="$nextTick(() => open())"
             width="3xl"
             :close-by-clicking-away="false"
             :close-by-escaping="false"
