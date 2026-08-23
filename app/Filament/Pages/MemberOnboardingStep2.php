@@ -258,6 +258,7 @@ class MemberOnboardingStep2 extends Page implements HasForms
                                         ->debounce(300)
                                         ->default(0)
                                         ->prefix(Helpers::getCurrencySymbol())
+                                        ->extraAttributes(['class' => 'verify-money-input'])
                                         ->maxValue(fn (Get $get): float => self::floatState($get, 'subscription_fee'))
                                         ->afterStateUpdated(
                                             function (Get $get, Set $set, $livewire, TextInput $component) {
@@ -281,6 +282,7 @@ class MemberOnboardingStep2 extends Page implements HasForms
                                         ->debounce(300)
                                         ->default(0)
                                         ->prefix(Helpers::getCurrencySymbol())
+                                        ->extraAttributes(['class' => 'verify-money-input'])
                                         ->visible(fn (Get $get): bool => ! PaymentMethod::isOnline(self::stringState($get, 'payment_method')))
                                         ->afterStateUpdated(function (Get $get, Set $set, $livewire, TextInput $component) {
                                             $livewire->validateOnly($component->getStatePath());

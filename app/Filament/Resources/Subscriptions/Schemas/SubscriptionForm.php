@@ -171,10 +171,10 @@ class SubscriptionForm
                                                     Invoice::class,
                                                     self::stringState($get, 'date')
                                                 )),
-                                                DatePicker::make('date')
-                                                    ->label(__('app.fields.date'))
-                                                    ->required()
-                                                    ->live(),
+                                            DatePicker::make('date')
+                                                ->label(__('app.fields.date'))
+                                                ->required()
+                                                ->live(),
                                             DatePicker::make('due_date')
                                                 ->label(__('app.fields.due_date'))
                                                 ->required()
@@ -445,6 +445,7 @@ class SubscriptionForm
                                 ->debounce(300)
                                 ->default(0)
                                 ->prefix(Helpers::getCurrencySymbol())
+                                ->extraAttributes(['class' => 'verify-money-input'])
                                 ->visible(fn (Get $get): bool => ! PaymentMethod::isOnline(self::stringState($get, 'payment_method')))
                                 ->afterStateUpdated(function (Get $get, Set $set): void {
                                     self::recalculateRenewInvoiceSummary($get, $set);
@@ -480,7 +481,8 @@ class SubscriptionForm
 
                                     return round(Data::float($plan?->amount));
                                 })
-                                ->prefix(Helpers::getCurrencySymbol()),
+                                ->prefix(Helpers::getCurrencySymbol())
+                                ->extraAttributes(['class' => 'verify-money-input']),
                             TextInput::make('tax')
                                 ->label(fn (): string => __('app.fields.tax_with_rate', ['rate' => Helpers::getTaxRate()]))
                                 ->numeric()
@@ -488,7 +490,8 @@ class SubscriptionForm
                                 ->disabled()
                                 ->dehydrated()
                                 ->default(0)
-                                ->prefix(Helpers::getCurrencySymbol()),
+                                ->prefix(Helpers::getCurrencySymbol())
+                                ->extraAttributes(['class' => 'verify-money-input']),
                             TextInput::make('total_amount')
                                 ->label(__('app.fields.total_amount'))
                                 ->numeric()
@@ -496,7 +499,8 @@ class SubscriptionForm
                                 ->disabled()
                                 ->dehydrated()
                                 ->default(0)
-                                ->prefix(Helpers::getCurrencySymbol()),
+                                ->prefix(Helpers::getCurrencySymbol())
+                                ->extraAttributes(['class' => 'verify-money-input']),
                             TextInput::make('due_amount')
                                 ->label(__('app.fields.due_amount'))
                                 ->numeric()
@@ -504,7 +508,8 @@ class SubscriptionForm
                                 ->disabled()
                                 ->dehydrated()
                                 ->default(0)
-                                ->prefix(Helpers::getCurrencySymbol()),
+                                ->prefix(Helpers::getCurrencySymbol())
+                                ->extraAttributes(['class' => 'verify-money-input']),
                         ]),
                 ]),
         ];
