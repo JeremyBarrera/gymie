@@ -277,6 +277,7 @@ return [
         'due_amount' => 'Due Amount: :amount',
         'refundable_amount' => 'Refundable: :amount',
         'phone_format' => 'Include country code. Only digits, spaces, +, -, and () allowed.',
+        'paid_at_device_time' => 'Select the payment time in your device\'s local time. It will be saved in UTC and shown to others in their local time.',
     ],
     'tooltips' => [
         'member_email_missing' => 'Member email is missing',

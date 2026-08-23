@@ -277,6 +277,7 @@ return [
         'due_amount' => 'Monto pendiente: :amount',
         'refundable_amount' => 'Reembolsable: :amount',
         'phone_format' => 'Incluí el código de país. Solo se permiten números, espacios, +, -, y ().',
+        'paid_at_device_time' => 'Seleccione la hora del pago en la hora local de su dispositivo. Se guardará en UTC y se mostrará a otros en su hora local.',
     ],
     'tooltips' => [
         'member_email_missing' => 'Falta el correo electrónico del socio',

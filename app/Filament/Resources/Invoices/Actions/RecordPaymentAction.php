@@ -4,8 +4,9 @@ namespace App\Filament\Resources\Invoices\Actions;
 
 use App\Helpers\Helpers;
 use App\Models\Invoice;
-use App\Support\AppConfig;
 use App\Support\Billing\PaymentMethod;
+use App\Support\Dates\DeviceDateFormat;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -32,7 +33,7 @@ class RecordPaymentAction
                     ->label(__('app.fields.amount_with_currency', ['currency' => Helpers::getCurrencyCode()]))
                     ->required()
                     ->numeric()
-                    ->extraAttributes(['class' => 'verify-money-input'])
+                    ->extraInputAttributes(['class' => 'verify-money-input'])
                     ->reactive()
                     ->default(fn (Invoice $record): float => (float) ($record->due_amount ?? 0))
                     ->placeholder(__('app.placeholders.enter_amount'))
@@ -46,9 +47,10 @@ class RecordPaymentAction
                 DateTimePicker::make('occurred_at')
                     ->label(__('app.fields.paid_at'))
                     ->seconds(false)
-                    ->timezone(AppConfig::timezone())
-                    ->default(fn (): string => now()->timezone(AppConfig::timezone())->format('Y-m-d H:i:s'))
-                    ->required(),
+                    ->timezone(DeviceDateFormat::timezone())
+                    ->default(fn (): string => now()->timezone(DeviceDateFormat::timezone())->format('Y-m-d H:i:s'))
+                    ->required()
+                    ->helperText(__('app.help.paid_at_device_time')),
                 Select::make('payment_method')
                     ->label(__('app.fields.payment_method'))
                     ->options(PaymentMethod::options())
@@ -72,10 +74,16 @@ class RecordPaymentAction
                     return;
                 }
 
+                // The picker speaks the viewing device's wall clock.
+                // Parse in device timezone, then store as UTC (MySQL TIMESTAMP handles this).
+                $occurredAt = filled($data['occurred_at'] ?? null)
+                    ? Carbon::parse((string) $data['occurred_at'], DeviceDateFormat::timezone())->utc()
+                    : now()->utc();
+
                 $record->transactions()->create([
                     'type' => 'payment',
                     'amount' => $amount,
-                    'occurred_at' => $data['occurred_at'] ?? now()->timezone(AppConfig::timezone()),
+                    'occurred_at' => $occurredAt,
                     'payment_method' => $data['payment_method'] ?? null,
                     'note' => $data['note'] ?? null,
                     'created_by' => auth()->id(),

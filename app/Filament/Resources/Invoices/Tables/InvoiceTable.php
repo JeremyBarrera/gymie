@@ -9,7 +9,6 @@ use App\Models\Invoice;
 use App\Models\InvoiceTransaction;
 use App\Models\Subscription;
 use App\Services\Email\InvoiceEmailService;
-use App\Support\AppConfig;
 use App\Support\Billing\PaymentMethod;
 use App\Support\Data;
 use App\Support\Dates\DeviceDateFormat;
@@ -190,7 +189,7 @@ class InvoiceTable
                                     ->label(__('app.fields.amount_with_currency', ['currency' => Helpers::getCurrencyCode()]))
                                     ->required()
                                     ->numeric()
-                                    ->extraAttributes(['class' => 'verify-money-input'])
+                                    ->extraInputAttributes(['class' => 'verify-money-input'])
                                     ->reactive()
                                     ->default(fn (Invoice $record): float => (float) ($record->due_amount ?? 0))
                                     ->placeholder(__('app.placeholders.enter_amount'))
@@ -204,9 +203,10 @@ class InvoiceTable
                                 DateTimePicker::make('occurred_at')
                                     ->label(__('app.fields.paid_at'))
                                     ->seconds(false)
-                                    ->timezone(AppConfig::timezone())
-                                    ->default(fn (): string => now()->timezone(AppConfig::timezone())->format('Y-m-d H:i:s'))
-                                    ->required(),
+                                    ->timezone(DeviceDateFormat::timezone())
+                                    ->default(fn (): string => now()->timezone(DeviceDateFormat::timezone())->format('Y-m-d H:i:s'))
+                                    ->required()
+                                    ->helperText(__('app.help.paid_at_device_time')),
                                 Select::make('payment_method')
                                     ->label(__('app.fields.payment_method'))
                                     ->options(PaymentMethod::options())
@@ -230,10 +230,15 @@ class InvoiceTable
                                     return;
                                 }
 
+                                // Device wall clock in, store as UTC.
+                                $occurredAt = filled($data['occurred_at'] ?? null)
+                                    ? Carbon::parse((string) $data['occurred_at'], DeviceDateFormat::timezone())->utc()
+                                    : now()->utc();
+
                                 $record->transactions()->create([
                                     'type' => 'payment',
                                     'amount' => $amount,
-                                    'occurred_at' => $data['occurred_at'] ?? now()->timezone(AppConfig::timezone()),
+                                    'occurred_at' => $occurredAt,
                                     'payment_method' => $data['payment_method'] ?? null,
                                     'note' => $data['note'] ?? null,
                                     'created_by' => auth()->id(),
@@ -260,7 +265,7 @@ class InvoiceTable
                                     ->label(__('app.fields.refund_amount_with_currency', ['currency' => Helpers::getCurrencyCode()]))
                                     ->required()
                                     ->numeric()
-                                    ->extraAttributes(['class' => 'verify-money-input'])
+                                    ->extraInputAttributes(['class' => 'verify-money-input'])
                                     ->reactive()
                                     ->placeholder(__('app.placeholders.enter_amount'))
                                     ->helperText(fn (Invoice $record): string => __('app.help.refundable_amount', ['amount' => Helpers::formatCurrency($record->paid_amount)]))
@@ -272,9 +277,10 @@ class InvoiceTable
                                 DateTimePicker::make('occurred_at')
                                     ->label(__('app.fields.refunded_at'))
                                     ->seconds(false)
-                                    ->timezone(AppConfig::timezone())
-                                    ->default(fn (): string => now()->timezone(AppConfig::timezone())->format('Y-m-d H:i:s'))
-                                    ->required(),
+                                    ->timezone(DeviceDateFormat::timezone())
+                                    ->default(fn (): string => now()->timezone(DeviceDateFormat::timezone())->format('Y-m-d H:i:s'))
+                                    ->required()
+                                    ->helperText(__('app.help.paid_at_device_time')),
                                 Textarea::make('note')
                                     ->label(__('app.fields.note'))
                                     ->rows(2)
@@ -293,10 +299,15 @@ class InvoiceTable
                                     return;
                                 }
 
+                                // Device wall clock in, store as UTC.
+                                $refundedAt = filled($data['occurred_at'] ?? null)
+                                    ? Carbon::parse((string) $data['occurred_at'], DeviceDateFormat::timezone())->utc()
+                                    : now()->utc();
+
                                 $record->transactions()->create([
                                     'type' => 'refund',
                                     'amount' => $amount,
-                                    'occurred_at' => $data['occurred_at'] ?? now()->timezone(AppConfig::timezone()),
+                                    'occurred_at' => $refundedAt,
                                     'note' => $data['note'] ?? null,
                                     'created_by' => auth()->id(),
                                 ]);
@@ -412,7 +423,7 @@ class InvoiceTable
                                             ->limit(5)
                                             ->get()
                                             ->mapWithKeys(function (InvoiceTransaction $transaction): array {
-                                                $occurredAt = $transaction->occurred_at?->timezone(AppConfig::timezone())->translatedFormat(DeviceDateFormat::dateTime()) ?? '—';
+                                                $occurredAt = $transaction->occurred_at?->timezone(DeviceDateFormat::timezone())->translatedFormat(DeviceDateFormat::dateTime()) ?? '—';
 
                                                 return [
                                                     Data::int($transaction->getKey()) => "{$occurredAt} - ".Helpers::formatCurrency((float) ($transaction->amount ?? 0)),

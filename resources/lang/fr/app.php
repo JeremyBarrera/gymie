@@ -277,6 +277,7 @@ return [
         'due_amount' => 'Montant dû : :amount',
         'refundable_amount' => 'Remboursable : :amount',
         'phone_format' => 'Inclure le code pays. Chiffres, espaces, +, -, et () seulement.',
+        'paid_at_device_time' => 'Sélectionnez l\'heure du paiement dans l\'heure locale de votre appareil. Elle sera enregistrée en UTC et affichée aux autres dans leur heure locale.',
     ],
     'tooltips' => [
         'member_email_missing' => 'Email du membre manquant',
