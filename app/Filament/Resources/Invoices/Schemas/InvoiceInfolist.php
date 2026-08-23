@@ -2,11 +2,10 @@
 
 namespace App\Filament\Resources\Invoices\Schemas;
 
-use App\Helpers\Helpers;
 use App\Models\Invoice;
 use App\Support\Billing\PaymentMethod;
+use App\Support\Filament\InvoiceSummaryRows;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -69,60 +68,10 @@ class InvoiceInfolist
                             ->columnSpan(3),
 
                         Section::make(__('app.titles.summary'))
-                            ->schema([
-                                self::summaryRow(__('app.fields.fee').':', 'subscription_fee'),
-                                self::summaryRow(
-                                    fn (): string => __('app.fields.tax_with_rate', ['rate' => Helpers::getTaxRate()]).':',
-                                    'tax',
-                                    fn (Invoice $record) => empty($record->tax),
-                                ),
-                                self::summaryRow(
-                                    fn (Invoice $record) => $record->discount
-                                        ? __('app.fields.discount_with_rate', ['rate' => $record->discount]).':'
-                                        : __('app.fields.discount').':',
-                                    'discount_amount',
-                                    fn (Invoice $record) => empty($record->discount_amount),
-                                ),
-                                self::summaryRow(__('app.fields.total').':', 'total_amount'),
-                                self::summaryRow(
-                                    __('app.fields.paid').':',
-                                    'paid_amount',
-                                    fn (Invoice $record) => empty($record->paid_amount),
-                                ),
-                                self::summaryRow(
-                                    __('app.fields.due').':',
-                                    'due_amount',
-                                    fn (Invoice $record) => empty($record->due_amount),
-                                ),
-                            ])
+                            ->schema(InvoiceSummaryRows::rows(fn (Invoice $record): Invoice => $record))
                             ->columns(1)
                             ->columnSpan(1),
                     ]),
             ]);
-    }
-
-    /**
-     * One compact "Label: amount" line. Both sides stay on a single line so
-     * amounts never wrap inside the summary column.
-     *
-     * @param  string|callable  $label
-     */
-    private static function summaryRow(string|callable $label, string $key, ?\Closure $hidden = null): Flex
-    {
-        $row = Flex::make([
-            TextEntry::make("{$key}_summary_label")
-                ->label($label)
-                ->extraAttributes(['class' => 'whitespace-nowrap']),
-            TextEntry::make($key)
-                ->hiddenLabel()
-                ->formatStateUsing(fn (Invoice $record) => Helpers::formatCurrency($record->{$key}))
-                ->extraAttributes(['class' => 'whitespace-nowrap']),
-        ]);
-
-        if ($hidden !== null) {
-            $row->hidden($hidden);
-        }
-
-        return $row;
     }
 }

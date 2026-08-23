@@ -159,6 +159,16 @@ it('allows anyone to subscribe to the public queue uuid channel', function (): v
     expect($closure(User::factory()->create(), Str::uuid()->toString()))->toBeTrue();
 });
 
+it('authorizes only the owning user on the private user channel', function (): void {
+    $closure = channelClosure('user.{id}');
+
+    $owner = User::factory()->create();
+    $other = User::factory()->create();
+
+    expect($closure($owner, (string) $owner->id))->toBeTrue()
+        ->and($closure($other, (string) $owner->id))->toBeFalse();
+});
+
 function pusherDriverForTest(): void
 {
     $manager = app('Illuminate\Broadcasting\BroadcastManager');

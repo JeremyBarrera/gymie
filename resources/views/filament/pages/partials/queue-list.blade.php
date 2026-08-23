@@ -15,8 +15,6 @@
                     ?? $entry['payload']['identifier_value']
                     ?? ($entry['kind'] === 'checkin' ? __('app.reception.unknown_member') : __('app.reception.new_member'));
 
-                $photoUrl = ($member && $member->photo) ? asset('storage/'.$member->photo) : null;
-
                 $eligible = [];
                 if ($member) {
                     $eligible = app(\App\Services\Membership\PlanCheckInService::class)
@@ -41,18 +39,25 @@
                     'denied' => 'danger',
                     default => 'gray',
                 };
+
+                // Action flags so the button column below renders each
+                // possible action exactly once.
+                $isSignup = $entry['kind'] === 'signup';
+                $isWaiting = $entry['status'] === 'waiting';
+                $isAttending = $entry['status'] === 'attending';
+                $isMine = $entry['claimed_by_user_id'] == Auth::id();
+
+                $canVerify = $isSignup && ($isWaiting || $isAttending) && ($isWaiting || $isMine);
+                $canDeny = $isSignup && $isAttending && $isMine;
+                $canClaim = ! $isSignup && $isWaiting;
+                $canResume = ! $isSignup && $isAttending && $isMine;
+                $canDelete = $isWaiting || ($isAttending && ($isSignup || $isMine));
             @endphp
 
             <x-filament::section compact wire:key="entry-{{ $entry['id'] }}">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
                     <div class="flex flex-1 items-start gap-3 min-w-0">
-                        @if($photoUrl)
-                            <x-filament::avatar :src="$photoUrl" size="lg" class="shrink-0" />
-                        @else
-                            <span class="fi-color fi-color-primary flex shrink-0 items-center justify-center rounded-lg fi-size-lg">
-                                <x-filament::icon icon="heroicon-m-user" :size="\Filament\Support\Enums\IconSize::Large" />
-                            </span>
-                        @endif
+                        @include('filament.pages.partials.member-avatar', ['member' => $member])
 
                         <div class="min-w-0 space-y-2">
                             <h4 class="fi-text text-base font-semibold">{{ $name }}</h4>
@@ -98,56 +103,40 @@
                     </div>
 
                     <div class="flex flex-col gap-2 sm:shrink-0 sm:items-end">
-                        @if($entry['kind'] === 'signup' && in_array($entry['status'], ['waiting', 'attending'], true))
-                            @if($entry['status'] === 'waiting' || $entry['claimed_by_user_id'] == Auth::id())
-                                <x-filament::button
-                                    wire:click="openVerifyOverlay({{ $entry['id'] }})"
-                                    wire:loading.attr="disabled"
-                                >
-                                    {{ __('app.reception.verify') }}
-                                </x-filament::button>
-                            @endif
+                        @if($canVerify)
+                            <x-filament::button
+                                wire:click="openVerifyOverlay({{ $entry['id'] }})"
+                                wire:loading.attr="disabled"
+                            >
+                                {{ __('app.reception.verify') }}
+                            </x-filament::button>
+                        @endif
 
-                            @if($entry['status'] === 'attending' && $entry['claimed_by_user_id'] == Auth::id())
-                                <x-filament::button
-                                    color="danger"
-                                    wire:click="openConfirmOverlay({{ $entry['id'] }}, 'deny')"
-                                >
-                                    {{ __('app.reception.deny') }}
-                                </x-filament::button>
-                            @endif
+                        @if($canDeny)
+                            <x-filament::button
+                                color="danger"
+                                wire:click="openConfirmOverlay({{ $entry['id'] }}, 'deny')"
+                            >
+                                {{ __('app.reception.deny') }}
+                            </x-filament::button>
+                        @endif
 
-                            @if(in_array($entry['status'], ['waiting', 'attending'], true))
-                                <x-filament::button
-                                    color="gray"
-                                    wire:click="deleteQueueEntry({{ $entry['id'] }})"
-                                    wire:loading.attr="disabled"
-                                >
-                                    {{ __('app.reception.delete') }}
-                                </x-filament::button>
-                            @endif
-                        @elseif($entry['status'] === 'waiting')
+                        @if($canClaim)
                             <x-filament::button
                                 wire:click="claim({{ $entry['id'] }})"
                                 wire:loading.attr="disabled"
                             >
                                 {{ __('app.reception.check_in') }}
                             </x-filament::button>
-
-                            <x-filament::button
-                                color="gray"
-                                wire:click="deleteQueueEntry({{ $entry['id'] }})"
-                                wire:loading.attr="disabled"
-                            >
-                                {{ __('app.reception.delete') }}
-                            </x-filament::button>
-                        @elseif($entry['status'] === 'attending' && $entry['claimed_by_user_id'] == Auth::id())
+                        @elseif($canResume)
                             <x-filament::button
                                 wire:click="openCheckInOverlay({{ $entry['id'] }})"
                             >
                                 {{ __('app.reception.check_in') }}
                             </x-filament::button>
+                        @endif
 
+                        @if($canDelete)
                             <x-filament::button
                                 color="gray"
                                 wire:click="deleteQueueEntry({{ $entry['id'] }})"
@@ -155,7 +144,7 @@
                             >
                                 {{ __('app.reception.delete') }}
                             </x-filament::button>
-                        @elseif($entry['status'] === 'attending')
+                        @elseif($isAttending && ! $isMine)
                             <span class="fi-text text-sm">
                                 {{ __('app.reception.attending_by') }}: {{ $claimedByName ?? '—' }}
                             </span>

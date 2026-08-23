@@ -1,6 +1,9 @@
 @php
-    $checkInEntry = \App\Models\QueueEntry::find($selectedCheckInEntryId);
-    $checkInCandidates = collect($checkInEntry?->payload['candidate_member_ids'] ?? [])
+    $checkInEntry = $selectedCheckInEntryId ? \App\Models\QueueEntry::find($selectedCheckInEntryId) : null;
+    $checkInCandidateIds = $checkInEntry
+        ? collect($checkInEntry->payload['candidate_member_ids'] ?? [])
+        : collect($this->manualCheckInCandidates);
+    $checkInCandidates = $checkInCandidateIds
         ->map(fn ($id) => \App\Models\Member::find((int) $id))
         ->filter()
         ->values();
@@ -28,17 +31,25 @@
         ->map(fn (array $row): int => $cardSeverityRank((string) ($row['state'] ?? 'access')));
     $planRank = $cardSeverityRank((string) ($checkInStatus['color'] ?? 'gray'));
 
-    $worstServiceRow = collect($checkInServices)
-        ->sortByDesc(fn (array $row): int => $cardSeverityRank((string) ($row['state'] ?? 'access')))
-        ->first();
-    $worstServiceRank = $worstServiceRow !== null
-        ? $cardSeverityRank((string) ($worstServiceRow['state'] ?? 'access'))
+    // Only statuses APPLICABLE to this attendance decision may darken the
+    // card: the selected service's own state, plus a member-wide overdue
+    // invoice (which blocks every service). Non-entitled rows elsewhere in
+    // the picker must not paint the whole member red.
+    $selectedRowRank = $checkInSelectedRow !== null
+        ? $cardSeverityRank((string) ($checkInSelectedRow['state'] ?? 'access'))
         : 0;
+    $overdueRow = collect($checkInServices)
+        ->first(fn (array $row): bool => ($row['state'] ?? null) === 'overdue');
+
+    $serviceRank = max($selectedRowRank, $overdueRow !== null ? 2 : 0);
+    $worstServiceRow = $selectedRowRank >= ($overdueRow !== null ? 2 : 0)
+        ? $checkInSelectedRow
+        : $overdueRow;
 
     // The plan-expiry badge and the worst payment/service badge share one
     // severity scale — whichever wins paints the border.
-    $planWins = $planRank >= $worstServiceRank;
-    $cardRank = max($planRank, $worstServiceRank);
+    $planWins = $planRank >= $serviceRank;
+    $cardRank = max($planRank, $serviceRank);
     $planIsNone = ($checkInStatus['color'] ?? null) === 'gray';
 
     // Theme tokens only (AGENTS.md rule 7) — never hardcoded hex/rgba.
@@ -59,11 +70,65 @@
             default => (string) ($checkInStatus['label'] ?? ''),
         }
         : (string) ($checkInStatus['label'] ?? '');
+
+    // One shared state→label map for the service picker options and the
+    // selected-service badge below.
+    $serviceStateLabel = fn (?string $state): string => match ($state ?? 'access') {
+        'access' => __('app.reception.service_access'),
+        'unpaid' => __('app.reception.service_unpaid_short'),
+        'overdue' => __('app.reception.service_overdue_short'),
+        'expired' => __('app.reception.service_expired_short'),
+        default => __('app.reception.service_no_access_short'),
+    };
+
+    // Same severity scale as the photo border: blocked states are red,
+    // attention is amber.
+    $selectedStateColor = match ($checkInSelectedRow['state'] ?? 'access') {
+        'unpaid' => 'warning',
+        'overdue', 'expired', 'no_access' => 'danger',
+        default => 'success',
+    };
+
+    // Member card detail columns (label/value pairs; null values are hidden).
+    $memberDetailsLeft = [
+        ['label' => __('app.fields.member_id'), 'value' => $checkInMember?->code],
+        ['label' => __('app.fields.contact'), 'value' => $checkInMember?->contact],
+        ['label' => __('app.fields.email'), 'value' => $checkInMember?->email, 'break' => true],
+    ];
+    $memberDetailsRight = [
+        ['label' => __('app.fields.gender'), 'value' => filled($checkInMember?->gender) ? __('app.options.gender.'.$checkInMember->gender) : null],
+        ['label' => __('app.fields.dob'), 'value' => filled($checkInMember?->dob) ? \App\Support\Dates\DeviceDateFormat::format($checkInMember->dob) : null],
+    ];
+
+    // Footer step: which back/confirm pair to render (null = member actions).
+    $footerStep = $checkInDenyStep
+        ? 'deny'
+        : ($checkInOverrideStep ? 'override' : null);
+
+    $footerBackActions = [
+        'deny' => "\$set('checkInDenyStep', false)",
+        'override' => "\$set('checkInOverrideStep', false)",
+    ];
+
+    $footerConfirmMeta = [
+        'deny' => [
+            'color' => 'gray',
+            'icon' => 'heroicon-m-x-mark',
+            'label' => __('app.reception.checkin_deny_confirm'),
+            'action' => 'confirmDenyCheckIn',
+        ],
+        'override' => [
+            'color' => 'info',
+            'icon' => 'heroicon-m-wrench',
+            'label' => __('app.reception.override_confirm'),
+            'action' => 'confirmCheckInOverride',
+        ],
+    ];
 @endphp
 
-@if($checkInEntry)
+@if($showCheckInOverlay)
     <div
-        wire:key="checkin-overlay-{{ $checkInEntry->id }}"
+        wire:key="checkin-overlay-{{ $checkInEntry?->id ?? 'manual' }}"
         x-data
         x-on:close-modal.window="if ($event.detail.id === 'checkin-overlay') $wire.closeCheckInOverlay()"
     >
@@ -75,20 +140,15 @@
             :close-by-escaping="false"
             :heading="$checkInDenyStep
                 ? __('app.reception.checkin_deny_title')
-                : ($checkInOverrideDueDateStep
-                    ? __('app.reception.override_due_date_title')
-                    : ($checkInOverrideStep
-                        ? __('app.reception.override_confirm_title')
-                        : __('app.reception.checkin_overlay_title')))"
+                : ($checkInOverrideStep
+                    ? __('app.reception.override_confirm_title')
+                    : __('app.reception.checkin_overlay_title'))"
             :description="$checkInDenyStep
                 ? __('app.reception.deny_reason')
-                : ($checkInOverrideDueDateStep
-                    ? __('app.reception.override_due_date_hint')
-                    : ($checkInOverrideStep
-                        ? __('app.reception.override_hint')
-                        : __('app.reception.checkin_overlay_hint')))"
-        >
-            <div class="space-y-6">
+                : ($checkInOverrideStep
+                    ? __('app.reception.override_hint')
+                    : __('app.reception.checkin_overlay_hint'))"
+        >            <div class="space-y-6">
                 @if($checkInDenyStep)
                     <div>
                         <label for="checkin-deny-reason" class="fi-text text-base font-semibold">
@@ -119,7 +179,7 @@
 
                     <div>
                         <label for="checkin-override-reason" class="fi-text text-base font-semibold">
-                            {{ __('app.reception.override_reason') }}
+                            {{ __('app.check_in.override_message_optional') }}
                         </label>
                         <x-filament::input.wrapper class="fi-fo-textarea mt-2">
                             <div class="h-20">
@@ -131,29 +191,6 @@
                                 ></textarea>
                             </div>
                         </x-filament::input.wrapper>
-                    </div>
-                @elseif($checkInOverrideDueDateStep)
-                    <div class="flex items-center gap-2">
-                        <x-filament::badge color="danger">
-                            <x-filament::icon icon="heroicon-m-exclamation-triangle" :size="\Filament\Support\Enums\IconSize::Small" />
-                        </x-filament::badge>
-                        <h3 class="fi-text text-base font-semibold">{{ __('app.reception.override_due_date_title') }}</h3>
-                    </div>
-
-                    <p class="fi-text text-base leading-relaxed">
-                        {{ __('app.reception.override_due_date_hint') }}
-                    </p>
-
-                    <div>
-                        <label for="checkin-override-due-date" class="fi-text text-base font-semibold">
-                            {{ __('app.fields.due_date') }}
-                        </label>
-                        <x-filament::input
-                            id="checkin-override-due-date"
-                            type="date"
-                            wire:model="checkInOverrideNewDueDate"
-                            class="mt-2 border-danger-500 focus:border-danger-500 focus:ring-danger-500"
-                        />
                     </div>
                 @elseif(! $checkInMember && $checkInCandidates->isNotEmpty())
                     <div class="flex items-center gap-2">
@@ -174,17 +211,7 @@
                             <x-filament::section compact wire:key="checkin-candidate-{{ $candidate->id }}">
                                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                                     <div class="flex min-w-0 flex-1 items-center gap-3">
-                                        @if($candidate->photo)
-                                            <img
-                                                src="{{ asset('storage/'.$candidate->photo) }}"
-                                                class="h-16 w-16 shrink-0 rounded-lg object-cover"
-                                                alt="{{ $candidate->name }}"
-                                            >
-                                        @else
-                                            <span class="fi-color fi-color-primary flex h-16 w-16 shrink-0 items-center justify-center rounded-lg">
-                                                <x-filament::icon icon="heroicon-m-user" :size="\Filament\Support\Enums\IconSize::Large" />
-                                            </span>
-                                        @endif
+                                        @include('filament.pages.partials.member-avatar', ['member' => $candidate])
 
                                         <div class="min-w-0 space-y-1">
                                             <h4 class="fi-text text-lg font-semibold">{{ $candidate->name }}</h4>
@@ -243,42 +270,18 @@
                             <h3 class="fi-text text-4xl font-bold leading-tight tracking-tight">{{ $checkInMember->name }}</h3>
 
                             <div class="grid gap-x-8 sm:grid-cols-2">
-                                <div class="space-y-4">
-                                    <div class="space-y-1">
-                                        <span class="fi-text-muted text-xs font-medium uppercase tracking-wide">{{ __('app.fields.member_id') }}</span>
-                                        <p class="fi-text text-base font-medium">{{ $checkInMember->code }}</p>
+                                @foreach([$memberDetailsLeft, $memberDetailsRight] as $memberDetailsColumn)
+                                    <div class="space-y-4">
+                                        @foreach($memberDetailsColumn as $detail)
+                                            @if(filled($detail['value']))
+                                                <div class="space-y-1">
+                                                    <span class="fi-text-muted text-xs font-medium uppercase tracking-wide">{{ $detail['label'] }}</span>
+                                                    <p class="fi-text text-base font-medium {{ ($detail['break'] ?? false) ? 'break-all' : '' }}">{{ $detail['value'] }}</p>
+                                                </div>
+                                            @endif
+                                        @endforeach
                                     </div>
-
-                                    @if($checkInMember->contact)
-                                        <div class="space-y-1">
-                                            <span class="fi-text-muted text-xs font-medium uppercase tracking-wide">{{ __('app.fields.contact') }}</span>
-                                            <p class="fi-text text-base font-medium">{{ $checkInMember->contact }}</p>
-                                        </div>
-                                    @endif
-
-                                    @if($checkInMember->email)
-                                        <div class="space-y-1">
-                                            <span class="fi-text-muted text-xs font-medium uppercase tracking-wide">{{ __('app.fields.email') }}</span>
-                                            <p class="fi-text text-base font-medium break-all">{{ $checkInMember->email }}</p>
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <div class="space-y-4">
-                                    @if($checkInMember->gender)
-                                        <div class="space-y-1">
-                                            <span class="fi-text-muted text-xs font-medium uppercase tracking-wide">{{ __('app.fields.gender') }}</span>
-                                            <p class="fi-text text-base font-medium">{{ __('app.options.gender.'.$checkInMember->gender) }}</p>
-                                        </div>
-                                    @endif
-
-                                    @if($checkInMember->dob)
-                                        <div class="space-y-1">
-                                            <span class="fi-text-muted text-xs font-medium uppercase tracking-wide">{{ __('app.fields.dob') }}</span>
-                                            <p class="fi-text text-base font-medium">{{ \App\Support\Dates\DeviceDateFormat::format($checkInMember->dob) }}</p>
-                                        </div>
-                                    @endif
-                                </div>
+                                @endforeach
                             </div>
                         </div>
                     </div>
@@ -320,35 +323,16 @@
                                 >
                                     @foreach($checkInServices as $row)
                                         <option value="{{ $row['id'] }}">
-                                            {{ $row['name'] }} — @if($row['state'] === 'access'){{ __('app.reception.service_access') }}@elseif($row['state'] === 'unpaid'){{ __('app.reception.service_unpaid_short') }}@elseif($row['state'] === 'overdue'){{ __('app.reception.service_overdue_short') }}@elseif($row['state'] === 'expired'){{ __('app.reception.service_expired_short') }}@else{{ __('app.reception.service_no_access_short') }}@endif
+                                            {{ $row['name'] }} — {{ $serviceStateLabel($row['state']) }}
                                         </option>
                                     @endforeach
                                 </x-filament::input.select>
                             </x-filament::input.wrapper>
 
                             @if($checkInSelectedRow)
-                                @php
-                                    // Same severity scale as the photo border:
-                                    // blocked states are red, attention is amber.
-                                    $selectedStateColor = match ($checkInSelectedRow['state'] ?? 'access') {
-                                        'unpaid' => 'warning',
-                                        'overdue', 'expired', 'no_access' => 'danger',
-                                        default => 'success',
-                                    };
-                                @endphp
                                 <div class="flex flex-wrap items-center gap-3">
                                     <x-filament::badge :color="$selectedStateColor" size="md">
-                                        @if(($checkInSelectedRow['state'] ?? null) === 'access')
-                                            {{ __('app.reception.service_access') }}
-                                        @elseif(($checkInSelectedRow['state'] ?? null) === 'unpaid')
-                                            {{ __('app.reception.service_unpaid_short') }}
-                                        @elseif(($checkInSelectedRow['state'] ?? null) === 'overdue')
-                                            {{ __('app.reception.service_overdue_short') }}
-                                        @elseif(($checkInSelectedRow['state'] ?? null) === 'expired')
-                                            {{ __('app.reception.service_expired_short') }}
-                                        @else
-                                            {{ __('app.reception.service_no_access_short') }}
-                                        @endif
+                                        {{ $serviceStateLabel($checkInSelectedRow['state'] ?? null) }}
                                     </x-filament::badge>
                                 </div>
 
@@ -365,75 +349,36 @@
 
             <x-slot name="footer">
                 <div class="flex w-full justify-end gap-2">
-                    @if($checkInDenyStep)
+                    @if($footerStep !== null)
                         <x-filament::button
-                            wire:key="checkin-deny-back"
+                            wire:key="checkin-{{ $footerStep }}-back"
                             color="gray"
+                            size="md"
                             class="min-w-28"
-                            wire:click="$set('checkInDenyStep', false)"
+                            wire:click="{{ $footerBackActions[$footerStep] }}"
                         >
                             {{ __('app.reception.back') }}
                         </x-filament::button>
 
                         <x-filament::button
-                            wire:key="checkin-deny-confirm"
-                            color="gray"
-                            icon="heroicon-m-x-mark"
+                            wire:key="checkin-{{ $footerStep }}-confirm"
+                            :color="$footerConfirmMeta[$footerStep]['color']"
+                            :icon="$footerConfirmMeta[$footerStep]['icon']"
                             size="md"
                             class="min-w-28"
-                            wire:click="confirmDenyCheckIn"
+                            wire:click="{{ $footerConfirmMeta[$footerStep]['action'] }}"
                             wire:loading.attr="disabled"
                         >
-                            {{ __('app.reception.checkin_deny_confirm') }}
-                        </x-filament::button>
-                    @elseif($checkInOverrideStep)
-                        <x-filament::button
-                            wire:key="checkin-override-back"
-                            color="gray"
-                            size="md"
-                            class="min-w-28"
-                            wire:click="$set('checkInOverrideStep', false)"
-                        >
-                            {{ __('app.reception.back') }}
-                        </x-filament::button>
-
-                        <x-filament::button
-                            wire:key="checkin-override-confirm"
-                            color="info"
-                            icon="heroicon-m-wrench"
-                            size="md"
-                            class="min-w-28"
-                            wire:click="confirmCheckInOverride"
-                            wire:loading.attr="disabled"
-                        >
-                            {{ __('app.reception.override_confirm') }}
-                        </x-filament::button>
-                    @elseif($checkInOverrideDueDateStep)
-                        <x-filament::button
-                            wire:key="checkin-due-date-back"
-                            color="gray"
-                            size="md"
-                            class="min-w-28"
-                            wire:click="cancelDueDateChange"
-                        >
-                            {{ __('app.reception.back') }}
-                        </x-filament::button>
-
-                        <x-filament::button
-                            wire:key="checkin-due-date-confirm"
-                            color="info"
-                            icon="heroicon-m-calendar-days"
-                            size="md"
-                            class="min-w-28"
-                            wire:click="confirmDueDateChange"
-                            wire:loading.attr="disabled"
-                        >
-                            {{ __('app.reception.override_due_date_confirm') }}
+                            {{ $footerConfirmMeta[$footerStep]['label'] }}
                         </x-filament::button>
                     @else
                         @if($checkInMember)
-                            {{-- Actions use neutral/info styles, never the status palette —
-                                 red/amber/green must only ever mean state, not action. --}}
+                            {{-- Actions use neutral/info/success styles, never the status palette —
+                                 red/amber/green must only ever mean state, not action.
+                                 The action set is driven by the selected service's state:
+                                 access → approve · expired → renewal popup (O3) ·
+                                 no_access → optional-message override (O4) ·
+                                 unpaid/overdue → payment / due-date popups (O5). --}}
                             <x-filament::button
                                 wire:key="checkin-deny"
                                 color="gray"
@@ -445,7 +390,31 @@
                                 {{ __('app.reception.deny') }}
                             </x-filament::button>
 
-                            @if($checkInSelectedRow && ($checkInSelectedRow['state'] ?? null) !== 'access')
+                            @if(! $checkInSelectedRow || ($checkInSelectedRow['state'] ?? null) === 'access')
+                                <x-filament::button
+                                    wire:key="checkin-approve"
+                                    color="success"
+                                    size="md"
+                                    class="min-w-28"
+                                    wire:click="approveCheckIn"
+                                    wire:loading.attr="disabled"
+                                    :disabled="! $checkInSelectedRow || ($checkInSelectedRow['state'] ?? null) !== 'access'"
+                                >
+                                    {{ __('app.reception.approve') }}
+                                </x-filament::button>
+                            @elseif(($checkInSelectedRow['state'] ?? null) === 'expired')
+                                <x-filament::button
+                                    wire:key="checkin-renew"
+                                    color="success"
+                                    icon="heroicon-m-plus-circle"
+                                    size="md"
+                                    class="min-w-28"
+                                    wire:click="openExpiredSubscriptionModal({{ $checkInSelectedRow['id'] }})"
+                                    wire:loading.attr="disabled"
+                                >
+                                    {{ __('app.check_in.add_subscription') }}
+                                </x-filament::button>
+                            @elseif(($checkInSelectedRow['state'] ?? null) === 'no_access')
                                 <x-filament::button
                                     wire:key="checkin-override"
                                     color="info"
@@ -458,15 +427,27 @@
                                 </x-filament::button>
                             @else
                                 <x-filament::button
-                                    wire:key="checkin-approve"
-                                    color="success"
+                                    wire:key="checkin-add-payment"
+                                    color="info"
+                                    icon="heroicon-m-banknotes"
                                     size="md"
                                     class="min-w-28"
-                                    wire:click="approveCheckIn"
+                                    wire:click="openAddPaymentModal({{ $checkInSelectedRow['id'] }})"
                                     wire:loading.attr="disabled"
-                                    :disabled="! $checkInSelectedRow || ($checkInSelectedRow['state'] ?? null) !== 'access'"
                                 >
-                                    {{ __('app.reception.approve') }}
+                                    {{ __('app.check_in.add_payment') }}
+                                </x-filament::button>
+
+                                <x-filament::button
+                                    wire:key="checkin-change-due-date"
+                                    color="gray"
+                                    icon="heroicon-m-calendar-days"
+                                    size="md"
+                                    class="min-w-28"
+                                    wire:click="openChangeDueDateModal({{ $checkInSelectedRow['id'] }})"
+                                    wire:loading.attr="disabled"
+                                >
+                                    {{ __('app.check_in.change_due_date') }}
                                 </x-filament::button>
                             @endif
                         @endif
@@ -474,5 +455,12 @@
                 </div>
             </x-slot>
         </x-filament::modal>
+
+        {{-- Override-path popups (O3/O5): mounted while the overlay is open,
+             opened on top of it via the open-modal dispatch, and closed
+             together with the overlay on success. --}}
+        @livewire(\App\Filament\Livewire\ExpiredSubscriptionModal::class, [], key('livewire-expired-subscription-modal'))
+        @livewire(\App\Filament\Livewire\AddPaymentModal::class, [], key('livewire-add-payment-modal'))
+        @livewire(\App\Filament\Livewire\ChangeDueDateModal::class, [], key('livewire-change-due-date-modal'))
     </div>
 @endif

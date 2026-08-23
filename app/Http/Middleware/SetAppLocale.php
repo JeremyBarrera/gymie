@@ -12,6 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SetAppLocale
 {
+    public const COOKIE_DEVICE_LOCALE = 'gymie_device_locale';
+
     /**
      * @param  Closure(Request): Response  $next
      */
@@ -35,6 +37,13 @@ class SetAppLocale
         $headerLocale = $request->getPreferredLanguage($supportedLocales);
         $headerLocale = is_string($headerLocale) ? trim($headerLocale) : null;
 
+        // Device language recorded by resources/js/device-locale.js. Only
+        // meaningful for the admin panel, where a saved preset may not exist
+        // yet; public screens keep their header-driven behaviour.
+        $cookieLocale = $request->cookie(self::COOKIE_DEVICE_LOCALE);
+        $cookieLocale = is_string($cookieLocale) ? strtolower(trim($cookieLocale)) : '';
+        $cookieLocale = in_array($cookieLocale, $supportedLocales, true) ? $cookieLocale : null;
+
         $isPublicRoute = str_starts_with($request->path(), 'checkin')
             || str_starts_with($request->path(), 'signup')
             || str_starts_with($request->path(), 'waiting');
@@ -42,7 +51,10 @@ class SetAppLocale
         if ($isPublicRoute) {
             $locale = $queryLocale ?: ($headerLocale ?: AppConfig::string('app.locale', 'en'));
         } else {
-            $locale = $queryLocale ?: ($settingsLocale ?: ($headerLocale ?: AppConfig::string('app.locale', 'en')));
+            $locale = $queryLocale
+                ?: ($settingsLocale
+                    ?: ($cookieLocale
+                        ?: ($headerLocale ?: AppConfig::string('app.locale', 'en'))));
         }
 
         if (! in_array($locale, $supportedLocales, true)) {

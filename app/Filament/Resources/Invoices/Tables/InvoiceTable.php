@@ -57,19 +57,24 @@ class InvoiceTable
                     ->sortable(),
                 TextColumn::make('subscription_fee')
                     ->label(__('app.fields.fee'))
-                    ->formatStateUsing(fn ($state): string => Helpers::formatCurrency($state)),
+                    ->formatStateUsing(fn ($state): string => Helpers::formatCurrency($state))
+                    ->extraAttributes(['class' => 'whitespace-nowrap']),
                 TextColumn::make('paid_amount')
                     ->label(__('app.fields.paid'))
-                    ->formatStateUsing(fn ($state): string => Helpers::formatCurrency($state)),
+                    ->formatStateUsing(fn ($state): string => Helpers::formatCurrency($state))
+                    ->extraAttributes(['class' => 'whitespace-nowrap']),
                 TextColumn::make('tax')
                     ->label(__('app.fields.tax'))
-                    ->formatStateUsing(fn ($state): string => Helpers::formatCurrency($state)),
+                    ->formatStateUsing(fn ($state): string => Helpers::formatCurrency($state))
+                    ->extraAttributes(['class' => 'whitespace-nowrap']),
                 TextColumn::make('total_amount')
                     ->label(__('app.fields.total'))
-                    ->formatStateUsing(fn ($state): string => Helpers::formatCurrency($state)),
+                    ->formatStateUsing(fn ($state): string => Helpers::formatCurrency($state))
+                    ->extraAttributes(['class' => 'whitespace-nowrap']),
                 TextColumn::make('due_amount')
                     ->label(__('app.fields.due'))
-                    ->formatStateUsing(fn ($state): string => Helpers::formatCurrency($state)),
+                    ->formatStateUsing(fn ($state): string => Helpers::formatCurrency($state))
+                    ->extraAttributes(['class' => 'whitespace-nowrap']),
                 TextColumn::make('status')
                     ->badge()
                     ->getStateUsing(fn (Invoice $record): ?Status => $record->effectiveStatus()),

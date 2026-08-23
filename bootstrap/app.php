@@ -5,8 +5,7 @@ use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\Honeypot;
 use App\Http\Middleware\SetAppLocale;
 use App\Http\Middleware\SetCurrentLocation;
-use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Application;use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\Exceptions\InvalidFilterQuery;
@@ -28,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: [
             'gymie_date_order',
             'gymie_hour12',
+            SetAppLocale::COOKIE_DEVICE_LOCALE,
         ]);
 
         $middleware->web(prepend: [

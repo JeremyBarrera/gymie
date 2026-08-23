@@ -584,7 +584,7 @@ it('approves against the eligible subscription with the latest end date for the 
         ->and($entry->refresh()->status)->toBe('approved');
 });
 
-it('blocks the approve for an unpaid invoice but allows the override', function (): void {
+it('blocks the approve for an unpaid invoice and routes staff to the payment / due-date modals', function (): void {
     Feature::activate('checkin.override');
 
     $location = Location::factory()->create();
@@ -610,26 +610,20 @@ it('blocks the approve for an unpaid invoice but allows the override', function 
         ->set('checkInServiceId', $plan->service_id)
         ->call('approveCheckIn')
         ->assertDispatched('notify')
-        ->assertSet('showCheckInOverlay', true);
+        ->assertSet('showCheckInOverlay', true)
+        // The generic override is gone for past-due states (O5): the footer
+        // offers the payment / due-date modals and the action refuses.
+        ->call('openCheckInOverrideFor', $plan->service_id)
+        ->assertSet('checkInOverrideStep', false)
+        ->call('openAddPaymentModal', $plan->service_id)
+        ->assertDispatched('open-add-payment-modal')
+        ->call('openChangeDueDateModal', $plan->service_id)
+        ->assertDispatched('open-change-due-date-modal');
 
     expect(PlanCheckIn::count())->toBe(0);
-
-    Livewire::actingAs(liveCheckInStaff())
-        ->test(Reception::class)
-        ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', $plan->service_id)
-        ->call('openCheckInOverrideFor', $plan->service_id)
-        ->assertSet('checkInOverrideStep', true)
-        ->call('confirmCheckInOverride')
-        ->assertDispatched('notify')
-        ->assertSet('showCheckInOverlay', false);
-
-    expect(PlanCheckIn::where('subscription_id', $subscription->id)->first()->override)->toBeTrue()
-        ->and($entry->refresh()->status)->toBe('approved')
-        ->and($entry->override)->toBeTrue();
 });
 
-it('keeps the strict gate for an overdue member: approve and override both blocked with due-date guidance', function (): void {
+it('keeps the strict gate for an overdue member: approve and crafted overrides both blocked', function (): void {
     Feature::activate('checkin.override');
 
     $location = Location::factory()->create();
@@ -658,11 +652,11 @@ it('keeps the strict gate for an overdue member: approve and override both block
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', true)
         ->call('openCheckInOverrideFor', $plan->service_id)
-        ->assertSet('checkInOverrideStep', true)
+        ->assertSet('checkInOverrideStep', false)
+        ->set('checkInServiceId', $plan->service_id)
         ->call('confirmCheckInOverride')
         ->assertDispatched('notify')
-        ->assertSet('showCheckInOverlay', true)
-        ->assertSet('checkInOverrideDueDateStep', true);
+        ->assertSet('showCheckInOverlay', true);
 
     expect(PlanCheckIn::count())->toBe(0)
         ->and($entry->refresh()->status)->toBe('waiting');
@@ -748,127 +742,6 @@ it('seeds the waiting line with check-in entries on mount', function (): void {
     Livewire::actingAs(liveCheckInStaff())
         ->test(LiveSignupPopup::class)
         ->assertSet('pendingQueue', fn (array $queue): bool => collect($queue)->pluck('kind')->contains('checkin'));
-});
-
-it('transitions to the due-date step when override is blocked by overdue invoice', function (): void {
-    Feature::activate('checkin.override');
-
-    $location = Location::factory()->create();
-    $plan = liveCheckInPlan();
-    $member = liveCheckInMember();
-    $subscription = liveCheckInSubscription($member, $plan);
-
-    $invoice = Invoice::factory()->create([
-        'subscription_id' => $subscription->id,
-        'status' => Status::Issued,
-        'subscription_fee' => 100,
-        'discount' => 0,
-        'discount_amount' => 0,
-        'paid_amount' => 0,
-        'due_amount' => 100,
-        'due_date' => now()->subDay(),
-    ]);
-
-    $entry = liveCheckInEntry($location, ['candidate_member_ids' => [$member->id]]);
-
-    Livewire::actingAs(liveCheckInStaff())
-        ->test(Reception::class)
-        ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', $plan->service_id)
-        ->call('approveCheckIn')
-        ->assertDispatched('notify')
-        ->assertSet('showCheckInOverlay', true)
-        ->call('openCheckInOverrideFor', $plan->service_id)
-        ->assertSet('checkInOverrideStep', true)
-        ->call('confirmCheckInOverride')
-        ->assertSet('showCheckInOverlay', true)
-        ->assertSet('checkInOverrideDueDateStep', true)
-        ->assertSet('checkInOverrideInvoiceId', $invoice->id)
-        ->assertSet('checkInOverrideNewDueDate', fn (string $value): bool => \Carbon\Carbon::parse($value)->isFuture());
-
-    expect(PlanCheckIn::count())->toBe(0)
-        ->and($entry->refresh()->status)->toBe('waiting');
-});
-
-it('updates the invoice due date and completes the override after due-date change', function (): void {
-    Feature::activate('checkin.override');
-
-    $location = Location::factory()->create();
-    $plan = liveCheckInPlan();
-    $member = liveCheckInMember();
-    $subscription = liveCheckInSubscription($member, $plan);
-
-    $invoice = Invoice::factory()->create([
-        'subscription_id' => $subscription->id,
-        'status' => Status::Issued,
-        'subscription_fee' => 100,
-        'discount' => 0,
-        'discount_amount' => 0,
-        'paid_amount' => 0,
-        'due_amount' => 100,
-        'due_date' => now()->subDay(),
-    ]);
-
-    $entry = liveCheckInEntry($location, ['candidate_member_ids' => [$member->id]]);
-    $newDueDate = now()->addWeek()->format('Y-m-d');
-
-    Livewire::actingAs(liveCheckInStaff())
-        ->test(Reception::class)
-        ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', $plan->service_id)
-        ->call('approveCheckIn')
-        ->assertSet('showCheckInOverlay', true)
-        ->call('openCheckInOverrideFor', $plan->service_id)
-        ->call('confirmCheckInOverride')
-        ->assertSet('checkInOverrideDueDateStep', true)
-        ->set('checkInOverrideNewDueDate', $newDueDate)
-        ->call('confirmDueDateChange')
-        ->assertSet('checkInOverrideDueDateStep', false)
-        ->assertSet('showCheckInOverlay', false)
-        ->assertDispatched('notify');
-
-    $invoice->refresh();
-    expect($invoice->due_date->format('Y-m-d'))->toBe($newDueDate)
-        ->and(PlanCheckIn::count())->toBe(1)
-        ->and($entry->refresh()->override)->toBeTrue();
-});
-
-it('cancels the due-date change and returns to the override step', function (): void {
-    Feature::activate('checkin.override');
-
-    $location = Location::factory()->create();
-    $plan = liveCheckInPlan();
-    $member = liveCheckInMember();
-    $subscription = liveCheckInSubscription($member, $plan);
-
-    Invoice::factory()->create([
-        'subscription_id' => $subscription->id,
-        'status' => Status::Issued,
-        'subscription_fee' => 100,
-        'discount' => 0,
-        'discount_amount' => 0,
-        'paid_amount' => 0,
-        'due_amount' => 100,
-        'due_date' => now()->subDay(),
-    ]);
-
-    $entry = liveCheckInEntry($location, ['candidate_member_ids' => [$member->id]]);
-
-    Livewire::actingAs(liveCheckInStaff())
-        ->test(Reception::class)
-        ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', $plan->service_id)
-        ->call('approveCheckIn')
-        ->assertDispatched('notify')
-        ->assertSet('showCheckInOverlay', true)
-        ->call('openCheckInOverrideFor', $plan->service_id)
-        ->assertSet('checkInOverrideStep', true)
-        ->call('confirmCheckInOverride')
-        ->assertDispatched('notify')
-        ->assertSet('showCheckInOverlay', true)
-        ->assertSet('checkInOverrideDueDateStep', true);
-
-    expect(PlanCheckIn::count())->toBe(0);
 });
 
 it('creates a PlanCheckIn when the check-in toggle is opted in during signup', function (): void {
@@ -1026,4 +899,36 @@ it('computes verifyCheckInServices from the selected plan after signup is saved'
                 && $services[0]['state'] === 'access'
                 && $services[0]['name'] === $plan->service->name;
         });
+});
+
+it('paints the photo border from applicable statuses only, not every picker row', function (): void {
+    $location = Location::factory()->create();
+    $entitled = liveCheckInPlan();
+    $unrelated = liveCheckInPlan();
+    $member = liveCheckInMember();
+    liveCheckInSubscription($member, $entitled, ['end_date' => now()->addDays(60)->toDateString()]);
+    $entry = liveCheckInEntry($location, ['candidate_member_ids' => [$member->id]]);
+
+    // Pin the expiring window so the far-out end date reads as valid green.
+    \App\Helpers\Helpers::setTestSettingsOverride([
+        'subscriptions' => ['expiring_days' => 7],
+    ]);
+
+    $component = Livewire::actingAs(liveCheckInStaff())
+        ->test(Reception::class)
+        ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
+        ->set('checkInServiceId', $entitled->service_id);
+
+    // Valid member checking into their access row: the unrelated service
+    // they are NOT entitled to must not paint the whole card red.
+    expect($component->html())->toContain('var(--success-500)')
+        ->not->toContain('var(--danger-500)');
+
+    // Deliberately picking the non-access row IS decision-relevant: the
+    // border flips to danger and matches that row's badge.
+    $component->set('checkInServiceId', $unrelated->service_id);
+
+    expect($component->html())->toContain('var(--danger-500)');
+
+    \App\Helpers\Helpers::setTestSettingsOverride(null);
 });

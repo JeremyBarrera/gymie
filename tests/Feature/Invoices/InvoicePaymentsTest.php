@@ -44,7 +44,7 @@ it('records a payment from the invoice view page and updates the ledger totals',
 
     Livewire\Livewire::actingAs(paymentsStaff())
         ->test(ViewInvoice::class, ['record' => $invoice->id])
-        ->assertSee('whitespace-nowrap', false)
+        ->assertSee('fi-color-gray', false)
         ->callAction('add_payment', data: [
             'amount' => 40,
             'occurred_at' => now()->format('Y-m-d H:i:s'),

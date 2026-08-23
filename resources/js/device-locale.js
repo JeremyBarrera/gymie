@@ -1,5 +1,6 @@
 const DATE_ORDER_COOKIE = 'gymie_date_order';
 const HOUR12_COOKIE = 'gymie_hour12';
+const LOCALE_COOKIE = 'gymie_device_locale';
 
 function detectOrder() {
     let order = 'dmy';
@@ -43,6 +44,32 @@ function detectHour12() {
     return hour12;
 }
 
+function detectLanguage() {
+    try {
+        const candidates = Array.isArray(navigator.languages) && navigator.languages.length > 0
+            ? navigator.languages
+            : [navigator.language];
+
+        for (const candidate of candidates) {
+            if (typeof candidate !== 'string' || candidate.trim() === '') {
+                continue;
+            }
+
+            // Only the primary subtag is recorded ("fr-CA" -> "fr"); the
+            // server validates it against the supported locales.
+            const primary = candidate.trim().split(/[-_]/)[0].toLowerCase();
+
+            if (primary !== '') {
+                return primary;
+            }
+        }
+    } catch {
+        // fall back to the server-side Accept-Language heuristic
+    }
+
+    return '';
+}
+
 function setCookie(name, value) {
     document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
 }
@@ -50,4 +77,9 @@ function setCookie(name, value) {
 document.addEventListener('DOMContentLoaded', () => {
     setCookie(DATE_ORDER_COOKIE, detectOrder());
     setCookie(HOUR12_COOKIE, detectHour12() ? '1' : '0');
+
+    const language = detectLanguage();
+    if (language !== '') {
+        setCookie(LOCALE_COOKIE, language);
+    }
 });

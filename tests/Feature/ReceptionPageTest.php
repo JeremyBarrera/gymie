@@ -33,8 +33,8 @@ class ReceptionPageTest extends TestCase
         $this->actingAs($user)
             ->get('/reception')
             ->assertOk()
-            ->assertSee('Sign in')
-            ->assertSee('Sign-Up');
+            ->assertSee('Sign-Up')
+            ->assertSee(__('app.reception.manual_search_placeholder'));
     }
 
     public function test_reception_page_shows_checkin_tab(): void
@@ -48,7 +48,10 @@ class ReceptionPageTest extends TestCase
         $this->actingAs($user)
             ->get('/reception')
             ->assertOk()
-            ->assertSee('Sign in')
-            ->assertSee(__('app.placeholders.select_member'));
+            ->assertSee(__('app.reception.manual_search_placeholder'))
+            ->assertDontSee(__('app.placeholders.select_member'))
+            ->assertDontSee(__('app.placeholders.select_plan'))
+            ->assertDontSee(__('app.check_in.section_sign_in'))
+            ->assertDontSee(__('app.actions.sign_in'));
     }
 }

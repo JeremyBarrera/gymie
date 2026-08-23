@@ -75,16 +75,7 @@ class PlanCheckIn extends Page implements HasActions, HasForms, HasTable
                             ->placeholder(__('app.placeholders.select_member'))
                             ->searchable()
                             ->getSearchResultsUsing(function (string $search): array {
-                                return Member::query()
-                                    ->where(function (Builder $query) use ($search): void {
-                                        $query->where('name', 'like', "%{$search}%")
-                                            ->orWhere('code', 'like', "%{$search}%")
-                                            ->orWhere('government_id', 'like', "%{$search}%")
-                                            ->orWhere('contact', 'like', "%{$search}%");
-                                    })
-                                    ->orderBy('name')
-                                    ->limit(50)
-                                    ->get()
+                                return Member::searchByIdentifier($search)
                                     ->mapWithKeys(fn (Member $record): array => [
                                         $record->id => "{$record->code} - {$record->name}",
                                     ])

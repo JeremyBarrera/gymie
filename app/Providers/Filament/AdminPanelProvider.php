@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\CheckInActivity;
 use App\Filament\Pages\Dashboard;
+use App\Filament\Pages\Notifications;
 use App\Filament\Pages\PlanCheckIn;
 use App\Filament\Pages\PrintQrCodes;
 use App\Filament\Pages\Reception;
@@ -89,6 +90,7 @@ class AdminPanelProvider extends PanelProvider
                 PlanCheckIn::class,
                 Reception::class,
                 CheckInActivity::class,
+                Notifications::class,
                 PrintQrCodes::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
@@ -120,14 +122,44 @@ class AdminPanelProvider extends PanelProvider
                     Blade::render('@livewire(\\App\\Filament\\Livewire\\LocaleSwitcher::class, [], key(\'locale-switcher\'))')
                 ),
             )
+            // Registered after the locale switcher on the same hook so the
+            // topbar reads: search · language · sound · notifications · profile.
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+                fn (): HtmlString => new HtmlString(
+                    Blade::render('@livewire(\\App\\Filament\\Livewire\\SoundAlertToggle::class, [], key(\'sound-alerts-toggle\'))')
+                ),
+            )
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_END,
+                function (): HtmlString {
+                    if (Filament::auth()->guest()) {
+                        return new HtmlString('');
+                    }
+
+                    return new HtmlString(
+                        Blade::render(<<<'BLADE'
+                            {{-- Server-side mirror of the acting user's sound preference, read by
+                                 resources/js/sound-alerts.js on boot (before the deferred bundle). --}}
+                            <script>
+                                window.GYMIE_SOUND_ALERTS = @js((bool) auth()->user()?->sound_alerts);
+                                window.GYMIE_USER_ID = @js(auth()->user()?->id);
+                            </script>
+                        BLADE)
+                    );
+                },
+            )
             ->renderHook(
                 PanelsRenderHook::HEAD_START,
                 fn (): HtmlString => new HtmlString(
                     Blade::render('@vite([\'resources/js/app.js\'])')
                 ),
             )
+            // The global waiting-line icon (fixed-position FAB rendered by
+            // LiveSignupPopup) is reachable from every admin page and owns
+            // the queue badge logic there.
             ->renderHook(
-                PanelsRenderHook::BODY_START,
+                PanelsRenderHook::TOPBAR_END,
                 function (): HtmlString {
                     if (Filament::auth()->guest()) {
                         return new HtmlString('');
@@ -199,6 +231,11 @@ class AdminPanelProvider extends PanelProvider
                 ->url(fn () => PrintQrCodes::getUrl())
                 ->isActiveWhen(fn () => request()->routeIs('filament.admin.pages.qr-codes'))
                 ->sort(1),
+            NavigationItem::make(__('app.follow_up.title'))
+                ->icon('heroicon-o-bell')
+                ->url(fn () => Notifications::getUrl())
+                ->isActiveWhen(fn () => request()->routeIs('filament.admin.pages.notifications'))
+                ->sort(2),
         ];
 
         return $builder

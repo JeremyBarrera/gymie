@@ -186,6 +186,37 @@ class Member extends Model
     }
 
     /**
+     * Shared identifier search for staff-facing member pickers and the
+     * reception walk-up check-in: matches name, member code, government
+     * ID and contact. Contact matches the raw term plus its normalized
+     * phone form, so a number typed without the country code still finds
+     * members stored with one. Queries run through the location global
+     * scope (accessible locations / current TenantContext location).
+     *
+     * @return Collection<int, self>
+     */
+    public static function searchByIdentifier(string $term, int $limit = 50): Collection
+    {
+        $term = trim($term);
+        $normalizedPhone = Helpers::normalizePhone($term);
+
+        return static::query()
+            ->where(function (Builder $query) use ($term, $normalizedPhone): void {
+                $query->where('name', 'like', "%{$term}%")
+                    ->orWhere('code', 'like', "%{$term}%")
+                    ->orWhere('government_id', 'like', "%{$term}%")
+                    ->orWhere('contact', 'like', "%{$term}%")
+                    ->when(
+                        filled($normalizedPhone) && $normalizedPhone !== $term,
+                        fn (Builder $phoneQuery): Builder => $phoneQuery->orWhere('contact', $normalizedPhone),
+                    );
+            })
+            ->orderBy('name')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
      * @return HasMany<PlanCheckIn, $this>
      */
     public function checkIns(): HasMany

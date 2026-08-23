@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Subscriptions\Schemas;
 
+use App\Models\Invoice;
 use App\Models\Subscription;
+use App\Support\Filament\InvoiceSummaryRows;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -55,6 +57,13 @@ class SubscriptionInfolist
                             ->label(__('app.fields.end_date'))
                             ->date(),
                     ])->columns(6),
+
+                Section::make(__('app.titles.summary'))
+                    ->schema(InvoiceSummaryRows::rows(
+                        fn (Subscription $record): ?Invoice => $record->invoices->last(),
+                    ))
+                    ->columns(1)
+                    ->hidden(fn (Subscription $record): bool => $record->invoices->isEmpty()),
             ]);
     }
 }

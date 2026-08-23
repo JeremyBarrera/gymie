@@ -267,23 +267,13 @@
                     </div>
 
                     <x-filament::section>
-                        <dl class="grid gap-2 sm:grid-cols-2">
-                            <div class="flex items-center justify-between">
-                                <dt class="fi-text-muted text-sm">{{ __('app.fields.fee') }}</dt>
-                                <dd class="fi-text text-sm">{{ \App\Helpers\Helpers::getCurrencySymbol() }} {{ number_format((float) ($verifyForm['sale']['fee'] ?? 0), 2) }}</dd>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <dt class="fi-text-muted text-sm">{{ __('app.fields.tax') }}</dt>
-                                <dd class="fi-text text-sm">{{ \App\Helpers\Helpers::getCurrencySymbol() }} {{ number_format((float) ($verifyForm['sale']['tax'] ?? 0), 2) }}</dd>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <dt class="fi-text-muted text-sm">{{ __('app.fields.total') }}</dt>
-                                <dd class="fi-text text-sm">{{ \App\Helpers\Helpers::getCurrencySymbol() }} {{ number_format((float) ($verifyForm['sale']['total'] ?? 0), 2) }}</dd>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <dt class="fi-text-muted text-sm">{{ __('app.fields.due') }}</dt>
-                                <dd class="fi-text text-sm">{{ \App\Helpers\Helpers::getCurrencySymbol() }} {{ number_format((float) ($verifyForm['sale']['due'] ?? 0), 2) }}</dd>
-                            </div>
+                        <dl class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                            @foreach(['fee', 'tax', 'total', 'due'] as $saleRowKey)
+                                <div class="flex min-w-0 items-baseline justify-between gap-3">
+                                    <dt class="fi-text-muted whitespace-nowrap text-sm">{{ __("app.fields.{$saleRowKey}") }}</dt>
+                                    <dd class="fi-text min-w-0 truncate text-sm font-medium">{{ \App\Helpers\Helpers::getCurrencySymbol() }} {{ number_format((float) ($verifyForm['sale'][$saleRowKey] ?? 0), 2) }}</dd>
+                                </div>
+                            @endforeach
                         </dl>
                     </x-filament::section>
 

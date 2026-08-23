@@ -12,7 +12,7 @@ use App\Models\QueueEntry;
 use App\Models\Service;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Notifications\ReceptionOverrideNotification;
+use App\Notifications\FollowUpAlertNotification;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -98,8 +98,8 @@ it('renders the reception page for an owner', function (): void {
     $this->actingAs($staff)
         ->get('/reception')
         ->assertOk()
-        ->assertSee('Sign in')
-        ->assertSee('Sign-Up');
+        ->assertSee('Sign-Up')
+        ->assertSee(__('app.reception.manual_search_placeholder'));
 });
 
 it('lists waiting checkin and signup queue entries scoped to the location', function (): void {
@@ -200,7 +200,7 @@ it('overrides a checkin entry when the feature is active and notifies owners', f
         ->and($entry->override)->toBeTrue()
         ->and($entry->override_by_user_id)->toBe($staff->id);
 
-    Notification::assertSentTo($staff, ReceptionOverrideNotification::class);
+    Notification::assertSentTo($staff, FollowUpAlertNotification::class);
 });
 
 it('overrides a checkin entry and notifies the configured roles instead of owners', function (): void {
@@ -233,8 +233,8 @@ it('overrides a checkin entry and notifies the configured roles instead of owner
     expect($entry->status)->toBe('approved')
         ->and($entry->override)->toBeTrue();
 
-    Notification::assertSentTo($manager, ReceptionOverrideNotification::class);
-    Notification::assertNotSentTo($staff, ReceptionOverrideNotification::class);
+    Notification::assertSentTo($manager, FollowUpAlertNotification::class);
+    Notification::assertNotSentTo($staff, FollowUpAlertNotification::class);
 });
 
 it('does not override when the feature flag is off', function (): void {

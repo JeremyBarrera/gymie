@@ -2,12 +2,12 @@
     @if($enabled)
         @if($pendingQueue)
             <x-filament::dropdown
-                placement="top-end"
+                placement="bottom-end"
                 width="sm"
                 maxHeight="60vh"
                 flip
                 wire:key="pending-fab"
-                class="pending-fab"
+                class="pending-fab pending-fab-topbar"
             >
                 <x-slot name="trigger">
                     <button

@@ -8,8 +8,6 @@
             ?? $entry->payload['identifier_value']
             ?? ($entry->kind === 'checkin' ? __('app.reception.unknown_member') : __('app.reception.new_member'));
 
-        $photoUrl = ($member && $member->photo) ? asset('storage/'.$member->photo) : null;
-
         $eligible = [];
         $hasLimited = false;
         if ($member) {
@@ -52,13 +50,7 @@
         >
             <div class="space-y-4">
                 <div class="flex items-center gap-3">
-                    @if($photoUrl)
-                        <x-filament::avatar :src="$photoUrl" size="lg" class="shrink-0" />
-                    @else
-                        <span class="fi-color fi-color-primary flex shrink-0 items-center justify-center rounded-lg fi-size-lg">
-                            <x-filament::icon icon="heroicon-m-user" :size="\Filament\Support\Enums\IconSize::Large" />
-                        </span>
-                    @endif
+                    @include('filament.pages.partials.member-avatar', ['member' => $member])
 
                     <div class="min-w-0">
                         <h3 class="fi-text text-base font-semibold">{{ $name }}</h3>
@@ -101,34 +93,22 @@
 
             <x-slot name="footer">
                 <div class="flex w-full gap-3">
-                    @if($action === 'approve')
-                        <x-filament::button
-                            color="success"
-                            wire:click="confirm"
-                            wire:loading.attr="disabled"
-                            class="flex-1"
-                        >
-                            {{ __('app.reception.confirm.approve_confirm') }}
-                        </x-filament::button>
-                    @elseif($action === 'deny')
-                        <x-filament::button
-                            color="danger"
-                            wire:click="confirm"
-                            wire:loading.attr="disabled"
-                            class="flex-1"
-                        >
-                            {{ __('app.reception.confirm.deny_confirm') }}
-                        </x-filament::button>
-                    @else
-                        <x-filament::button
-                            color="warning"
-                            wire:click="confirm"
-                            wire:loading.attr="disabled"
-                            class="flex-1"
-                        >
-                            {{ __('app.reception.confirm.override_confirm') }}
-                        </x-filament::button>
-                    @endif
+                    @php
+                        [$confirmColor, $confirmLabel] = match ($action) {
+                            'approve' => ['success', __('app.reception.confirm.approve_confirm')],
+                            'deny' => ['danger', __('app.reception.confirm.deny_confirm')],
+                            default => ['warning', __('app.reception.confirm.override_confirm')],
+                        };
+                    @endphp
+
+                    <x-filament::button
+                        :color="$confirmColor"
+                        wire:click="confirm"
+                        wire:loading.attr="disabled"
+                        class="flex-1"
+                    >
+                        {{ $confirmLabel }}
+                    </x-filament::button>
 
                     <x-filament::button
                         color="gray"

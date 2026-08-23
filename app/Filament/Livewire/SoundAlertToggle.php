@@ -5,6 +5,7 @@ namespace App\Filament\Livewire;
 use App\Events\SoundAlertsToggled;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 /**
@@ -38,7 +39,16 @@ class SoundAlertToggle extends Component
         // every other open tab of this user in sync live.
         $this->dispatch('sound-alerts-updated', enabled: $this->soundAlerts);
 
-        broadcast(new SoundAlertsToggled($user->id, $this->soundAlerts));
+        // Cross-tab sync is best-effort: a down websocket server must never
+        // break the toggle itself (the acting tab already flipped above).
+        try {
+            broadcast(new SoundAlertsToggled($user->id, $this->soundAlerts));
+        } catch (\Throwable $exception) {
+            Log::warning('Sound alerts cross-tab broadcast failed', [
+                'user_id' => $user->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
 
         $this->dispatch('notify',
             type: 'success',

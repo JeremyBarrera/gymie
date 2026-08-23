@@ -3,6 +3,8 @@ import './echo';
 import './camera-capture';
 import './theme-live';
 import './device-locale';
+import './locale-live';
+import './sound-alerts';
 
 document.addEventListener('livewire:init', () => {
     Livewire.on('notify', (params) => {

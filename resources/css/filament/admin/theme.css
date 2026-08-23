@@ -2,7 +2,25 @@
 @import "../../../../vendor/filament/filament/resources/css/theme.css";
 
 @source '../../../../app/Filament/**/*';
+@source '../../../../app/Support/**/*';
 @source '../../../../resources/views/filament/**/*';
+
+/* Canonical money-row text colors (theme + dark-mode aware) */
+.fi-text {
+    color: var(--gray-950);
+}
+
+.dark .fi-text {
+    color: white;
+}
+
+.fi-text-muted {
+    color: var(--gray-500);
+}
+
+.dark .fi-text-muted {
+    color: var(--gray-400);
+}
 
 .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-label-ctn > .fi-icon {
     color: var(--primary-500);
@@ -33,22 +51,19 @@
     color: white;
 }
 
-/* Reception: floating pending sign-ups queue badge */
+/* Reception: waiting-line queue badge in the panel top navbar */
 [x-cloak] {
     display: none !important;
 }
 
-.pending-fab {
-    position: fixed;
-    inset-inline-end: 1.5rem;
-    bottom: 1.5rem;
-    z-index: 90;
+.pending-fab-topbar {
+    display: inline-flex;
 }
 
 .pending-fab-button {
     position: relative;
-    width: 56px;
-    height: 56px;
+    width: 40px;
+    height: 40px;
     border-radius: 9999px;
     background: var(--primary-600);
     color: white;
@@ -57,7 +72,6 @@
     justify-content: center;
     border: none;
     cursor: pointer;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
     transition: background 0.15s;
 }
 
@@ -66,22 +80,23 @@
 }
 
 .pending-fab-button svg {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
 }
 
 .pending-fab-count {
     position: absolute;
     top: -4px;
     inset-inline-end: -4px;
-    min-width: 22px;
-    height: 22px;
-    padding: 0 6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
     border-radius: 9999px;
     background: var(--danger-600);
     color: white;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
+    line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;

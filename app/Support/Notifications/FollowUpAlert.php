@@ -2,18 +2,19 @@
 
 namespace App\Support\Notifications;
 
+use App\Events\FollowUpEscalated;
 use App\Models\Invoice;
 use App\Models\Member;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Notifications\ReceptionOverrideNotification;
+use App\Notifications\FollowUpAlertNotification;
 
 /**
  * Entry point for follow-up alerts (LIVE_RECEPTION_FLOW_PLAN.md).
  *
- * Resolves recipients from the settings scope `follow_up` and persists one
- * database notification per recipient. Delivery internals are swapped behind
- * this helper in Phase O2 — call sites never change.
+ * Resolves recipients from the settings scope `follow_up`, persists one
+ * contract-payload notification per recipient and escalates each over its
+ * private `user.{id}` channel. Call sites never change.
  */
 final class FollowUpAlert
 {
@@ -50,7 +51,20 @@ final class FollowUpAlert
         ];
 
         foreach (NotificationRecipients::resolve('follow_up') as $recipient) {
-            $recipient->notify(ReceptionOverrideNotification::followUp($member, $actor, $payload));
+            $notification = new FollowUpAlertNotification($payload);
+            $recipient->notify($notification);
+
+            FollowUpEscalated::dispatch(
+                $recipient->id,
+                (string) $notification->id,
+                $payload['action'],
+                $payload['reason'],
+                $payload['actor'],
+                $payload['member'],
+                $payload['subscription_id'],
+                $payload['invoice_id'],
+                $payload['occurred_at'],
+            );
         }
     }
 }

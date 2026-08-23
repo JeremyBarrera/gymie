@@ -5,8 +5,6 @@ namespace App\Filament\Pages;
 use App\Events\QueueEntryClaimed;
 use App\Events\QueueEntryExpired;
 use App\Events\QueueEntryResolved;
-use App\Exceptions\PlanCheckIn\DuplicateCheckInRequiresConfirmationException;
-use App\Exceptions\PlanCheckIn\PlanCheckInException;
 use App\Filament\Concerns\HandlesCheckInVerification;
 use App\Filament\Concerns\HandlesSignupVerification;
 use App\Models\Location;
@@ -14,31 +12,18 @@ use App\Models\LocationToken;
 use App\Models\Member;
 use App\Models\QueueEntry;
 use App\Models\Subscription;
-use App\Notifications\ReceptionOverrideNotification;
 use App\Services\Membership\PlanCheckInService;
 use App\Support\DevOps\FeatureFlags;
 use App\Support\Locations\LocationAccess;
-use App\Support\Notifications\NotificationRecipients;
-use Filament\Actions\Action;
-use Filament\Actions\Concerns\InteractsWithActions;
-use Filament\Actions\Contracts\HasActions;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Notifications\Notification;
+use App\Support\Notifications\FollowUpAlert;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
-class Reception extends Page implements HasActions, HasForms
+class Reception extends Page
 {
     use HandlesCheckInVerification;
     use HandlesSignupVerification;
-    use InteractsWithActions;
-    use InteractsWithForms;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
 
@@ -71,8 +56,14 @@ class Reception extends Page implements HasActions, HasForms
 
     public array $signupEntries = [];
 
-    /** @var array<string, mixed>|null */
-    public ?array $data = [];
+    /**
+     * Live walk-up search rows (minimal identity fields only: id, code,
+     * name, contact). Refreshed on every debounced search-term update; the
+     * overlay owns everything beyond identity.
+     *
+     * @var array<int, array{id: int, code: string, name: string, contact: string|null}>
+     */
+    public array $manualSearchResults = [];
 
     protected $listeners = [
         'queueEntryCreated' => 'onQueueEntryCreated',
@@ -83,7 +74,6 @@ class Reception extends Page implements HasActions, HasForms
 
     public function mount(): void
     {
-        $this->form->fill();
         $this->loadQueueEntries();
     }
 
@@ -92,179 +82,53 @@ class Reception extends Page implements HasActions, HasForms
         return __('app.reception.title');
     }
 
-    public function form(Schema $schema): Schema
+    /**
+     * Debounced live lookup across name, member code, contact and
+     * government ID. Runs through `Member::searchByIdentifier()`, whose
+     * global location scope keeps results inside the accessible locations.
+     */
+    public function updatedManualCheckInSearch(string $value): void
     {
-        return $schema
-            ->components([
-                Section::make(__('app.check_in.section_sign_in'))
-                    ->icon('heroicon-o-identification')
-                    ->schema([
-                        Select::make('member_id')
-                            ->label(__('app.resources.members.singular'))
-                            ->placeholder(__('app.placeholders.select_member'))
-                            ->searchable()
-                            ->getSearchResultsUsing(function (string $search): array {
-                                return Member::query()
-                                    ->where(function (Builder $query) use ($search): void {
-                                        $query->where('name', 'like', "%{$search}%")
-                                            ->orWhere('code', 'like', "%{$search}%")
-                                            ->orWhere('government_id', 'like', "%{$search}%")
-                                            ->orWhere('contact', 'like', "%{$search}%");
-                                    })
-                                    ->orderBy('name')
-                                    ->limit(50)
-                                    ->get()
-                                    ->mapWithKeys(fn (Member $record): array => [
-                                        $record->id => "{$record->code} - {$record->name}",
-                                    ])
-                                    ->all();
-                            })
-                            ->getOptionLabelUsing(function ($value): ?string {
-                                $member = Member::query()->find($value);
+        $term = trim($value);
 
-                                return $member ? "{$member->code} - {$member->name}" : null;
-                            })
-                            ->live()
-                            ->afterStateUpdated(fn (callable $set) => $set('subscription_id', null))
-                            ->required(),
-                        Select::make('subscription_id')
-                            ->label(__('app.resources.subscriptions.singular'))
-                            ->placeholder(__('app.placeholders.select_plan'))
-                            ->options(function (callable $get): array {
-                                $memberId = $get('member_id');
+        if ($term === '') {
+            $this->manualSearchResults = [];
 
-                                if (blank($memberId)) {
-                                    return [];
-                                }
-
-                                $member = Member::query()->find($memberId);
-
-                                if ($member === null) {
-                                    return [];
-                                }
-
-                                return app(PlanCheckInService::class)
-                                    ->eligibleSubscriptions($member)
-                                    ->mapWithKeys(fn (Subscription $subscription): array => [
-                                        $subscription->id => app(PlanCheckInService::class)
-                                            ->subscriptionOptionLabel($subscription),
-                                    ])
-                                    ->all();
-                            })
-                            ->searchable()
-                            ->required()
-                            ->visible(fn (callable $get): bool => filled($get('member_id')))
-                            ->helperText(function (callable $get): ?string {
-                                $memberId = $get('member_id');
-
-                                if (blank($memberId)) {
-                                    return null;
-                                }
-
-                                $member = Member::query()->find($memberId);
-
-                                if ($member === null) {
-                                    return null;
-                                }
-
-                                return app(PlanCheckInService::class)
-                                    ->eligibleSubscriptions($member)
-                                    ->isEmpty()
-                                    ? __('app.empty.no_eligible_plans')
-                                    : null;
-                            }),
-                    ])
-                    ->columns(2),
-            ])
-            ->statePath('data');
-    }
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            Action::make('signIn')
-                ->label(__('app.actions.sign_in'))
-                ->icon('heroicon-o-check-circle')
-                ->color('success')
-                ->requiresConfirmation(fn (): bool => $this->wouldDuplicateToday())
-                ->modalHeading(__('app.check_in.confirm_duplicate_heading'))
-                ->modalDescription(__('app.check_in.confirm_duplicate_description'))
-                ->modalSubmitActionLabel(__('app.actions.confirm_sign_in'))
-                ->action(function (): void {
-                    $this->performCheckIn($this->wouldDuplicateToday());
-                })
-                ->disabled(fn (): bool => blank($this->data['member_id'] ?? null) || blank($this->data['subscription_id'] ?? null)),
-        ];
-    }
-
-    public function performCheckIn(bool $confirmDuplicate = false): void
-    {
-        $memberId = $this->data['member_id'] ?? null;
-        $subscriptionId = $this->data['subscription_id'] ?? null;
-
-        if (blank($memberId) || blank($subscriptionId)) {
             return;
         }
 
-        $member = Member::query()->findOrFail($memberId);
-        $subscription = Subscription::query()->findOrFail($subscriptionId);
-
-        try {
-            $checkIn = app(PlanCheckInService::class)->checkIn(
-                $member,
-                $subscription,
-                Auth::user(),
-                $confirmDuplicate,
-            );
-
-            $checkIn->loadMissing('plan');
-            $remaining = app(PlanCheckInService::class)->remainingUses($subscription);
-            $usesLabel = $remaining === null
-                ? __('app.fields.unlimited')
-                : __('app.fields.uses_remaining', ['count' => $remaining]);
-
-            Notification::make()
-                ->title(__('app.notifications.check_in_success'))
-                ->body(__('app.notifications.check_in_success_body', [
-                    'member' => $member->name,
-                    'plan' => $checkIn->plan?->name ?? '',
-                    'uses' => $usesLabel,
-                ]))
-                ->success()
-                ->send();
-
-            $this->data = [];
-            $this->form->fill();
-        } catch (DuplicateCheckInRequiresConfirmationException $exception) {
-            Notification::make()
-                ->title(__('app.notifications.check_in_failed'))
-                ->body($exception->getMessage())
-                ->warning()
-                ->send();
-        } catch (PlanCheckInException $exception) {
-            Notification::make()
-                ->title(__('app.notifications.check_in_failed'))
-                ->body($exception->getMessage())
-                ->danger()
-                ->send();
-        }
+        $this->manualSearchResults = Member::searchByIdentifier($term)
+            ->map(fn (Member $member): array => [
+                'id' => (int) $member->id,
+                'code' => (string) $member->code,
+                'name' => (string) $member->name,
+                'contact' => $member->contact,
+            ])
+            ->all();
     }
 
-    protected function wouldDuplicateToday(): bool
+    /**
+     * Funnel a live-result selection into the shared manual check-in flow:
+     * the picked member's unique code becomes the search term, then the
+     * existing entry point resolves services and opens the standard
+     * check-in overlay (candidate picker included for multi-match).
+     */
+    public function openManualCheckInForMember(int $memberId): void
     {
-        $subscriptionId = $this->data['subscription_id'] ?? null;
-
-        if (blank($subscriptionId)) {
-            return false;
+        if (! collect($this->manualSearchResults)
+            ->contains(fn (array $row): bool => (int) $row['id'] === $memberId)
+        ) {
+            return;
         }
 
-        $subscription = Subscription::query()->find($subscriptionId);
+        $member = Member::query()->find($memberId);
 
-        if ($subscription === null) {
-            return false;
+        if ($member === null) {
+            return;
         }
 
-        return app(PlanCheckInService::class)->hasCheckedInToday($subscription);
+        $this->manualCheckInSearch = (string) $member->code;
+        $this->openManualCheckInOverlay();
     }
 
     public function loadQueueEntries(): void
@@ -516,6 +380,10 @@ class Reception extends Page implements HasActions, HasForms
         $this->checkInOverrideReason = '';
         $this->checkInOverrideRecipients = [];
         $this->checkInPopupQueue = [];
+        $this->checkInManualMode = false;
+        $this->manualCheckInCandidates = [];
+        $this->manualCheckInSearch = '';
+        $this->manualSearchResults = [];
     }
 
     public function claim(int $queueEntryId): void
@@ -778,10 +646,12 @@ class Reception extends Page implements HasActions, HasForms
 
     private function notifyRecipients(QueueEntry $entry, Member $member): void
     {
-        $recipients = NotificationRecipients::resolve('override');
-
-        foreach ($recipients as $user) {
-            $user->notify(new ReceptionOverrideNotification($entry, $member, Auth::user()));
-        }
+        FollowUpAlert::send(
+            action: 'override_checkin',
+            member: $member,
+            actor: Auth::user(),
+            reason: $entry->override_reason ?: null,
+            subscription: Subscription::find($entry->payload['subscription_id'] ?? null),
+        );
     }
 }

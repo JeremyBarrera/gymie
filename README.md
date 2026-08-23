@@ -1,4 +1,4 @@
-<p align="center"><img width="160" src=".github/assets/logo.svg"></p>
+﻿<p align="center"><img width="160" src=".github/assets/logo.svg"></p>
 
 ![Gymie](.github/assets/banner.png)
 
@@ -210,7 +210,7 @@ The **Reception** page (`Reception` Filament page) is available to staff with th
 
 Staff can **claim** a waiting entry (so no two staff members grab the same person), then **approve** or **deny** it with a reason. Approving a check-in records a plan check-in against the member's eligible subscription and respects its use limits.
 
-The **Override** flow lets staff approve an entry that would otherwise fail eligibility checks; the configured roles and users are notified via `ReceptionOverrideNotification` (recipients are configurable under **Settings → Notifications**, defaulting to owners). Subscription status updates from the `gymie:subscriptions` command notify the recipients configured there as well.
+The **Override** flow lets staff approve an entry that would otherwise fail eligibility checks; the configured roles and users are notified via the follow-up alert helper (`FollowUpAlert::send` / `FollowUpAlertNotification`, recipients configurable under **Settings → Notifications**, defaulting to owners). Subscription status updates from the `gymie:subscriptions` command notify the recipients configured there as well.
 
 ### QR codes
 

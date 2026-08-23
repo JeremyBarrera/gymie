@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminLocaleController;
 use App\Http\Controllers\AdminThemeController;
 use App\Http\Controllers\CheckInScanController;
 use App\Http\Controllers\InvoiceDocumentController;
@@ -36,4 +37,7 @@ Route::middleware([Authenticate::class])
 
         Route::post('/admin/theme', AdminThemeController::class)
             ->name('admin.theme.update');
+
+        Route::post('/admin/locale', AdminLocaleController::class)
+            ->name('admin.locale.update');
     });

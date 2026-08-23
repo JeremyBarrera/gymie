@@ -74,10 +74,11 @@ final class MembershipStatus
         }
 
         $expiringDays = Helpers::getSubscriptionExpiringDays();
+        // Absolute day count — a signed diff would make every future date
+        // negative and read as "expiring soon".
+        $daysLeft = (int) $today->diffInDays($endDate);
 
-        if ($endDate->diffInDays($today, false) <= $expiringDays) {
-            $daysLeft = $today->diffInDays($endDate);
-
+        if ($daysLeft <= $expiringDays) {
             return [
                 'color' => self::COLOR_YELLOW,
                 'label' => __('app.membership_status.expires_in_days', ['count' => $daysLeft]),

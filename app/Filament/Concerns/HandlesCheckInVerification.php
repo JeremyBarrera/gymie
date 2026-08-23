@@ -2,19 +2,21 @@
 
 namespace App\Filament\Concerns;
 
+use App\Enums\Status;
 use App\Events\QueueEntryResolved;
-use App\Exceptions\PlanCheckIn\OverdueInvoiceException;
 use App\Models\Location;
 use App\Models\LocationToken;
 use App\Models\Member;
 use App\Models\QueueEntry;
 use App\Models\Subscription;
 use App\Models\Invoice;
-use App\Notifications\ReceptionOverrideNotification;
 use App\Services\Membership\PlanCheckInService;
 use App\Support\DevOps\FeatureFlags;
+use App\Support\Notifications\FollowUpAlert;
 use App\Support\Notifications\NotificationRecipients;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\On;
 
 /**
  * Shared check-in verification flow used by the Reception page and the
@@ -23,6 +25,10 @@ use Illuminate\Support\Facades\Auth;
  * when the identifier matches more than one member), and lets staff
  * approve (picking the service the member checks in against) or deny the
  * check-in. Non-access services can be overridden after confirmation.
+ *
+ * The same overlay doubles as the manual walk-up flow: staff searches a
+ * member directly (no queue entry exists), and every entry-dependent step
+ * (status updates, broadcasts, resolution notifications) is skipped.
  */
 trait HandlesCheckInVerification
 {
@@ -30,11 +36,20 @@ trait HandlesCheckInVerification
 
     public ?int $selectedCheckInEntryId = null;
 
-    /** The member chosen for the entry — auto-resolved for single matches. */
+    /** The member chosen for the entry; auto-resolved for single matches. */
     public ?int $selectedCheckInMemberId = null;
 
     /** The service (from the location's services) the member checks in against. */
     public ?int $checkInServiceId = null;
+
+    /** True when the overlay was opened by the manual walk-up search instead of a queue entry. */
+    public bool $checkInManualMode = false;
+
+    /** @var array<int> Member ids found by the manual walk-up search (picker shown when several). */
+    public array $manualCheckInCandidates = [];
+
+    /** Manual walk-up search term (name, contact, code or government ID). */
+    public string $manualCheckInSearch = '';
 
     public bool $checkInDenyStep = false;
 
@@ -47,16 +62,6 @@ trait HandlesCheckInVerification
 
     /** @var array<string> Recipient names shown on the override confirm step. */
     public array $checkInOverrideRecipients = [];
-
-    /** Overdue due-date-change step: staff must extend the invoice due date before override. */
-    public bool $checkInOverrideDueDateStep = false;
-
-    public ?int $checkInOverrideInvoiceId = null;
-
-    public ?string $checkInOverrideNewDueDate = null;
-
-    /** When true, confirmCheckInOverride skips the overdue-invoice gate (used after due-date change). */
-    public bool $checkInOverrideSkipOverdue = false;
 
     /** @var array<int> Check-in entries that arrived while the overlay was already open. */
     public array $checkInPopupQueue = [];
@@ -76,6 +81,75 @@ trait HandlesCheckInVerification
         } else {
             $this->openCheckInOverlay($entry->id);
         }
+    }
+
+    /**
+     * Run the manual walk-up search and open the shared check-in overlay:
+     * exactly one active match opens the profile straight away, several
+     * matches open it on the candidate picker step.
+     */
+    public function openManualCheckInOverlay(): void
+    {
+        $search = trim($this->manualCheckInSearch);
+
+        if ($search === '') {
+            return;
+        }
+
+        $activeMatches = Member::searchByIdentifier($search)
+            ->filter(fn (Member $member): bool => $member->status === Status::Active)
+            ->values();
+
+        if ($activeMatches->isEmpty()) {
+            $hasInactiveMatches = Member::searchByIdentifier($search)->isNotEmpty();
+
+            $this->dispatch('notify',
+                type: $hasInactiveMatches ? 'warning' : 'danger',
+                message: $hasInactiveMatches
+                    ? __('app.reception.check_in_member_inactive')
+                    : __('app.reception.manual_no_match', ['search' => $search]),
+            );
+
+            return;
+        }
+
+        $this->beginManualCheckIn($activeMatches);
+    }
+
+    /**
+     * Open the overlay in manual mode for the given candidates. A single
+     * candidate skips the picker, mirroring how single-candidate queue
+     * entries behave.
+     *
+     * @param  Collection<int, Member>  $candidates
+     */
+    private function beginManualCheckIn(Collection $candidates): void
+    {
+        $this->resetCheckInOverlay();
+
+        $this->checkInManualMode = true;
+        $this->manualCheckInCandidates = $candidates->map(fn (Member $member): int => (int) $member->id)->values()->all();
+        $this->showCheckInOverlay = true;
+
+        if ($candidates->count() === 1) {
+            $this->selectedCheckInMemberId = (int) $candidates->first()->id;
+            $this->autoSelectCheckInService();
+        }
+    }
+
+    /**
+     * The queue entry backing the open overlay, or null in manual walk-up
+     * mode / when the entry disappeared or is not a check-in entry.
+     */
+    private function resolveCurrentCheckInEntry(): ?QueueEntry
+    {
+        if ($this->selectedCheckInEntryId === null) {
+            return null;
+        }
+
+        $entry = QueueEntry::find($this->selectedCheckInEntryId);
+
+        return $entry !== null && $entry->kind === 'checkin' ? $entry : null;
     }
 
     public function openCheckInOverlay(int $queueEntryId): void
@@ -104,15 +178,7 @@ trait HandlesCheckInVerification
         $this->checkInPopupQueue = array_values(array_diff($this->checkInPopupQueue, [$entry->id]));
 
         if ($this->selectedCheckInMemberId) {
-            $services = $this->checkInServices;
-            if (! empty($services)) {
-                $access = collect($services)->where('state', 'access')->values();
-                if ($access->count() === 1) {
-                    $this->checkInServiceId = (int) $access->first()['id'];
-                } else {
-                    $this->checkInServiceId = (int) $services[0]['id'];
-                }
-            }
+            $this->autoSelectCheckInService();
         }
     }
 
@@ -135,10 +201,9 @@ trait HandlesCheckInVerification
         $this->checkInOverrideStep = false;
         $this->checkInOverrideReason = '';
         $this->checkInOverrideRecipients = [];
-        $this->checkInOverrideDueDateStep = false;
-        $this->checkInOverrideInvoiceId = null;
-        $this->checkInOverrideNewDueDate = null;
-        $this->checkInOverrideSkipOverdue = false;
+        $this->checkInManualMode = false;
+        $this->manualCheckInCandidates = [];
+        $this->manualCheckInSearch = '';
 
         if ($closedId > 0) {
             $this->checkInOverlayClosed($closedId);
@@ -159,19 +224,39 @@ trait HandlesCheckInVerification
     }
 
     /**
-     * Resolve an ambiguous identifier: pick the correct profile among the
-     * candidates carried by the entry payload.
+     * Preselect the only accessible service, falling back to the first row,
+     * whenever the overlay shows a resolved member.
      */
-    public function selectCheckInMember(int $memberId): void
+    private function autoSelectCheckInService(): void
     {
-        if (! $this->selectedCheckInEntryId) {
+        $services = $this->checkInServices;
+
+        if (empty($services)) {
             return;
         }
 
-        $entry = QueueEntry::find($this->selectedCheckInEntryId);
-        $candidateIds = array_map('intval', $entry?->payload['candidate_member_ids'] ?? []);
+        $access = collect($services)->where('state', 'access')->values();
+        $this->checkInServiceId = $access->count() === 1
+            ? (int) $access->first()['id']
+            : (int) $services[0]['id'];
+    }
 
-        if (! in_array($memberId, $candidateIds, true)) {
+    /**
+     * Resolve an ambiguous identifier: pick the correct profile among the
+     * candidates carried by the entry payload, or among the manual walk-up
+     * search results when no entry backs the overlay.
+     */
+    public function selectCheckInMember(int $memberId): void
+    {
+        $entry = $this->resolveCurrentCheckInEntry();
+
+        if ($entry !== null) {
+            $candidateIds = array_map('intval', $entry->payload['candidate_member_ids'] ?? []);
+
+            if (! in_array($memberId, $candidateIds, true)) {
+                return;
+            }
+        } elseif (! in_array($memberId, $this->manualCheckInCandidates, true)) {
             return;
         }
 
@@ -179,37 +264,38 @@ trait HandlesCheckInVerification
         $this->checkInServiceId = null;
         $this->checkInOverrideStep = false;
 
-        $services = $this->checkInServices;
-        if (! empty($services)) {
-            $access = collect($services)->where('state', 'access')->values();
-            if ($access->count() === 1) {
-                $this->checkInServiceId = (int) $access->first()['id'];
-            } else {
-                $this->checkInServiceId = (int) $services[0]['id'];
-            }
-        }
+        $this->autoSelectCheckInService();
     }
 
     /**
-     * Per-service check-in states for the selected member at the entry's
-     * location (see `PlanCheckInService::serviceStatesForMember()`).
+     * Per-service check-in states for the selected member: at the queue
+     * entry's location, or at the current TenantContext location for the
+     * manual walk-up flow (see `PlanCheckInService::serviceStatesForMember()`).
      *
      * @return array<int, array<string, mixed>>
      */
     public function getCheckInServicesProperty(): array
     {
-        if (! $this->selectedCheckInMemberId || ! $this->selectedCheckInEntryId) {
+        if (! $this->selectedCheckInMemberId) {
             return [];
         }
 
-        $entry = QueueEntry::find($this->selectedCheckInEntryId);
         $member = Member::find($this->selectedCheckInMemberId);
 
-        if (! $entry || ! $member) {
+        if (! $member) {
             return [];
         }
 
-        return app(PlanCheckInService::class)->serviceStatesForMember($member, (int) $entry->location_id);
+        $entry = $this->resolveCurrentCheckInEntry();
+
+        if ($this->selectedCheckInEntryId !== null && $entry === null) {
+            return [];
+        }
+
+        return app(PlanCheckInService::class)->serviceStatesForMember(
+            $member,
+            $entry !== null ? (int) $entry->location_id : null,
+        );
     }
 
     public function updatedCheckInServiceId($value): void
@@ -249,20 +335,46 @@ trait HandlesCheckInVerification
         $this->checkInOverrideStep = false;
     }
 
+    /**
+     * Broadcast the queue entry's resolution to its location scanner, when
+     * the overlay is backed by a queue entry at all (manual walk-ups have
+     * nothing to broadcast to).
+     */
+    private function broadcastCheckInResolution(QueueEntry $entry, bool $approved, ?string $reason): void
+    {
+        $locationToken = LocationToken::where('tokenable_type', Location::class)
+            ->where('tokenable_id', $entry->location_id)
+            ->where('kind', 'checkin')
+            ->value('token');
+
+        if ($locationToken) {
+            broadcast(new QueueEntryResolved(
+                $entry->id,
+                $entry->uuid,
+                $locationToken,
+                'checkin',
+                $entry->payload,
+                $approved,
+                $reason
+            ))->toOthers();
+        }
+    }
+
     public function approveCheckIn(): void
     {
-        if (! $this->selectedCheckInEntryId || ! $this->selectedCheckInMemberId || ! $this->checkInServiceId) {
+        if (! $this->selectedCheckInMemberId || ! $this->checkInServiceId) {
             return;
         }
 
-        $entry = QueueEntry::find($this->selectedCheckInEntryId);
-        if (! $entry || $entry->kind !== 'checkin') {
+        $entry = $this->resolveCurrentCheckInEntry();
+
+        if ($entry === null && $this->selectedCheckInEntryId !== null) {
             $this->closeCheckInOverlay();
 
             return;
         }
 
-        if (! in_array($entry->status, ['waiting', 'attending'], true)) {
+        if ($entry !== null && ! in_array($entry->status, ['waiting', 'attending'], true)) {
             $this->closeCheckInOverlay();
 
             return;
@@ -292,23 +404,10 @@ trait HandlesCheckInVerification
             return;
         }
 
-        $entry->update(['status' => 'approved', 'override' => false]);
+        if ($entry !== null) {
+            $entry->update(['status' => 'approved', 'override' => false]);
 
-        $locationToken = LocationToken::where('tokenable_type', Location::class)
-            ->where('tokenable_id', $entry->location_id)
-            ->where('kind', 'checkin')
-            ->value('token');
-
-        if ($locationToken) {
-            broadcast(new QueueEntryResolved(
-                $entry->id,
-                $entry->uuid,
-                $locationToken,
-                'checkin',
-                $entry->payload,
-                true,
-                null
-            ))->toOthers();
+            $this->broadcastCheckInResolution($entry, true, null);
         }
 
         $this->dispatch('notify',
@@ -317,18 +416,31 @@ trait HandlesCheckInVerification
         );
 
         $this->resetCheckInOverlay();
-        $this->removeCheckInFromView($entry->id);
+
+        if ($entry !== null) {
+            $this->removeCheckInFromView($entry->id);
+        }
     }
 
     /**
      * Move the overlay to the override confirm step for the given service:
      * shows who will be notified, with an optional reason.
+     *
+     * Only the no-access state offers the generic override — expired goes
+     * through the renewal modal and past-due states through the payment /
+     * due-date modals instead (LIVE_RECEPTION_FLOW_PLAN.md O3/O5).
      */
     public function openCheckInOverrideFor(int $serviceId): void
     {
         $this->selectCheckInService($serviceId);
 
         if ($this->checkInServiceId !== $serviceId) {
+            return;
+        }
+
+        $row = collect($this->checkInServices)->firstWhere('id', $serviceId);
+
+        if (($row['state'] ?? null) !== 'no_access') {
             return;
         }
 
@@ -342,7 +454,7 @@ trait HandlesCheckInVerification
 
     public function confirmCheckInOverride(): void
     {
-        if (! $this->selectedCheckInEntryId || ! $this->selectedCheckInMemberId || ! $this->checkInServiceId) {
+        if (! $this->selectedCheckInMemberId || ! $this->checkInServiceId) {
             return;
         }
 
@@ -355,8 +467,9 @@ trait HandlesCheckInVerification
             return;
         }
 
-        $entry = QueueEntry::find($this->selectedCheckInEntryId);
-        if (! $entry || $entry->kind !== 'checkin' || ! in_array($entry->status, ['waiting', 'attending'], true)) {
+        $entry = $this->resolveCurrentCheckInEntry();
+
+        if ($entry !== null && ! in_array($entry->status, ['waiting', 'attending'], true)) {
             $this->closeCheckInOverlay();
 
             return;
@@ -366,10 +479,223 @@ trait HandlesCheckInVerification
         $member = Member::find($this->selectedCheckInMemberId);
         $subscription = $row ? Subscription::find($row['subscription_id']) : null;
         $overrideReason = match ($row['state'] ?? null) {
-            'expired' => 'expired',
             'no_access' => 'no_subscription',
             default => null,
         };
+
+        if (! $member || ($row['state'] ?? null) !== 'no_access') {
+            $this->dispatch('notify',
+                type: 'danger',
+                message: __('app.notifications.check_in_failed'),
+            );
+
+            return;
+        }
+
+        $reason = $this->checkInOverrideReason ?: $overrideReason;
+
+        try {
+            app(PlanCheckInService::class)->checkInOverride(
+                $member,
+                $subscription,
+                Auth::user(),
+                $reason,
+                false,
+                $this->checkInServiceId,
+            );
+        } catch (\Throwable $exception) {
+            $this->dispatch('notify',
+                type: 'danger',
+                message: $exception->getMessage(),
+            );
+
+            return;
+        }
+
+        if ($entry !== null) {
+            $entry->update([
+                'status' => 'approved',
+                'override' => true,
+                'override_by_user_id' => Auth::id(),
+                'override_reason' => $this->checkInOverrideReason ?: null,
+            ]);
+
+            $this->broadcastCheckInResolution($entry, true, null);
+        }
+
+        FollowUpAlert::send(
+            action: 'override_checkin',
+            member: $member,
+            actor: Auth::user(),
+            reason: $reason,
+            subscription: $subscription,
+        );
+
+        $this->dispatch('notify',
+            type: 'warning',
+            message: __('app.reception.override_approved'),
+        );
+
+        $this->resetCheckInOverlay();
+
+        if ($entry !== null) {
+            $this->removeCheckInFromView($entry->id);
+        }
+    }
+
+    /**
+     * Open the renewal popup for an expired service row: the child Livewire
+     * component receives the context and shows its own modal on top of the
+     * overlay. After a successful renew + check-in both close together.
+     */
+    public function openExpiredSubscriptionModal(int $serviceId): void
+    {
+        $member = Member::find($this->selectedCheckInMemberId);
+        $row = collect($this->checkInServices)->firstWhere('id', $serviceId);
+
+        if (! $member || ! $row || ($row['state'] ?? null) !== 'expired') {
+            return;
+        }
+
+        $previous = $this->latestSubscriptionForService($member, $serviceId);
+
+        if ($previous === null) {
+            $this->dispatch('notify',
+                type: 'danger',
+                message: __('app.notifications.check_in_not_eligible'),
+            );
+
+            return;
+        }
+
+        $this->dispatch('open-expired-subscription-modal',
+            memberId: (int) $member->id,
+            serviceId: (int) $serviceId,
+            previousSubscriptionId: (int) $previous->id,
+        );
+    }
+
+    /**
+     * Open the add-payment popup for an unpaid / overdue service row.
+     */
+    public function openAddPaymentModal(int $serviceId): void
+    {
+        $context = $this->pastDueModalContext($serviceId);
+
+        if ($context === null) {
+            return;
+        }
+
+        $this->dispatch('open-add-payment-modal', ...$context);
+    }
+
+    /**
+     * Open the change-due-date popup for an unpaid / overdue service row.
+     */
+    public function openChangeDueDateModal(int $serviceId): void
+    {
+        $context = $this->pastDueModalContext($serviceId);
+
+        if ($context === null) {
+            return;
+        }
+
+        $this->dispatch('open-change-due-date-modal', ...$context);
+    }
+
+    /**
+     * Complete a normal check-in after a modal resolved the blocking issue:
+     * the renewed subscription (expired path) or the settled invoice
+     * (paid-in-full payment path).
+     */
+    #[On('check-in.resolved-by-modal')]
+    public function completeResolvedCheckIn(int $subscriptionId): void
+    {
+        $entry = $this->resolveCurrentCheckInEntry();
+
+        if ($entry === null && $this->selectedCheckInEntryId !== null) {
+            $this->closeCheckInOverlay();
+
+            return;
+        }
+
+        if ($entry !== null && ! in_array($entry->status, ['waiting', 'attending'], true)) {
+            $this->closeCheckInOverlay();
+
+            return;
+        }
+
+        $member = Member::find($this->selectedCheckInMemberId);
+        $subscription = Subscription::find($subscriptionId);
+
+        if (! $member || ! $subscription || (int) $subscription->member_id !== (int) $member->id) {
+            $this->dispatch('notify',
+                type: 'danger',
+                message: __('app.notifications.check_in_failed'),
+            );
+
+            return;
+        }
+
+        try {
+            app(PlanCheckInService::class)->checkIn($member, $subscription, Auth::user());
+        } catch (\Throwable $exception) {
+            $this->dispatch('notify',
+                type: 'danger',
+                message: $exception->getMessage(),
+            );
+
+            return;
+        }
+
+        if ($entry !== null) {
+            $entry->update(['status' => 'approved', 'override' => false]);
+
+            $this->broadcastCheckInResolution($entry, true, null);
+        }
+
+        $this->dispatch('notify',
+            type: 'success',
+            message: __('app.reception.checkin_approved', ['name' => $member->name]),
+        );
+
+        $this->resetCheckInOverlay();
+
+        if ($entry !== null) {
+            $this->removeCheckInFromView($entry->id);
+        }
+    }
+
+    /**
+     * Complete an override-semantics check-in after the payment or due-date
+     * modal recorded its write (both skip the overdue gate: the blocking
+     * invoice was just settled or pushed out).
+     */
+    #[On('check-in.assisted-override')]
+    public function completeAssistedOverrideCheckIn(int $serviceId, ?string $reason = null): void
+    {
+        if (! FeatureFlags::activeForUser(Auth::user(), 'checkin.override')) {
+            $this->dispatch('notify',
+                type: 'danger',
+                message: __('app.reception.override_disabled'),
+            );
+
+            return;
+        }
+
+        $entry = $this->resolveCurrentCheckInEntry();
+
+        if ($entry !== null && ! in_array($entry->status, ['waiting', 'attending'], true)) {
+            $this->closeCheckInOverlay();
+
+            return;
+        }
+
+        $row = collect($this->checkInServices)->firstWhere('id', $serviceId);
+        $member = Member::find($this->selectedCheckInMemberId);
+        $subscription = ($row && $row['subscription_id'] !== null)
+            ? Subscription::find($row['subscription_id'])
+            : null;
 
         if (! $member) {
             return;
@@ -380,47 +706,10 @@ trait HandlesCheckInVerification
                 $member,
                 $subscription,
                 Auth::user(),
-                $this->checkInOverrideReason ?: $overrideReason,
-                $this->checkInOverrideSkipOverdue,
-                $this->checkInServiceId,
+                $reason,
+                true,
+                $serviceId,
             );
-        } catch (OverdueInvoiceException $exception) {
-            if ($this->checkInOverrideSkipOverdue) {
-                $this->dispatch('notify',
-                    type: 'danger',
-                    message: $exception->getMessage(),
-                );
-
-                return;
-            }
-
-            $overdueInvoice = $subscription->invoices()
-                ->where(fn ($q) => $q->where('status', 'issued')->orWhere('status', 'partial')->orWhere('status', 'overdue'))
-                ->where('due_amount', '>', 0)
-                ->whereNotNull('due_date')
-                ->where('due_date', '<', now(config('app.timezone') ?: 'UTC'))
-                ->orderBy('due_date')
-                ->first();
-
-            if (! $overdueInvoice) {
-                $this->dispatch('notify',
-                    type: 'danger',
-                    message: __('app.reception.override_must_change_date'),
-                );
-
-                return;
-            }
-
-            $this->checkInOverrideInvoiceId = $overdueInvoice->id;
-            $this->checkInOverrideNewDueDate = now(config('app.timezone') ?: 'UTC')->addWeek()->format('Y-m-d');
-            $this->checkInOverrideDueDateStep = true;
-
-            $this->dispatch('notify',
-                type: 'danger',
-                message: __('app.reception.override_must_change_date'),
-            );
-
-            return;
         } catch (\Throwable $exception) {
             $this->dispatch('notify',
                 type: 'danger',
@@ -430,32 +719,15 @@ trait HandlesCheckInVerification
             return;
         }
 
-        $entry->update([
-            'status' => 'approved',
-            'override' => true,
-            'override_by_user_id' => Auth::id(),
-            'override_reason' => $this->checkInOverrideReason ?: null,
-        ]);
+        if ($entry !== null) {
+            $entry->update([
+                'status' => 'approved',
+                'override' => true,
+                'override_by_user_id' => Auth::id(),
+                'override_reason' => $reason ?: null,
+            ]);
 
-        $locationToken = LocationToken::where('tokenable_type', Location::class)
-            ->where('tokenable_id', $entry->location_id)
-            ->where('kind', 'checkin')
-            ->value('token');
-
-        if ($locationToken) {
-            broadcast(new QueueEntryResolved(
-                $entry->id,
-                $entry->uuid,
-                $locationToken,
-                'checkin',
-                $entry->payload,
-                true,
-                null
-            ))->toOthers();
-        }
-
-        foreach (NotificationRecipients::resolve('override') as $user) {
-            $user->notify(new ReceptionOverrideNotification($entry, $member, Auth::user(), $overrideReason));
+            $this->broadcastCheckInResolution($entry, true, null);
         }
 
         $this->dispatch('notify',
@@ -464,49 +736,78 @@ trait HandlesCheckInVerification
         );
 
         $this->resetCheckInOverlay();
-        $this->removeCheckInFromView($entry->id);
+
+        if ($entry !== null) {
+            $this->removeCheckInFromView($entry->id);
+        }
     }
 
     /**
-     * Update the overdue invoice's due date and retry the override.
+     * The most recently ending subscription of the member for a service —
+     * the "expired one" whose plan preselects the renewal form and whose id
+     * chains the new subscription via `renewed_from_subscription_id`.
      */
-    public function confirmDueDateChange(): void
+    private function latestSubscriptionForService(Member $member, int $serviceId): ?Subscription
     {
-        if (! $this->checkInOverrideInvoiceId || ! $this->checkInOverrideNewDueDate) {
-            return;
+        return $member->subscriptions()
+            ->with('plan')
+            ->whereHas('plan', fn ($query) => $query->where('service_id', $serviceId))
+            ->orderByDesc('end_date')
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    /**
+     * Shared context for the two past-due popups: validates the selected row
+     * is actually unpaid/overdue and resolves the open invoice to act on.
+     *
+     * @return array{memberId: int, invoiceId: int, serviceId: int, subscriptionId: int|null}|null
+     */
+    private function pastDueModalContext(int $serviceId): ?array
+    {
+        $member = Member::find($this->selectedCheckInMemberId);
+        $row = collect($this->checkInServices)->firstWhere('id', $serviceId);
+
+        if (! $member || ! $row || ! in_array($row['state'] ?? null, ['unpaid', 'overdue'], true)) {
+            return null;
         }
 
-        $invoice = Invoice::find($this->checkInOverrideInvoiceId);
-        if (! $invoice) {
+        $invoice = $this->pastDueInvoiceForMember($member, $row);
+
+        if ($invoice === null) {
             $this->dispatch('notify',
                 type: 'danger',
                 message: __('app.reception.invoice_not_found'),
             );
 
-            return;
+            return null;
         }
 
-        $newDueDate = \Carbon\Carbon::parse($this->checkInOverrideNewDueDate);
-        $invoice->update([
-            'due_date' => $newDueDate,
-        ]);
-
-        $this->checkInOverrideDueDateStep = false;
-        $this->checkInOverrideInvoiceId = null;
-        $this->checkInOverrideNewDueDate = null;
-        $this->checkInOverrideSkipOverdue = true;
-
-        $this->confirmCheckInOverride();
+        return [
+            'memberId' => (int) $member->id,
+            'invoiceId' => (int) $invoice->id,
+            'serviceId' => (int) $serviceId,
+            'subscriptionId' => $row['subscription_id'] !== null ? (int) $row['subscription_id'] : null,
+        ];
     }
 
     /**
-     * Go back from the due-date step to the override confirm step.
+     * The member's most urgent open invoice with money due — the row's own
+     * subscription's first when it has one, otherwise the earliest across
+     * all subscriptions (the member-wide overdue gate).
      */
-    public function cancelDueDateChange(): void
+    private function pastDueInvoiceForMember(Member $member, array $row): ?Invoice
     {
-        $this->checkInOverrideDueDateStep = false;
-        $this->checkInOverrideInvoiceId = null;
-        $this->checkInOverrideNewDueDate = null;
+        $subscriptionId = (int) ($row['subscription_id'] ?? 0);
+
+        return Invoice::query()
+            ->whereHas('subscription', fn ($query) => $query->where('member_id', $member->id))
+            ->when($subscriptionId > 0, fn ($query) => $query->where('subscription_id', $subscriptionId))
+            ->whereIn('status', ['issued', 'partial', 'overdue'])
+            ->where('due_amount', '>', 0)
+            ->orderBy('due_date')
+            ->orderBy('id')
+            ->first();
     }
 
     /**
@@ -519,18 +820,15 @@ trait HandlesCheckInVerification
 
     public function confirmDenyCheckIn(): void
     {
-        if (! $this->selectedCheckInEntryId) {
-            return;
-        }
+        $entry = $this->resolveCurrentCheckInEntry();
 
-        $entry = QueueEntry::find($this->selectedCheckInEntryId);
-        if (! $entry || $entry->kind !== 'checkin') {
+        if ($entry === null && $this->selectedCheckInEntryId !== null) {
             $this->closeCheckInOverlay();
 
             return;
         }
 
-        if (! in_array($entry->status, ['waiting', 'attending'], true)) {
+        if ($entry !== null && ! in_array($entry->status, ['waiting', 'attending'], true)) {
             $this->closeCheckInOverlay();
 
             return;
@@ -538,33 +836,23 @@ trait HandlesCheckInVerification
 
         $reason = $this->checkInDenyReason ?: __('app.reception.denied_no_reason');
 
-        $entry->update([
-            'status' => 'denied',
-            'denied_reason' => $reason,
-            'override' => false,
-        ]);
+        if ($entry !== null) {
+            $entry->update([
+                'status' => 'denied',
+                'denied_reason' => $reason,
+                'override' => false,
+            ]);
 
-        $locationToken = LocationToken::where('tokenable_type', Location::class)
-            ->where('tokenable_id', $entry->location_id)
-            ->where('kind', 'checkin')
-            ->value('token');
-
-        if ($locationToken) {
-            broadcast(new QueueEntryResolved(
-                $entry->id,
-                $entry->uuid,
-                $locationToken,
-                'checkin',
-                $entry->payload,
-                false,
-                $reason
-            ))->toOthers();
+            $this->broadcastCheckInResolution($entry, false, $reason);
         }
 
         $this->dispatch('notify', type: 'success', message: __('app.reception.denied'));
 
         $this->resetCheckInOverlay();
-        $this->removeCheckInFromView($entry->id);
+
+        if ($entry !== null) {
+            $this->removeCheckInFromView($entry->id);
+        }
     }
 
     /**

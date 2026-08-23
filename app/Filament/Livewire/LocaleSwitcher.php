@@ -3,6 +3,7 @@
 namespace App\Filament\Livewire;
 
 use App\Contracts\SettingsRepository;
+use App\Events\LocaleChanged;
 use App\Support\AppConfig;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\View\View;
@@ -54,6 +55,8 @@ class LocaleSwitcher extends Component
         data_set($settings, 'general.locale', $locale);
         /** @var array<string, mixed> $settings */
         $repository->put($settings);
+
+        LocaleChanged::dispatch($locale);
 
         $this->locale = $locale;
 
