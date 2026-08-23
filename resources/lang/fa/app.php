@@ -312,6 +312,7 @@ return [
     ],
     'options' => [
         'all_locations' => 'همه مکان‌ها',
+        'no_discount' => 'بدون تخفیف',
         'gender' => [
             'male' => 'مرد',
             'female' => 'زن',

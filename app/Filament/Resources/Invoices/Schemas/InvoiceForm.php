@@ -114,7 +114,10 @@ class InvoiceForm
                                     ->native(false)
                                     ->live()
                                     ->reactive()
-                                    ->default(null)
+                                    ->default('0')
+                                    ->afterStateHydrated(function (mixed $state, Set $set): void {
+                                        $set('discount', is_numeric($state) ? (string) $state : '0');
+                                    })
                                     ->afterStateUpdated(
                                         function (Get $get, Set $set) {
                                             $fee = self::floatState($get, 'subscription_fee');

@@ -241,7 +241,7 @@ class MemberOnboardingStep2 extends Page implements HasForms
                                         ->label(__('app.fields.discount'))
                                         ->options(Helpers::getDiscounts())
                                         ->live()
-                                        ->default(null)
+                                        ->default('0')
                                         ->afterStateUpdated(
                                             function (Get $get, Set $set) {
                                                 $fee = self::floatState($get, 'subscription_fee');

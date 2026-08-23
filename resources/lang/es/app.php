@@ -312,6 +312,7 @@ return [
     ],
     'options' => [
         'all_locations' => 'Todas las ubicaciones',
+        'no_discount' => 'Sin descuento',
         'gender' => [
             'male' => 'Masculino',
             'female' => 'Femenino',

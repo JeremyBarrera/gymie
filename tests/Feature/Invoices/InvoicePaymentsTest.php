@@ -106,5 +106,5 @@ it('persists a custom discount amount without a percentage on edit', function ()
     $invoice->refresh();
 
     expect((float) $invoice->discount_amount)->toBe(20.0)
-        ->and($invoice->discount)->toBeNull();
+        ->and((float) $invoice->discount)->toBe(0.0);
 });

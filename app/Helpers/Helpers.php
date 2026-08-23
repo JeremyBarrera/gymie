@@ -700,7 +700,9 @@ class Helpers
      */
     public static function getDiscounts(): array
     {
-        return Discounts::optionsFromSettings(self::getSettings());
+        $discounts = Discounts::optionsFromSettings(self::getSettings());
+
+        return ['0' => __('app.options.no_discount')] + $discounts;
     }
 
     /**

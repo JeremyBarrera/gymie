@@ -183,7 +183,7 @@ class SubscriptionForm
                                                 ->label(__('app.fields.discount'))
                                                 ->options(Helpers::getDiscounts())
                                                 ->live()
-                                                ->default(null)
+                                                ->default('0')
                                                 ->afterStateUpdated(
                                                     function (Get $get, Set $set) {
                                                         $fee = self::floatState($get, 'subscription_fee');
@@ -409,7 +409,7 @@ class SubscriptionForm
                                 ->label(__('app.fields.discount'))
                                 ->options(Helpers::getDiscounts())
                                 ->live()
-                                ->default(null)
+                                ->default('0')
                                 ->afterStateUpdated(function (Get $get, Set $set): void {
                                     $plan = self::planFromState($get);
                                     $fee = round(Data::float($plan?->amount));
