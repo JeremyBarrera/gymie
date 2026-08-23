@@ -180,7 +180,19 @@ class JsonSettingsRepository implements SettingsRepository
         }
         $settings['notifications']['email'] = $emailSettings;
 
-        foreach (['override', 'subscription_status'] as $topic) {
+        // Upgrade path: the stored `override` scope was renamed to `follow_up`.
+        $storedNotifications = $settings['notifications'];
+        if (
+            (! isset($storedNotifications['follow_up']) || ! is_array($storedNotifications['follow_up'])) &&
+            isset($storedNotifications['override']) &&
+            is_array($storedNotifications['override'])
+        ) {
+            $storedNotifications['follow_up'] = $storedNotifications['override'];
+        }
+        unset($storedNotifications['override']);
+        $settings['notifications'] = $storedNotifications;
+
+        foreach (['follow_up', 'subscription_status'] as $topic) {
             $topicSettings = $settings['notifications'][$topic] ?? [];
             if (
                 ! array_key_exists('roles', $topicSettings) ||

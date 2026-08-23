@@ -15,15 +15,36 @@ class ReceptionOverrideNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * @param  array<string, mixed>|null  $followUpPayload  Pre-built follow-up
+     * alert payload; when set, the notification carries that contract instead
+     * of the legacy queue-entry message and is database-only.
+     */
     public function __construct(
-        public QueueEntry $queueEntry,
+        public ?QueueEntry $queueEntry,
         public Member $member,
         public User $staff,
         public ?string $overrideReason = null,
+        public ?array $followUpPayload = null,
     ) {}
+
+    /**
+     * Follow-up alert carrying the shared payload contract
+     * (action/reason/actor/member/subscription_id/invoice_id/occurred_at).
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public static function followUp(Member $member, User $actor, array $payload): self
+    {
+        return new self(queueEntry: null, member: $member, staff: $actor, followUpPayload: $payload);
+    }
 
     public function via(object $notifiable): array
     {
+        if ($this->followUpPayload !== null) {
+            return ['database'];
+        }
+
         return ['database', 'broadcast'];
     }
 
@@ -45,6 +66,10 @@ class ReceptionOverrideNotification extends Notification implements ShouldQueue
 
     public function toDatabase(object $notifiable): array
     {
+        if ($this->followUpPayload !== null) {
+            return $this->followUpPayload;
+        }
+
         $base = $this->buildMessage();
         $reason = $this->queueEntry->override_reason;
 

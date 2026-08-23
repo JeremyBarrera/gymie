@@ -270,28 +270,28 @@ class Settings extends Page implements HasForms
     private function notificationsTab(): Tab
     {
         return Tab::make(__('app.settings.tabs.notifications'))->icon('heroicon-m-bell-alert')
-            ->visible(fn (): bool => (bool) auth()->user()?->can('manage_override_notifications'))
+            ->visible(fn (): bool => (bool) auth()->user()?->can('manage_follow_up_alerts'))
             ->schema([
-                Section::make(__('app.settings.sections.override_notifications'))
+                Section::make(__('app.follow_up.title'))
                     ->aside()
                     ->schema([
-                        CheckboxList::make('notifications.override.roles')
-                            ->label(__('app.settings.fields.override_notify_roles'))
-                            ->helperText(__('app.settings.hints.override_notify_roles'))
+                        CheckboxList::make('notifications.follow_up.roles')
+                            ->label(__('app.follow_up.recipients_label'))
+                            ->helperText(__('app.follow_up.help'))
                             ->options(fn (): array => Role::query()->pluck('name', 'name')->all())
                             ->searchable()
                             ->bulkToggleable()
                             ->default(['owner']),
-                        Select::make('notifications.override.users')
-                            ->label(__('app.settings.fields.override_notify_users'))
-                            ->helperText(__('app.settings.hints.override_notify_users'))
+                        Select::make('notifications.follow_up.users')
+                            ->label(__('app.follow_up.users_label'))
+                            ->helperText(__('app.follow_up.users_help'))
                             ->options(fn (): array => User::query()->pluck('name', 'id')->all())
                             ->multiple()
                             ->searchable()
                             ->preload(),
-                        Placeholder::make('override_notify_default')
-                            ->content(__('app.settings.hints.override_notify_default'))
-                            ->label(__('app.settings.hints.override_notify_default_label')),
+                        Placeholder::make('follow_up_default')
+                            ->content(__('app.follow_up.default_hint'))
+                            ->label(__('app.follow_up.default_label')),
                     ]),
                 Section::make(__('app.settings.sections.subscription_status_notifications'))
                     ->aside()

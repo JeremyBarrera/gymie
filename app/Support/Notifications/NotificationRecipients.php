@@ -15,6 +15,12 @@ use Illuminate\Database\Eloquent\Collection;
  */
 final class NotificationRecipients
 {
+    /**
+     * Callers that still pass the pre-rename topic name resolve the
+     * `follow_up` section.
+     */
+    private const TOPIC_ALIASES = ['override' => 'follow_up'];
+
     private function __construct() {}
 
     /**
@@ -27,6 +33,8 @@ final class NotificationRecipients
      */
     public static function resolve(string $topic, array $defaultRoles = ['owner']): Collection
     {
+        $topic = self::TOPIC_ALIASES[$topic] ?? $topic;
+
         $section = Helpers::getSettings()['notifications'][$topic] ?? [];
 
         $roleNames = is_array($section['roles'] ?? null) && $section['roles'] !== []

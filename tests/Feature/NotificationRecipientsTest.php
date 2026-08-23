@@ -19,7 +19,7 @@ it('falls back to the default role when the topic has no configuration', functio
 
     $other = User::factory()->create();
 
-    $recipients = NotificationRecipients::resolve('override');
+    $recipients = NotificationRecipients::resolve('follow_up');
 
     expect($recipients->pluck('id'))
         ->toContain($owner->id)
@@ -36,14 +36,14 @@ it('resolves the roles and specific users configured for the topic', function ()
 
     Helpers::setTestSettingsOverride([
         'notifications' => [
-            'override' => [
+            'follow_up' => [
                 'roles' => ['manager'],
                 'users' => [$pinned->id],
             ],
         ],
     ]);
 
-    $recipients = NotificationRecipients::resolve('override');
+    $recipients = NotificationRecipients::resolve('follow_up');
 
     expect($recipients->pluck('id'))
         ->toContain($manager->id)
@@ -67,6 +67,26 @@ it('treats each notification topic independently', function (): void {
 
     expect(NotificationRecipients::resolve('subscription_status')->pluck('id'))->toContain($manager->id);
 
-    // The override topic is unconfigured, so it falls back to owners.
-    expect(NotificationRecipients::resolve('override')->pluck('id'))->not->toContain($manager->id);
+    // The follow-up topic is unconfigured, so it falls back to owners.
+    expect(NotificationRecipients::resolve('follow_up')->pluck('id'))->not->toContain($manager->id);
+});
+
+it('maps the pre-rename override topic onto the follow-up scope', function (): void {
+    Role::create(['name' => 'manager']);
+    $manager = User::factory()->create();
+    $manager->assignRole('manager');
+    $outsider = User::factory()->create();
+
+    Helpers::setTestSettingsOverride([
+        'notifications' => [
+            'override' => [
+                'roles' => ['manager'],
+                'users' => [],
+            ],
+        ],
+    ]);
+
+    expect(NotificationRecipients::resolve('override')->pluck('id'))
+        ->toContain($manager->id)
+        ->not->toContain($outsider->id);
 });
