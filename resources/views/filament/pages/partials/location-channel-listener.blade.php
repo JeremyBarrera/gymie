@@ -1,7 +1,11 @@
 {{-- Subscribe to Echo events for every location channel (checkin + signup).
-     Host component must expose getLocationTokens() and the onQueueEntry* handlers. --}}
+     Host component must expose getLocationTokens() and the onQueueEntry* handlers,
+     plus the public resync method passed as $resyncMethod (called on socket
+     reconnect so events missed during a drop are re-fetched from the DB). --}}
 <script>
     document.addEventListener('livewire:init', () => {
+        const resync = @js($resyncMethod ?? null);
+
         // Track staff presence so a tab left unattended never wins the
         // popup race on behalf of an absent colleague: AFK tabs park new
         // arrivals in the badge instead of claiming them.
@@ -39,9 +43,9 @@
 
         // Events missed during a disconnect are never replayed — re-sync
         // from the database whenever the socket (re)connects.
-        if (window.Echo) {
+        if (window.Echo && resync) {
             window.Echo.connector.pusher.connection.bind('connected', () => {
-                @this.call('loadQueueEntries');
+                @this.call(resync);
             });
         }
     });

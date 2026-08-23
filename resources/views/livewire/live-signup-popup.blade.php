@@ -70,7 +70,7 @@
             </div>
         @endif
 
-        @include('filament.pages.partials.location-channel-listener')
+        @include('filament.pages.partials.location-channel-listener', ['resyncMethod' => 'refreshPendingQueue'])
         @include('filament.pages.partials.verify-camera-script')
     @endif
 </div>

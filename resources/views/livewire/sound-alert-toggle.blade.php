@@ -1,16 +1,32 @@
-<div class="fi-inline-flex relative items-center ms-1">
+<div
+    class="fi-inline-flex relative items-center ms-1"
+    x-data="{
+        open: false,
+        promptSeen: localStorage.getItem('gymie-sound-prompt-seen') === '1',
+        iconClick() {
+            window.SoundAlerts && window.SoundAlerts.ensureUnlocked();
+
+            if (! this.promptSeen) {
+                localStorage.setItem('gymie-sound-prompt-seen', '1');
+                this.promptSeen = true;
+                this.open = true;
+
+                return;
+            }
+
+            $wire.toggleSoundAlerts();
+        },
+    }"
+>
     <x-filament::icon-button
         :icon="$soundAlerts ? 'heroicon-m-speaker-wave' : 'heroicon-m-speaker-x-mark'"
         :color="$soundAlerts ? 'success' : 'gray'"
         :label="__('app.reception.sound_alerts_label')"
         wire:key="sound-toggle-topbar"
-        wire:click="toggleSoundAlerts"
-        onclick="window.SoundAlerts && window.SoundAlerts.ensureUnlocked()"
+        x-on:click="iconClick"
     />
 
     <div
-        x-data="{ open: false }"
-        x-init="open = {{ Js::from(! $soundAlerts) }} && ! sessionStorage.getItem('gymie-sound-prompt-dismissed')"
         x-on:gymie-sound-synced.window="if ($event.detail.enabled) open = false"
         x-show="open"
         x-transition:enter="transition ease-out duration-150"
@@ -29,7 +45,7 @@
             <x-filament::button
                 size="xs"
                 color="gray"
-                x-on:click="open = false; sessionStorage.setItem('gymie-sound-prompt-dismissed', '1')"
+                x-on:click="open = false"
             >
                 {{ __('app.reception.sound_not_now') }}
             </x-filament::button>
@@ -38,7 +54,7 @@
                 size="xs"
                 color="success"
                 wire:click="toggleSoundAlerts"
-                onclick="window.SoundAlerts && window.SoundAlerts.enableFromGesture()"
+                x-on:click="window.SoundAlerts && window.SoundAlerts.enableFromGesture(); open = false"
             >
                 {{ __('app.reception.sound_enable') }}
             </x-filament::button>

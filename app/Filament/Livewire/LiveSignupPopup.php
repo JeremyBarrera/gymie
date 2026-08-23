@@ -54,6 +54,15 @@ class LiveSignupPopup extends Component
     public function mount(): void
     {
         $this->popupEnabled = ! request()->routeIs('filament.admin.pages.reception');
+        $this->refreshPendingQueue();
+    }
+
+    /**
+     * Re-fetches both queues from the database — the socket-reconnect resync
+     * entry point (events missed during a drop are never replayed).
+     */
+    public function refreshPendingQueue(): void
+    {
         [$this->pendingQueue, $this->claimedQueue] = $this->loadQueues();
     }
 

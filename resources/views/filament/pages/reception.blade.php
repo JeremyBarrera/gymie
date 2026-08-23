@@ -99,6 +99,6 @@
         @include('filament.pages.partials.checkin-overlay')
     @endif
 
-    @include('filament.pages.partials.location-channel-listener')
+    @include('filament.pages.partials.location-channel-listener', ['resyncMethod' => 'loadQueueEntries'])
     @include('filament.pages.partials.verify-camera-script')
 </x-filament-panels::page>
