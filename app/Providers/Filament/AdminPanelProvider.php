@@ -244,16 +244,16 @@ class AdminPanelProvider extends PanelProvider
                     ->items($memberships)
                     ->collapsed(false),
 
+                NavigationGroup::make(__('app.navigation.groups.billing'))
+                    ->items($billing)
+                    ->collapsed(false),
+
                 NavigationGroup::make(__('app.navigation.groups.administration'))
                     ->items($administration)
                     ->collapsed(false),
 
                 NavigationGroup::make(__('app.navigation.groups.sales'))
                     ->items($sales)
-                    ->collapsed(false),
-
-                NavigationGroup::make(__('app.navigation.groups.billing'))
-                    ->items($billing)
                     ->collapsed(false),
             ])
             ->items($topLevel);
