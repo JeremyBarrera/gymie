@@ -56,3 +56,24 @@ it('allows inline service creation with service permission', function (): void {
     expect($serviceField)->toBeInstanceOf(Select::class)
         ->and($serviceField->getCreateOptionAction()?->isAuthorized())->toBeTrue();
 });
+
+it('offers a single create submit without a create-another button in the inline service modal', function (): void {
+    $this->actingAs(User::factory()->create());
+
+    $livewire = new class extends Component implements HasSchemas
+    {
+        use InteractsWithSchemas;
+
+        public function render(): string
+        {
+            return '<div></div>';
+        }
+    };
+    $schema = PlanForm::configure(Schema::make($livewire)->model(Plan::class));
+    $serviceField = $schema->getComponentByStatePath('services');
+    $action = $serviceField?->getCreateOptionAction();
+
+    expect($serviceField)->toBeInstanceOf(Select::class)
+        ->and($action?->getExtraModalFooterActions())->toBe([])
+        ->and($action?->getModalSubmitActionLabel())->toBeString();
+});

@@ -95,7 +95,8 @@ class PlanForm
                             ->createOptionModalHeading(__('app.actions.new', ['resource' => __('app.resources.services.singular')]))
                             ->createOptionForm(fn (Schema $schema): Schema => ServiceForm::configure($schema))
                             ->createOptionAction(fn (Action $action): Action => $action
-                                ->authorize(fn (): bool => Gate::allows('create', Service::class)))
+                                ->authorize(fn (): bool => Gate::allows('create', Service::class))
+                                ->extraModalFooterActions([]))
                             ->createOptionUsing(function (array $data, Get $get): int {
                                 Gate::authorize('create', Service::class);
 
