@@ -102,15 +102,19 @@
     justify-content: center;
 }
 
-/* Hide native number-input spinners on money fields — every browser
-   (WebKit needs the pseudo-elements, Firefox/standard need appearance). */
-.verify-money-input {
+/* Hide native number-input spinners — every browser (WebKit needs the
+   pseudo-elements, Firefox/standard need appearance). Filament v4 puts
+   extraAttributes on the input WRAPPER, so target the inner input too. */
+.verify-money-input,
+.verify-money-input input {
     -moz-appearance: textfield;
     appearance: textfield;
 }
 
 .verify-money-input::-webkit-outer-spin-button,
-.verify-money-input::-webkit-inner-spin-button {
+.verify-money-input::-webkit-inner-spin-button,
+.verify-money-input input::-webkit-outer-spin-button,
+.verify-money-input input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }

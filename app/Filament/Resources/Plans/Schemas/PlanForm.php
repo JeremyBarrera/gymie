@@ -68,7 +68,7 @@ class PlanForm
                             ->searchable()
                             ->preload()
                             ->live()
-                            ->columnSpan(1),
+                            ->columnSpan(2),
                         Select::make('services')
                             ->label(__('app.fields.service'))
                             ->relationship(name: 'services', titleAttribute: 'name', modifyQueryUsing: function (Builder $query, Get $get): void {
@@ -104,8 +104,7 @@ class PlanForm
                                     ...$data,
                                     'location_id' => $data['location_id'] ?? $get('location_id'),
                                 ])->getKey());
-                            })
-                            ->columnSpan(2),
+                            }),
                         TextInput::make('days')
                             ->placeholder(__('app.placeholders.plan_days'))
                             ->numeric()
@@ -121,13 +120,13 @@ class PlanForm
                             ->label(__('app.fields.amount'))
                             ->required()
                             ->extraAttributes(['class' => 'verify-money-input'])
-                            ->columnSpan(2),
+                            ->columnSpan(1),
                         Toggle::make('track_uses')
                             ->label(__('app.fields.track_uses'))
                             ->helperText(__('app.helpers.track_uses'))
                             ->live()
                             ->default(false)
-                            ->columnSpanFull(),
+                            ->columnSpan(1),
                         TextInput::make('uses_limit')
                             ->label(__('app.fields.uses_limit'))
                             ->numeric()

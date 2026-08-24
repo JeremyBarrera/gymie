@@ -23,9 +23,51 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Gate;
 
 class PlanTable
 {
+    /**
+     * Status toggle shared by the row dropdown and the preview popup footer.
+     * Custom actions get no default policy authorization, so the permission
+     * is checked for rendering AND enforced again inside the action itself.
+     */
+    public static function markAsActiveAction(): Action
+    {
+        return Action::make('mark_as_active')
+            ->authorize(fn (Plan $record): bool => Gate::allows('update', $record))
+            ->color('success')
+            ->label(__('app.actions.mark_as_active'))
+            ->requiresConfirmation()
+            ->action(function (Plan $record): void {
+                Gate::authorize('update', $record);
+                $record->update(['status' => 'active']);
+                Notification::make()
+                    ->title(__('app.notifications.plan_activated'))
+                    ->success()
+                    ->send();
+            })
+            ->visible(fn (Plan $record): bool => $record->status->value === 'inactive');
+    }
+
+    public static function markAsInactiveAction(): Action
+    {
+        return Action::make('mark_as_inactive')
+            ->authorize(fn (Plan $record): bool => Gate::allows('update', $record))
+            ->color('danger')
+            ->label(__('app.actions.mark_as_inactive'))
+            ->requiresConfirmation()
+            ->action(function (Plan $record): void {
+                Gate::authorize('update', $record);
+                $record->update(['status' => 'inactive']);
+                Notification::make()
+                    ->title(__('app.notifications.plan_deactivated'))
+                    ->danger()
+                    ->send();
+            })
+            ->visible(fn (Plan $record): bool => $record->status->value === 'active');
+    }
+
     /**
      * Configure the plan table schema.
      */
@@ -180,30 +222,8 @@ class PlanTable
                             ->label(__('app.fields.status'))
                             ->disabled()
                             ->color('gray'),
-                        Action::make('mark_as_active')
-                            ->color('success')
-                            ->label(__('app.actions.mark_as_active'))
-                            ->requiresConfirmation()
-                            ->action(fn (Plan $record) => tap($record, function ($record) {
-                                $record->update(['status' => 'active']);
-                                Notification::make()
-                                    ->title(__('app.notifications.plan_activated'))
-                                    ->success()
-                                    ->send();
-                            }))
-                            ->visible(fn ($record) => $record->status->value === 'inactive'),
-                        Action::make('mark_as_inactive')
-                            ->color('danger')
-                            ->label(__('app.actions.mark_as_inactive'))
-                            ->requiresConfirmation()
-                            ->action(fn (Plan $record) => tap($record, function ($record) {
-                                $record->update(['status' => 'inactive']);
-                                Notification::make()
-                                    ->title(__('app.notifications.plan_deactivated'))
-                                    ->danger()
-                                    ->send();
-                            }))
-                            ->visible(fn ($record) => $record->status->value === 'active'),
+                        self::markAsActiveAction(),
+                        self::markAsInactiveAction(),
                     ])->dropdown(false),
                     ActionGroup::make([
                         Action::make('heading_actions')
@@ -213,7 +233,15 @@ class PlanTable
                         ViewAction::make()
                             ->modalWidth('xl')
                             ->modalCancelAction(false)
-                            ->modalAlignment('center'),
+                            ->modalAlignment('center')
+                            ->extraModalFooterActions(fn (): array => [
+                                EditAction::make()
+                                    ->cancelParentActions()
+                                    ->modalAlignment('center')
+                                    ->modalWidth('xl'),
+                                self::markAsActiveAction(),
+                                self::markAsInactiveAction(),
+                            ]),
                         EditAction::make()
                             ->modalAlignment('center')
                             ->modalWidth('xl'),
