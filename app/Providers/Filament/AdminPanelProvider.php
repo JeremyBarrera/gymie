@@ -4,7 +4,6 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\CheckInActivity;
 use App\Filament\Pages\Dashboard;
-use App\Filament\Pages\Notifications;
 use App\Filament\Pages\PlanCheckIn;
 use App\Filament\Pages\PrintQrCodes;
 use App\Filament\Pages\Reception;
@@ -90,7 +89,6 @@ class AdminPanelProvider extends PanelProvider
                 PlanCheckIn::class,
                 Reception::class,
                 CheckInActivity::class,
-                Notifications::class,
                 PrintQrCodes::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
@@ -114,7 +112,6 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->databaseNotifications()
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,
@@ -142,6 +139,18 @@ class AdminPanelProvider extends PanelProvider
 
                     return new HtmlString(
                         Blade::render('<x-filament::icon-button icon="heroicon-o-cog-6-tooth" tag="a" :href="\App\Filament\Pages\Settings::getUrl()" :label="__(\'app.settings.title\')" color="'.$color.'" wire:key="settings-shortcut" />')
+                    );
+                },
+            )
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+                function (): HtmlString {
+                    if (Filament::auth()->guest()) {
+                        return new HtmlString('');
+                    }
+
+                    return new HtmlString(
+                        Blade::render('@livewire(\\App\\Filament\\Livewire\\NotificationBell::class, [], key(\'notification-bell\'))')
                     );
                 },
             )
@@ -246,11 +255,6 @@ class AdminPanelProvider extends PanelProvider
                 ->url(fn () => PrintQrCodes::getUrl())
                 ->isActiveWhen(fn () => request()->routeIs('filament.admin.pages.qr-codes'))
                 ->sort(1),
-            NavigationItem::make(__('app.follow_up.title'))
-                ->icon('heroicon-o-bell')
-                ->url(fn () => Notifications::getUrl())
-                ->isActiveWhen(fn () => request()->routeIs('filament.admin.pages.notifications'))
-                ->sort(2),
         ];
 
         return $builder
