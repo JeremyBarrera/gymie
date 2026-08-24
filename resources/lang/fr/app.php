@@ -104,7 +104,7 @@ return [
         'theme_color' => 'Couleur du thème',
         'theme_color_hint' => 'Couleur utilisée pour le thème d’administration.',
         'track_uses' => 'Suivre les utilisations',
-        'uses_limit' => 'Limite d’utilisations',
+        'uses_limit' => 'Limiter les utilisations',
     ],
     'placeholders' => [
         'na' => 'N/A',

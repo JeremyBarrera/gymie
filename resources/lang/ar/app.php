@@ -104,7 +104,7 @@ return [
         'theme_color' => 'لون الثيم',
         'theme_color_hint' => 'اللون المستخدم لثيم الإدارة.',
         'track_uses' => 'تتبع الاستخدامات',
-        'uses_limit' => 'حد الاستخدامات',
+        'uses_limit' => 'تحديد الاستخدامات',
     ],
     'placeholders' => [
         'na' => 'غير متوفر',

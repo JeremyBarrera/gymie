@@ -104,7 +104,7 @@ return [
         'theme_color' => 'رنگ تم',
         'theme_color_hint' => 'رنگ مورد استفاده برای تم مدیریت.',
         'track_uses' => 'ثبت تعداد استفاده',
-        'uses_limit' => 'سقف استفاده',
+        'uses_limit' => 'محدود کردن استفاده‌ها',
     ],
     'placeholders' => [
         'na' => 'نامشخص',

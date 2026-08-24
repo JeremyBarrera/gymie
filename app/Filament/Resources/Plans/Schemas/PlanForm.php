@@ -104,7 +104,14 @@ class PlanForm
                                     ...$data,
                                     'location_id' => $data['location_id'] ?? $get('location_id'),
                                 ])->getKey());
-                            }),
+                            })
+                            ->columnSpan(2),
+                        Toggle::make('track_uses')
+                            ->label(__('app.fields.track_uses'))
+                            ->helperText(__('app.helpers.track_uses'))
+                            ->live()
+                            ->default(false)
+                            ->columnSpan(1),
                         TextInput::make('days')
                             ->placeholder(__('app.placeholders.plan_days'))
                             ->numeric()
@@ -120,12 +127,6 @@ class PlanForm
                             ->label(__('app.fields.amount'))
                             ->required()
                             ->extraAttributes(['class' => 'verify-money-input'])
-                            ->columnSpan(1),
-                        Toggle::make('track_uses')
-                            ->label(__('app.fields.track_uses'))
-                            ->helperText(__('app.helpers.track_uses'))
-                            ->live()
-                            ->default(false)
                             ->columnSpan(1),
                         TextInput::make('uses_limit')
                             ->label(__('app.fields.uses_limit'))

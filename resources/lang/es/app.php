@@ -104,7 +104,7 @@ return [
         'theme_color' => 'Color del tema',
         'theme_color_hint' => 'Color usado para el tema de administración.',
         'track_uses' => 'Registrar usos',
-        'uses_limit' => 'Límite de usos',
+        'uses_limit' => 'Limitar usos',
     ],
     'placeholders' => [
         'na' => 'N/D',
