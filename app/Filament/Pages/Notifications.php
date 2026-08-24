@@ -11,8 +11,8 @@ use Illuminate\Support\Carbon;
 use Livewire\WithPagination;
 
 /**
- * Notification center for the follow-up alert plan (LIVE_RECEPTION_FLOW_PLAN.md
- * phase O6): unread filter, per-item archive and a collapsed archive section.
+ * Notification center for the follow-up alert plan: unread filter, per-item
+ * archive and a collapsed archive section.
  *
  * Every display field (member, actor, action, occurred_at) lives inside the
  * notification's JSON payload, so listing never queries related rows — no N+1

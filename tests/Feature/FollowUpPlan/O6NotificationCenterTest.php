@@ -34,8 +34,7 @@ function o6Send(User $recipient, array $payloadOverrides = []): DatabaseNotifica
 }
 
 /**
- * @return array<string, mixed> The shared alert payload contract
- *                              (LIVE_RECEPTION_FLOW_PLAN.md).
+ * @return array<string, mixed> The shared alert payload contract.
  */
 function o6Payload(array $overrides = []): array
 {

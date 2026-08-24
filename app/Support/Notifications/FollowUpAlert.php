@@ -10,7 +10,7 @@ use App\Models\User;
 use App\Notifications\FollowUpAlertNotification;
 
 /**
- * Entry point for follow-up alerts (LIVE_RECEPTION_FLOW_PLAN.md).
+ * Entry point for follow-up alerts.
  *
  * Resolves recipients from the settings scope `follow_up`, persists one
  * contract-payload notification per recipient and escalates each over its

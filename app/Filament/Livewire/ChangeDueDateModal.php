@@ -15,11 +15,11 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
- * Past-due "Change payment due date" popup (LIVE_RECEPTION_FLOW_PLAN.md O5):
- * edits only the blocking invoice's due date — a valid picked date unlocks
- * the confirm button and reveals the shared optional alert input, then the
- * write runs in a transaction and the host completes an override-semantics
- * check-in plus a `due_date_changed` follow-up alert.
+ * Past-due "Change payment due date" popup: edits only the blocking
+ * invoice's due date — a valid picked date unlocks the confirm button and
+ * reveals the shared optional alert input, then the write runs in a
+ * transaction and the host completes an override-semantics check-in plus a
+ * `due_date_changed` follow-up alert.
  */
 class ChangeDueDateModal extends Component
 {

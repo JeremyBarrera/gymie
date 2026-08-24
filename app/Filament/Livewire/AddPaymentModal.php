@@ -18,11 +18,11 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
- * Past-due "Add payment" popup (LIVE_RECEPTION_FLOW_PLAN.md O5): records a
- * payment against the blocking invoice inside a transaction, then hands back
- * to the host — paid in full triggers a normal check-in, a partial balance
- * requires the next payment due date and completes an override-semantics
- * check-in plus a `payment_added` follow-up alert.
+ * Past-due "Add payment" popup: records a payment against the blocking
+ * invoice inside a transaction, then hands back to the host — paid in full
+ * triggers a normal check-in, a partial balance requires the next payment
+ * due date and completes an override-semantics check-in plus a
+ * `payment_added` follow-up alert.
  */
 class AddPaymentModal extends Component
 {

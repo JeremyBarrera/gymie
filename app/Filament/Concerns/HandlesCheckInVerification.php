@@ -434,8 +434,8 @@ trait HandlesCheckInVerification
      * shows who will be notified, with an optional reason.
      *
      * Only the no-access state offers the generic override — expired goes
-     * through the renewal modal and past-due states through the payment /
-     * due-date modals instead (LIVE_RECEPTION_FLOW_PLAN.md O3/O5).
+      * through the renewal modal and past-due states through the payment /
+      * due-date modals instead.
      */
     public function openCheckInOverrideFor(int $serviceId): void
     {

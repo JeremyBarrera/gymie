@@ -19,11 +19,11 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
- * Expired-path renewal popup (LIVE_RECEPTION_FLOW_PLAN.md O3): opened on top
- * of the check-in overlay for a service row in the `expired` state, sells a
- * new subscription through SubscriptionRenewalService::renew() (never a
- * hand-rolled Subscription::create), then hands back to the host so the
- * normal check-in runs and overlay + popup close together.
+ * Expired-path renewal popup: opened on top of the check-in overlay for a
+ * service row in the `expired` state, sells a new subscription through
+ * SubscriptionRenewalService::renew() (never a hand-rolled
+ * Subscription::create), then hands back to the host so the normal check-in
+ * runs and overlay + popup close together.
  */
 class ExpiredSubscriptionModal extends Component
 {

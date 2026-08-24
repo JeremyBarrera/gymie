@@ -9,9 +9,9 @@ use Illuminate\Foundation\Events\Dispatchable;
 
 /**
  * One follow-up alert escalation for exactly one recipient: the wire payload
- * mirrors the frozen alert contract (LIVE_RECEPTION_FLOW_PLAN.md) plus the
- * notification id. The database row stays the source of truth — listeners
- * re-fetch instead of applying the payload as a client-side delta.
+ * mirrors the frozen alert contract plus the notification id. The database
+ * row stays the source of truth — listeners re-fetch instead of applying the
+ * payload as a client-side delta.
  */
 class FollowUpEscalated implements ShouldBroadcast
 {
