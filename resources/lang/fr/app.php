@@ -103,8 +103,8 @@ return [
         'slug' => 'Slug',
         'theme_color' => 'Couleur du thème',
         'theme_color_hint' => 'Couleur utilisée pour le thème d’administration.',
-        'track_uses' => 'Suivre les utilisations',
-        'uses_limit' => 'Limiter les utilisations',
+        'track_uses' => 'Limiter les utilisations',
+        'uses_limit' => 'Nombre maximum d’utilisations',
     ],
     'placeholders' => [
         'na' => 'N/A',
@@ -898,7 +898,7 @@ return [
         'overridden' => 'Outrepassé',
     ],
     'helpers' => [
-        'track_uses' => 'Suivre le nombre d\'utilisations du plan.',
+        'track_uses' => 'Limiter le nombre d\'utilisations du plan.',
         'service_location' => 'Les enregistrements d\'entrée sont consignés dans cet emplacement.',
         'all_locations' => 'Laissez vide pour que le plan soit disponible dans tous les emplacements, y compris ceux créés à l\'avenir.',
         'plan_days_optional' => 'Laissez vide pour un plan qui n\'expire jamais.',

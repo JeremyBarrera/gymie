@@ -103,8 +103,8 @@ return [
         'slug' => 'Slug',
         'theme_color' => 'Theme color',
         'theme_color_hint' => 'Color used for the admin theme.',
-        'track_uses' => 'Track uses',
-        'uses_limit' => 'Limit uses',
+        'track_uses' => 'Limit uses',
+        'uses_limit' => 'Maximum uses',
     ],
     'placeholders' => [
         'na' => 'N/A',
@@ -898,7 +898,7 @@ return [
         'message' => 'This application is still being configured. Please contact your administrator.',
     ],
     'helpers' => [
-        'track_uses' => 'Track how many times the plan can be used.',
+        'track_uses' => 'Limit how many times the plan can be used.',
         'service_location' => 'Check-ins are recorded against this location.',
         'all_locations' => 'Leave empty to make the plan available at every location, including locations created in the future.',
         'plan_days_optional' => 'Leave empty for a plan that never expires.',
