@@ -14,6 +14,10 @@
                 return;
             }
 
+            const turningOn = ! $wire.soundAlerts;
+            if (turningOn) {
+                window.SoundAlerts && window.SoundAlerts.enableFromGesture();
+            }
             $wire.toggleSoundAlerts();
         },
     }"
@@ -53,8 +57,7 @@
             <x-filament::button
                 size="xs"
                 color="success"
-                wire:click="toggleSoundAlerts"
-                x-on:click="window.SoundAlerts && window.SoundAlerts.enableFromGesture(); open = false"
+                x-on:click="window.SoundAlerts && window.SoundAlerts.enableFromGesture(); $wire.toggleSoundAlerts(); open = false"
             >
                 {{ __('app.reception.sound_enable') }}
             </x-filament::button>

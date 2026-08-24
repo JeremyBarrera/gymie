@@ -97,7 +97,7 @@ function ding(context) {
         osc.frequency.value = frequency;
 
         gain.gain.setValueAtTime(0.0001, t + start);
-        gain.gain.exponentialRampToValueAtTime(0.2, t + start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.44, t + start + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, t + end);
 
         osc.connect(gain);
@@ -181,6 +181,7 @@ export function enableFromGesture() {
 
         enabled = true;
         markUnlocked();
+        lastBeepAt = Date.now();
         dingWhenReady(context);
     } catch {}
 }
