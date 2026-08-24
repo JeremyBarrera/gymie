@@ -102,7 +102,13 @@
     justify-content: center;
 }
 
-/* Reception: hide native number-input spinners on the verify sale fields */
+/* Hide native number-input spinners on money fields — every browser
+   (WebKit needs the pseudo-elements, Firefox/standard need appearance). */
+.verify-money-input {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
 .verify-money-input::-webkit-outer-spin-button,
 .verify-money-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -112,6 +118,14 @@
 .verify-money-input {
     -moz-appearance: textfield;
     appearance: textfield;
+}
+
+/* Filament paints dark-mode repeater items with a 5% white wash; on large
+   items (the invoice details form) that reads as a semi-transparent white
+   window stacked on top of the content. Items must follow the surface they
+   sit on (AGENTS.md styling rule 7) — no translucent white layers. */
+.fi-fo-repeater .fi-fo-repeater-item:where(.dark, .dark *) {
+    background-color: transparent;
 }
 
 /* Reception: flashing importance chip on the live check-in overlay */
