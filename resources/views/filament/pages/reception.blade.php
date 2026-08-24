@@ -61,7 +61,7 @@
 
                                         <x-filament::button
                                             wire:key="manual-search-select-{{ $result['id'] }}"
-                                            wire:click="openManualCheckInForResult({{ $result['id'] }})"
+                                            wire:click="openManualCheckInForMember({{ $result['id'] }})"
                                             size="sm"
                                             class="shrink-0"
                                         >
