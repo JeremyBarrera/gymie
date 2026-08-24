@@ -1,6 +1,7 @@
 const DATE_ORDER_COOKIE = 'gymie_date_order';
 const HOUR12_COOKIE = 'gymie_hour12';
 const LOCALE_COOKIE = 'gymie_device_locale';
+const TIMEZONE_COOKIE = 'gymie_device_tz';
 
 function detectOrder() {
     let order = 'dmy';
@@ -70,6 +71,17 @@ function detectLanguage() {
     return '';
 }
 
+function detectTimezone() {
+    try {
+        // IANA identifier of the device's timezone ("Asia/Riyadh",
+        // "America/New_York", ...) — used by the server to show every
+        // date/time in the viewer's local wall clock.
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    } catch {
+        return '';
+    }
+}
+
 function setCookie(name, value) {
     document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
 }
@@ -81,5 +93,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const language = detectLanguage();
     if (language !== '') {
         setCookie(LOCALE_COOKIE, language);
+    }
+
+    const timezone = detectTimezone();
+    if (timezone !== '') {
+        setCookie(TIMEZONE_COOKIE, timezone);
     }
 });

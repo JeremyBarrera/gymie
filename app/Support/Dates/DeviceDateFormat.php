@@ -2,6 +2,7 @@
 
 namespace App\Support\Dates;
 
+use App\Support\AppConfig;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 
@@ -20,6 +21,8 @@ final class DeviceDateFormat
     public const COOKIE_ORDER = 'gymie_date_order';
 
     public const COOKIE_HOUR12 = 'gymie_hour12';
+
+    public const COOKIE_TIMEZONE = 'gymie_device_tz';
 
     private const ORDERS = ['mdy', 'dmy', 'ymd'];
 
@@ -90,11 +93,34 @@ final class DeviceDateFormat
     }
 
     /**
+     * IANA timezone of the viewing device ("Asia/Riyadh",
+     * "America/New_York", ...), recorded by resources/js/device-locale.js.
+     * Falls back to the app timezone until the cookie exists (first visit,
+     * queued emails, console commands).
+     */
+    public static function timezone(): string
+    {
+        $cookie = self::request()?->cookie(self::COOKIE_TIMEZONE);
+
+        if (is_string($cookie) && $cookie !== '') {
+            try {
+                new \DateTimeZone($cookie);
+
+                return $cookie;
+            } catch (\Throwable) {
+                // Invalid cookie value — fall through to the app timezone.
+            }
+        }
+
+        return AppConfig::timezone();
+    }
+
+    /**
      * Render a date in the device convention with locale-translated parts.
      */
     public static function format(?CarbonInterface $date): string
     {
-        return $date?->translatedFormat(self::date()) ?? '—';
+        return $date?->copy()->timezone(self::timezone())->translatedFormat(self::date()) ?? '—';
     }
 
     /**
@@ -102,7 +128,7 @@ final class DeviceDateFormat
      */
     public static function formatTime(?CarbonInterface $date): string
     {
-        return $date?->translatedFormat(self::time()) ?? '—';
+        return $date?->copy()->timezone(self::timezone())->translatedFormat(self::time()) ?? '—';
     }
 
     /**
@@ -110,7 +136,7 @@ final class DeviceDateFormat
      */
     public static function formatDateTime(?CarbonInterface $date): string
     {
-        return $date?->translatedFormat(self::dateTime()) ?? '—';
+        return $date?->copy()->timezone(self::timezone())->translatedFormat(self::dateTime()) ?? '—';
     }
 
     private static function request(): ?Request
