@@ -33,8 +33,7 @@ class ServiceForm
                     ->required(),
                 Textarea::make('description')
                     ->placeholder(__('app.placeholders.service_description'))
-                    ->label(__('app.fields.description'))
-                    ->required(),
+                    ->label(__('app.fields.description')),
             ]);
     }
 }
