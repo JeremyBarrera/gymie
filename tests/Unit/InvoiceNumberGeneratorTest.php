@@ -21,13 +21,14 @@ class InvoiceNumberGeneratorTest extends TestCase
 
         Carbon::setTestNow(Carbon::create(2025, 6, 17));
 
-        // Prevent the listener (so updateLastNumber() never writes disk)
+        // The generator reads existing rows, not saved state — keep model
+        // events out so factories don't recurse into number generation.
         Invoice::flushEventListeners();
         Member::flushEventListeners();
 
         // Override settings in-memory so we always start at "GY-1"
         Helpers::setTestSettingsOverride([
-            'invoice' => ['prefix' => '', 'last_number' => ''],
+            'invoice' => ['prefix' => ''],
         ]);
     }
 
@@ -45,6 +46,27 @@ class InvoiceNumberGeneratorTest extends TestCase
             'GY-1',
             $next,
             'When there are no invoices at all, the next number should be GY-1'
+        );
+    }
+
+    #[Test]
+    #[TestDox('A stale saved last_number is ignored — DB is the only source')]
+    public function stale_saved_last_number_is_ignored(): void
+    {
+        Helpers::setTestSettingsOverride([
+            'invoice' => ['prefix' => '', 'last_number' => '999'],
+        ]);
+
+        $next = Helpers::generateLastNumber(
+            'invoice',
+            Invoice::class,
+            '2025-06-17'
+        );
+
+        $this->assertSame(
+            'GY-1',
+            $next,
+            'No manual sequence override exists: an empty span always yields GY-1'
         );
     }
 

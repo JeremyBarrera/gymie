@@ -96,16 +96,11 @@ class Settings extends Page implements HasForms
         return
             Tab::make(__('app.settings.tabs.invoice'))->icon('heroicon-m-document-text')
                 ->schema([
-                    Grid::make(3)
+                    Grid::make(2)
                         ->schema([
                             TextInput::make('invoice.prefix')
                                 ->placeholder(__('app.settings.placeholders.prefix'))
                                 ->label(__('app.settings.fields.prefix')),
-                            TextInput::make('invoice.last_number')
-                                ->numeric()
-                                ->label(__('app.settings.fields.last_number'))
-                                ->maxLength(10)
-                                ->extraAttributes(['class' => 'verify-money-input']),
                             Select::make('invoice.name_type')
                                 ->native(false)
                                 ->label(__('app.settings.fields.name_type'))
@@ -157,17 +152,11 @@ class Settings extends Page implements HasForms
         return
             Tab::make(__('app.settings.tabs.member'))->icon('heroicon-m-user-group')
                 ->schema([
-                    Grid::make(2)
-                        ->schema([
-                            TextInput::make('member.prefix')
-                                ->placeholder(__('app.settings.placeholders.prefix'))
-                                ->label(__('app.settings.fields.prefix')),
-                            TextInput::make('member.last_number')
-                                ->numeric()
-                                ->label(__('app.settings.fields.last_number'))
-                                ->maxLength(10)
-                                ->extraAttributes(['class' => 'verify-money-input']),
-                        ]),
+                    // Numbering always starts at 1 and self-heals from the
+                    // database — no manual sequence input exists.
+                    TextInput::make('member.prefix')
+                        ->placeholder(__('app.settings.placeholders.prefix'))
+                        ->label(__('app.settings.fields.prefix')),
                 ]);
     }
 

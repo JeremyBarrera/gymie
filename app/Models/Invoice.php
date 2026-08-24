@@ -218,7 +218,6 @@ class Invoice extends Model
             if (! $invoice->number) {
                 $invoice->number = Helpers::generateLastNumber('invoice', Invoice::class, $invoice->date);
             }
-            Helpers::updateLastNumber('invoice', $invoice->number, $invoice->date);
 
             $taxRate = $invoice->tax_percent ?? Helpers::getTaxRate();
             $summary = InvoiceCalculator::summary(

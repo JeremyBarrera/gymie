@@ -20,13 +20,36 @@ class MemberCodeGeneratorTest extends TestCase
 
         Carbon::setTestNow(Carbon::create(2025, 6, 17));
 
-        // Prevent the Member::saving listener (so updateLastNumber() never writes disk)
+        // The generator reads existing rows, not saved state — keep model
+        // events out so factories don't recurse into code generation.
         Member::flushEventListeners();
 
         // Override settings in-memory so we always start at "GY-1"
         Helpers::setTestSettingsOverride([
-            'member' => ['prefix' => '', 'last_number' => ''],
+            'member' => ['prefix' => ''],
         ]);
+    }
+
+    #[Test]
+    #[TestDox('A stale saved last_number is ignored — DB is the only source')]
+    public function stale_saved_last_number_is_ignored(): void
+    {
+        Helpers::setTestSettingsOverride([
+            'member' => ['prefix' => '', 'last_number' => '999'],
+        ]);
+
+        $next = Helpers::generateLastNumber(
+            'member',
+            Member::class,
+            null,
+            'code'
+        );
+
+        $this->assertSame(
+            'GY-1',
+            $next,
+            'No manual sequence override exists: an empty span always yields GY-1'
+        );
     }
 
     #[Test]

@@ -804,18 +804,6 @@ class Helpers
     }
 
     /**
-     * Persist the last number for a given type if within the current fiscal year.
-     *
-     * @param  string  $type  The type of setting to update.
-     * @param  string  $newNumber  The new number to set as the last number.
-     * @param  string|null  $date  The date to check against the financial year.
-     */
-    public static function updateLastNumber(string $type, string $newNumber, ?string $date = null): void
-    {
-        app(SequenceRepository::class)->update($type, $newNumber, $date);
-    }
-
-    /**
      * @return array<int, array<string, mixed>>
      */
     private static function fallbackCountries(): array

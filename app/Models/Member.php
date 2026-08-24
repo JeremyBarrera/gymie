@@ -235,7 +235,6 @@ class Member extends Model
             if (! $member->code) {
                 $member->code = Helpers::generateLastNumber('member', Member::class, null, 'code');
             }
-            Helpers::updateLastNumber('member', $member->code);
         });
     }
 
