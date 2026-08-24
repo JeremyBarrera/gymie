@@ -115,11 +115,6 @@
     margin: 0;
 }
 
-.verify-money-input {
-    -moz-appearance: textfield;
-    appearance: textfield;
-}
-
 /* Filament paints dark-mode repeater items with a 5% white wash; on large
    items (the invoice details form) that reads as a semi-transparent white
    window stacked on top of the content. Items must follow the surface they
