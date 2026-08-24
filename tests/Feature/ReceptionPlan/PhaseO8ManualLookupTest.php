@@ -10,6 +10,7 @@
 // paths a staff member would, so a renamed/missing method fails CI.
 // ============================================================================
 
+use App\Enums\Status;
 use App\Filament\Pages\Reception;
 use App\Models\Member;
 use App\Models\User;
@@ -24,7 +25,8 @@ beforeEach(function (): void {
 });
 
 it('opens the shared check-in overlay when a search result is selected', function (): void {
-    $member = Member::factory()->create(['name' => 'Otelia Rand']);
+    // The factory randomizes status; only an active member may check in.
+    $member = Member::factory()->create(['name' => 'Otelia Rand', 'status' => Status::Active]);
 
     Livewire::actingAs(User::factory()->create()->assignRole('owner'))
         ->test(Reception::class)

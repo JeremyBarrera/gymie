@@ -123,12 +123,27 @@ class AdminPanelProvider extends PanelProvider
                 ),
             )
             // Registered after the locale switcher on the same hook so the
-            // topbar reads: search · language · sound · notifications · profile.
+            // topbar reads: search · language · sound · settings ·
+            // notifications · profile.
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,
                 fn (): HtmlString => new HtmlString(
                     Blade::render('@livewire(\\App\\Filament\\Livewire\\SoundAlertToggle::class, [], key(\'sound-alerts-toggle\'))')
                 ),
+            )
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+                function (): HtmlString {
+                    if (Filament::auth()->guest() || ! Settings::canAccess()) {
+                        return new HtmlString('');
+                    }
+
+                    $color = request()->routeIs('filament.admin.pages.settings') ? 'primary' : 'gray';
+
+                    return new HtmlString(
+                        Blade::render('<x-filament::icon-button icon="heroicon-o-cog-6-tooth" tag="a" :href="\App\Filament\Pages\Settings::getUrl()" :label="__(\'app.settings.title\')" color="'.$color.'" wire:key="settings-shortcut" />')
+                    );
+                },
             )
             ->renderHook(
                 PanelsRenderHook::TOPBAR_END,
