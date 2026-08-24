@@ -2,6 +2,7 @@
 
 use App\Enums\Status;
 use App\Filament\Pages\Reception;
+use App\Helpers\Helpers;
 use App\Models\Location;
 use App\Models\Member;
 use App\Models\Plan;
@@ -11,6 +12,7 @@ use App\Models\Service;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Pennant\Feature;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
@@ -31,13 +33,14 @@ function manualStaff(): User
 function manualPlan(): Plan
 {
     $service = Service::factory()->create();
-
-    return Plan::factory()->create([
-        'service_id' => $service->id,
+    $plan = Plan::factory()->create([
         'amount' => 100,
         'track_uses' => false,
         'status' => Status::Active,
     ]);
+    $plan->services()->attach($service->id);
+
+    return $plan;
 }
 
 function manualMember(array $overrides = []): Member
@@ -73,7 +76,7 @@ it('opens the shared overlay for a single walk-up match and records the PlanChec
         ->assertSet('checkInManualMode', true)
         ->assertSet('selectedCheckInEntryId', null)
         ->assertSet('selectedCheckInMemberId', $member->id)
-        ->assertSet('checkInServiceId', (int) $plan->service_id)
+        ->assertSet('checkInServiceId', (int) $plan->primaryService()->id)
         ->call('approveCheckIn')
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', false)
@@ -101,7 +104,7 @@ it('shows the candidate picker inside the same overlay when several members matc
         ->assertSet('manualCheckInCandidates', fn (array $ids): bool => collect($ids)->sort()->values()->all() === [$first->id, $second->id])
         ->call('selectCheckInMember', $second->id)
         ->assertSet('selectedCheckInMemberId', $second->id)
-        ->set('checkInServiceId', (int) $plan->service_id)
+        ->set('checkInServiceId', (int) $plan->primaryService()->id)
         ->call('approveCheckIn')
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', false);
@@ -167,7 +170,7 @@ it('denies a walk-up check-in without touching any queue entry', function (): vo
 });
 
 it('overrides an ineligible walk-up service and records the override reason', function (): void {
-    \Laravel\Pennant\Feature::activate('checkin.override');
+    Feature::activate('checkin.override');
 
     $plan = manualPlan();
     $member = manualMember();
@@ -179,8 +182,8 @@ it('overrides an ineligible walk-up service and records the override reason', fu
         ->call('openManualCheckInOverlay')
         ->assertSet('showCheckInOverlay', true)
         ->assertSet('selectedCheckInMemberId', $member->id)
-        ->set('checkInServiceId', (int) $plan->service_id)
-        ->call('openCheckInOverrideFor', (int) $plan->service_id)
+        ->set('checkInServiceId', (int) $plan->primaryService()->id)
+        ->call('openCheckInOverrideFor', (int) $plan->primaryService()->id)
         ->assertSet('checkInOverrideStep', true)
         ->call('confirmCheckInOverride')
         ->assertDispatched('notify')
@@ -189,7 +192,7 @@ it('overrides an ineligible walk-up service and records the override reason', fu
     $checkIn = PlanCheckIn::first();
     expect($checkIn)->not->toBeNull()
         ->and($checkIn->override)->toBeTrue()
-        ->and($checkIn->service_id)->toBe((int) $plan->service_id)
+        ->and($checkIn->service_id)->toBe((int) $plan->primaryService()->id)
         ->and(QueueEntry::count())->toBe(0);
 });
 
@@ -198,7 +201,7 @@ it('finds members by name, code, government ID and unprefixed phone variants', f
     $member = manualMember(['contact' => '555 123 4567']);
     $prefixed = manualMember(['name' => 'Prefix Member', 'contact' => '+15559876111']);
 
-    \App\Helpers\Helpers::setTestSettingsOverride([
+    Helpers::setTestSettingsOverride([
         'general' => ['country' => 'United States'],
     ]);
 
@@ -209,7 +212,7 @@ it('finds members by name, code, government ID and unprefixed phone variants', f
         ->and(Member::searchByIdentifier('5559876111')->pluck('id'))->toContain($prefixed->id)
         ->and(Member::searchByIdentifier('no-such-member')->isEmpty())->toBeTrue();
 
-    \App\Helpers\Helpers::setTestSettingsOverride(null);
+    Helpers::setTestSettingsOverride(null);
 });
 
 it('populates the debounced live results when the search term updates', function (): void {
@@ -290,7 +293,7 @@ it('opens the shared overlay when a live result is selected', function (): void 
         ->assertSet('checkInManualMode', true)
         ->assertSet('selectedCheckInEntryId', null)
         ->assertSet('selectedCheckInMemberId', $member->id)
-        ->assertSet('checkInServiceId', (int) $plan->service_id);
+        ->assertSet('checkInServiceId', (int) $plan->primaryService()->id);
 
     expect(PlanCheckIn::count())->toBe(0);
 });
@@ -308,7 +311,7 @@ it('resolves the picked candidate when a live term matches several members', fun
         ->call('openManualCheckInForMember', $second->id)
         ->assertSet('showCheckInOverlay', true)
         ->assertSet('selectedCheckInMemberId', $second->id)
-        ->assertSet('checkInServiceId', (int) $plan->service_id)
+        ->assertSet('checkInServiceId', (int) $plan->primaryService()->id)
         ->call('approveCheckIn')
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', false)

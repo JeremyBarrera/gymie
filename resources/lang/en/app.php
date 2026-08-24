@@ -436,7 +436,6 @@ return [
             'email_address' => 'Email Address',
             'contact_no' => 'Contact No.',
             'prefix' => 'Prefix',
-            'last_number' => 'Last Number',
             'name_type' => 'Name Type',
             'email_invoice_subject' => 'Invoice email subject',
             'email_receipt_subject' => 'Receipt email subject',
@@ -897,6 +896,7 @@ return [
         'track_uses' => 'Track how many times the plan can be used.',
         'service_location' => 'Check-ins are recorded against this location.',
         'all_locations' => 'Leave empty to make the plan available at every location, including locations created in the future.',
+        'plan_days_optional' => 'Leave empty for a plan that never expires.',
     ],
     'onboarding' => [
         'step1_title' => 'New Member',

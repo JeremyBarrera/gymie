@@ -50,10 +50,12 @@ class PlanInfolist
                         TextEntry::make('location.name')
                             ->label(__('app.fields.location'))
                             ->formatStateUsing(fn ($state): string => (string) ($state ?? __('app.options.all_locations'))),
-                        TextEntry::make('service.name')
-                            ->label(__('app.fields.service')),
+                        TextEntry::make('services.name')
+                            ->label(__('app.fields.service'))
+                            ->badge(),
                         TextEntry::make('days')
-                            ->label(__('app.fields.days')),
+                            ->label(__('app.fields.days'))
+                            ->placeholder(__('app.fields.unlimited')),
                         TextEntry::make('amount')
                             ->label(__('app.fields.amount'))
                             ->money(Helpers::getCurrencyCode()),

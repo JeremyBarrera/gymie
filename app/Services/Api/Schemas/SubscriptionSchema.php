@@ -139,7 +139,7 @@ final class SubscriptionSchema
                 'code' => $subscription->plan->code ? (string) $subscription->plan->code : null,
                 'name' => (string) $subscription->plan->name,
                 'amount' => (float) ($subscription->plan->amount ?? 0),
-                'days' => (int) ($subscription->plan->days ?? 0),
+                'days' => $subscription->plan->days !== null ? (int) $subscription->plan->days : null,
             ];
         }
 

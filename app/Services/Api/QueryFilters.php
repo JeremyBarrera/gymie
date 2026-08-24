@@ -135,7 +135,7 @@ final class QueryFilters
      *
      * @param  Builder<TModel>  $query
      * @param  list<string>  $allowedIncludes
-     * @param  array<string, array{type: string, column: string}>  $filterRules
+     * @param  array<string, array{type: string, column?: string, relation?: string}>  $filterRules
      * @param  list<string>  $allowedSorts
      */
     private static function applyQueryBuilderFilters(
@@ -150,11 +150,23 @@ final class QueryFilters
         $allowedFilters = [];
         foreach ($filterRules as $key => $rule) {
             $type = $rule['type'];
-            $column = $rule['column'];
 
             $allowedFilters[] = match ($type) {
-                'partial' => AllowedFilter::partial($key, $column),
-                'in' => AllowedFilter::callback($key, static function (Builder $builder, mixed $value) use ($column): void {
+                'partial' => AllowedFilter::partial($key, $rule['column']),
+                'relation' => AllowedFilter::callback($key, static function (Builder $builder, mixed $value) use ($rule): void {
+                    if (! is_scalar($value)) {
+                        return;
+                    }
+
+                    $trimmed = trim((string) $value);
+
+                    if ($trimmed === '') {
+                        return;
+                    }
+
+                    $builder->whereHas($rule['relation'], fn (Builder $related): Builder => $related->whereKey($trimmed));
+                }),
+                'in' => AllowedFilter::callback($key, static function (Builder $builder, mixed $value) use ($rule): void {
                     if (! is_scalar($value)) {
                         return;
                     }
@@ -164,16 +176,16 @@ final class QueryFilters
                         return;
                     }
 
-                    $builder->whereIn($column, $values);
+                    $builder->whereIn($rule['column'], $values);
                 }),
-                'date_range', 'datetime_range' => AllowedFilter::callback($key, static function (Builder $builder, mixed $value) use ($column): void {
+                'date_range', 'datetime_range' => AllowedFilter::callback($key, static function (Builder $builder, mixed $value) use ($rule): void {
                     if (! is_scalar($value)) {
                         return;
                     }
 
-                    self::applyRange($builder, $column, trim((string) $value));
+                    self::applyRange($builder, $rule['column'], trim((string) $value));
                 }),
-                default => AllowedFilter::exact($key, $column),
+                default => AllowedFilter::exact($key, $rule['column']),
             };
         }
 

@@ -394,8 +394,9 @@ class MemberOnboardingStep2 extends Page implements HasForms
 
             $plan = Plan::findOrFail(Data::int($validated['plan_id'] ?? null));
             $startDate = Carbon::parse(Data::string($validated['start_date'] ?? null))->toDateString();
+            // Evergreen plans (no day count) have no end date at all.
             $endDate = Data::string($validated['end_date'] ?? null)
-                ?: Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id));
+                ?: ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id)));
 
             $status = Carbon::parse($startDate)->gt(Carbon::today(AppConfig::timezone()))
                 ? 'upcoming'

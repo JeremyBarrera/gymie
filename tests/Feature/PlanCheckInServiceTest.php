@@ -7,6 +7,7 @@ use App\Exceptions\PlanCheckIn\SubscriptionNotEligibleException;
 use App\Exceptions\PlanCheckIn\UsesExceededException;
 use App\Models\Member;
 use App\Models\Plan;
+use App\Models\Service;
 use App\Models\Subscription;
 use App\Services\Membership\PlanCheckInService;
 use Carbon\Carbon;
@@ -27,10 +28,18 @@ function createEligibleSubscription(Member $member, Plan $plan, array $overrides
     ], $overrides));
 }
 
+function attachPlanServices(Plan $plan, int $count = 1): void
+{
+    $plan->services()->attach(
+        Service::factory()->count($count)->create()->pluck('id'),
+    );
+}
+
 it('returns eligible subscriptions for an active member', function (): void {
     $service = app(PlanCheckInService::class);
     $member = Member::factory()->create(['status' => Status::Active->value]);
     $plan = Plan::factory()->create(['status' => Status::Active->value]);
+    attachPlanServices($plan);
     $subscription = createEligibleSubscription($member, $plan);
 
     $eligible = $service->eligibleSubscriptions($member);
@@ -43,6 +52,7 @@ it('blocks check-in when plan use limit is exceeded', function (): void {
     $service = app(PlanCheckInService::class);
     $member = Member::factory()->create(['status' => Status::Active->value]);
     $plan = Plan::factory()->withUseLimit(1)->create(['status' => Status::Active->value]);
+    attachPlanServices($plan);
     $subscription = createEligibleSubscription($member, $plan);
 
     $service->checkIn($member, $subscription);
@@ -59,6 +69,7 @@ it('allows unlimited check-ins when plan does not track uses', function (): void
         'track_uses' => false,
         'uses_limit' => null,
     ]);
+    attachPlanServices($plan);
     $subscription = createEligibleSubscription($member, $plan);
 
     $service->checkIn($member, $subscription, null, true);
@@ -71,6 +82,7 @@ it('requires confirmation for duplicate same-day check-ins', function (): void {
     $service = app(PlanCheckInService::class);
     $member = Member::factory()->create(['status' => Status::Active->value]);
     $plan = Plan::factory()->withUseLimit(5)->create(['status' => Status::Active->value]);
+    attachPlanServices($plan);
     $subscription = createEligibleSubscription($member, $plan);
 
     $service->checkIn($member, $subscription);

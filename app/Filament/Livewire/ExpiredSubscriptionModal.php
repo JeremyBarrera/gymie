@@ -2,6 +2,7 @@
 
 namespace App\Filament\Livewire;
 
+use App\Contracts\TenantContext;
 use App\Enums\Status;
 use App\Helpers\Helpers;
 use App\Models\Member;
@@ -10,7 +11,6 @@ use App\Models\Subscription;
 use App\Services\Subscriptions\SubscriptionRenewalService;
 use App\Support\Billing\PaymentMethod;
 use App\Support\Notifications\FollowUpAlert;
-use App\Contracts\TenantContext;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -94,7 +94,7 @@ class ExpiredSubscriptionModal extends Component
         $locationId = app(TenantContext::class)->locationId();
 
         return Plan::query()
-            ->where('service_id', $this->serviceId)
+            ->forService($this->serviceId)
             ->where('status', Status::Active)
             ->orderBy('name')
             ->get()

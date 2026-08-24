@@ -44,13 +44,13 @@ class CheckInApiTest extends TestCase
     {
         $service = Service::factory()->create(['name' => 'Gym Access']);
         $plan = Plan::factory()->create([
-            'service_id' => $service->id,
             'code' => 'GYM-01',
             'name' => 'Monthly',
             'track_uses' => true,
             'uses_limit' => 12,
             'status' => Status::Active,
         ]);
+        $plan->services()->attach($service->id);
 
         $member = Member::factory()->create([
             'name' => 'John Doe',
@@ -93,10 +93,10 @@ class CheckInApiTest extends TestCase
     {
         $service = Service::factory()->create();
         $plan = Plan::factory()->create([
-            'service_id' => $service->id,
             'track_uses' => false,
             'status' => Status::Active,
         ]);
+        $plan->services()->attach($service->id);
 
         $member = Member::factory()->create([
             'government_id' => 'GOV999',
@@ -123,10 +123,10 @@ class CheckInApiTest extends TestCase
     {
         $service = Service::factory()->create();
         $plan = Plan::factory()->create([
-            'service_id' => $service->id,
             'track_uses' => false,
             'status' => Status::Active,
         ]);
+        $plan->services()->attach($service->id);
 
         $member = Member::factory()->create([
             'code' => 'MEM-001',

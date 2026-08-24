@@ -32,6 +32,7 @@ class PlanTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['services']))
             ->columns([
                 TextColumn::make('id')
                     ->sortable()
@@ -49,12 +50,13 @@ class PlanTable
                 TextColumn::make('description')
                     ->searchable()
                     ->label(__('app.fields.description')),
-                TextColumn::make('service.name')
+                TextColumn::make('services.name')
+                    ->badge()
                     ->searchable()
                     ->label(__('app.fields.service')),
                 TextColumn::make('days')
-                    ->searchable()
-                    ->label(__('app.fields.days')),
+                    ->label(__('app.fields.days'))
+                    ->placeholder(__('app.fields.unlimited')),
                 TextColumn::make('amount')
                     ->searchable()
                     ->label(__('app.fields.amount'))

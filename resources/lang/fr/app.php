@@ -436,7 +436,6 @@ return [
             'email_address' => 'Adresse email',
             'contact_no' => 'Téléphone',
             'prefix' => 'Préfixe',
-            'last_number' => 'Dernier numéro',
             'name_type' => 'Type de nom',
             'email_invoice_subject' => 'Objet email facture',
             'email_receipt_subject' => 'Objet email reçu',
@@ -744,7 +743,7 @@ return [
         'verify_save' => 'Créer',
         'verify_saved' => ':name a été créé et inscrit',
         'verify_checkin_toggle' => "Enregistrer l'entrée de ce membre maintenant",
-        'verify_checkin_save' => "Enregistrer et entrer",
+        'verify_checkin_save' => 'Enregistrer et entrer',
         'verify_checkin_title' => "Enregistrer l'entrée maintenant",
         'verify_checkin_hint' => ':name a été créé. Enregistrer son entrée maintenant ?',
         'checkin_success' => 'Entrée enregistrée avec succès',
@@ -863,7 +862,7 @@ return [
         'complete_checkin' => 'Enregistrement terminé',
         'complete_signup' => 'Inscription terminée',
         'complete_signup_checked_in' => 'Inscription & Entrée Enregistrées',
-        'confirmed_signup_checked_in' => "Votre adhésion est active et votre entrée est enregistrée !",
+        'confirmed_signup_checked_in' => 'Votre adhésion est active et votre entrée est enregistrée !',
         'confirmed_checkin' => 'Votre enregistrement a été confirmé. Bienvenue !',
         'confirmed_signup' => 'Votre demande a été confirmée. Bienvenue !',
         'denied_checkin' => 'Enregistrement refusé',
@@ -897,6 +896,7 @@ return [
         'track_uses' => 'Suivre le nombre d\'utilisations du plan.',
         'service_location' => 'Les enregistrements d\'entrée sont consignés dans cet emplacement.',
         'all_locations' => 'Laissez vide pour que le plan soit disponible dans tous les emplacements, y compris ceux créés à l\'avenir.',
+        'plan_days_optional' => 'Laissez vide pour un plan qui n\'expire jamais.',
     ],
     'onboarding' => [
         'step1_title' => 'Nouveau membre',
@@ -904,7 +904,7 @@ return [
     'pages' => [
         'first_subscription_title' => 'Premier abonnement de :member',
     ],
-'validation' => [
+    'validation' => [
         'founding_location_required' => 'L\'emplacement fondateur est requis.',
         'location_outside_jurisdiction' => 'L\'emplacement sélectionné est hors de votre juridiction.',
         'role_outside_jurisdiction' => 'Le rôle sélectionné est hors de votre juridiction.',

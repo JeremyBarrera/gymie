@@ -436,7 +436,6 @@ return [
             'email_address' => 'Correo electrónico',
             'contact_no' => 'Teléfono',
             'prefix' => 'Prefijo',
-            'last_number' => 'Último número',
             'name_type' => 'Tipo de nombre',
             'email_invoice_subject' => 'Asunto del correo de la factura',
             'email_receipt_subject' => 'Asunto del correo del comprobante',
@@ -897,6 +896,7 @@ return [
         'track_uses' => 'Realiza un seguimiento de cuántas veces se puede usar el plan.',
         'service_location' => 'Los registros de entrada se guardan en esta ubicación.',
         'all_locations' => 'Déjalo vacío para que el plan esté disponible en todas las ubicaciones, incluidas las que se creen en el futuro.',
+        'plan_days_optional' => 'Déjalo vacío para un plan que nunca caduca.',
     ],
     'onboarding' => [
         'step1_title' => 'Nuevo miembro',
@@ -904,7 +904,7 @@ return [
     'pages' => [
         'first_subscription_title' => 'Primera suscripción de :member',
     ],
-'validation' => [
+    'validation' => [
         'founding_location_required' => 'La ubicación fundadora es obligatoria.',
         'location_outside_jurisdiction' => 'La ubicación seleccionada está fuera de su jurisdicción.',
         'role_outside_jurisdiction' => 'El rol seleccionado está fuera de su jurisdicción.',

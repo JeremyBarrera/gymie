@@ -4,12 +4,12 @@ namespace App\Filament\Concerns;
 
 use App\Enums\Status;
 use App\Events\QueueEntryResolved;
+use App\Models\Invoice;
 use App\Models\Location;
 use App\Models\LocationToken;
 use App\Models\Member;
 use App\Models\QueueEntry;
 use App\Models\Subscription;
-use App\Models\Invoice;
 use App\Services\Membership\PlanCheckInService;
 use App\Support\DevOps\FeatureFlags;
 use App\Support\Notifications\FollowUpAlert;
@@ -434,8 +434,8 @@ trait HandlesCheckInVerification
      * shows who will be notified, with an optional reason.
      *
      * Only the no-access state offers the generic override — expired goes
-      * through the renewal modal and past-due states through the payment /
-      * due-date modals instead.
+     * through the renewal modal and past-due states through the payment /
+     * due-date modals instead.
      */
     public function openCheckInOverrideFor(int $serviceId): void
     {
@@ -758,7 +758,7 @@ trait HandlesCheckInVerification
     {
         return $member->subscriptions()
             ->with('plan')
-            ->whereHas('plan', fn ($query) => $query->where('service_id', $serviceId))
+            ->whereHas('plan', fn ($query) => $query->forService($serviceId))
             ->orderByDesc('end_date')
             ->orderByDesc('id')
             ->first();

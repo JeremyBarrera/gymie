@@ -1,10 +1,12 @@
 <?php
 
 use App\Enums\Status;
+use App\Filament\Concerns\HandlesCheckInVerification;
 use App\Filament\Livewire\AddPaymentModal;
 use App\Filament\Livewire\ChangeDueDateModal;
 use App\Filament\Livewire\ExpiredSubscriptionModal;
 use App\Filament\Pages\Reception;
+use App\Helpers\Helpers;
 use App\Models\Invoice;
 use App\Models\InvoiceTransaction;
 use App\Models\Location;
@@ -28,7 +30,7 @@ beforeEach(function (): void {
 });
 
 afterEach(function (): void {
-    \App\Helpers\Helpers::setTestSettingsOverride(null);
+    Helpers::setTestSettingsOverride(null);
 });
 
 function o3o4o5Staff(): User
@@ -42,13 +44,14 @@ function o3o4o5Staff(): User
 function o3o4o5Plan(): Plan
 {
     $service = Service::factory()->create();
-
-    return Plan::factory()->create([
-        'service_id' => $service->id,
+    $plan = Plan::factory()->create([
         'amount' => 100,
         'track_uses' => false,
         'status' => Status::Active,
     ]);
+    $plan->services()->attach($service->id);
+
+    return $plan;
 }
 
 function o3o4o5Member(array $overrides = []): Member
@@ -87,7 +90,7 @@ function o3o4o5ConfigureRecipients(User $pinned): void
 {
     Role::firstOrCreate(['name' => 'manager']);
 
-    \App\Helpers\Helpers::setTestSettingsOverride([
+    Helpers::setTestSettingsOverride([
         'notifications' => [
             'follow_up' => [
                 'roles' => ['manager'],
@@ -111,7 +114,7 @@ it('swaps the override button for add-new-subscription when the selected service
     $html = Livewire::actingAs(o3o4o5Staff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->call('selectCheckInService', (int) $plan->service_id)
+        ->call('selectCheckInService', (int) $plan->primaryService()->id)
         ->html();
 
     expect($html)->toContain('openExpiredSubscriptionModal')
@@ -130,16 +133,16 @@ it('opens the renewal popup preselecting the expired plan with cash and blank da
     Livewire::actingAs(o3o4o5Staff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->call('openExpiredSubscriptionModal', (int) $plan->service_id)
+        ->call('openExpiredSubscriptionModal', (int) $plan->primaryService()->id)
         ->assertDispatched('open-expired-subscription-modal',
             memberId: (int) $member->id,
-            serviceId: (int) $plan->service_id,
+            serviceId: (int) $plan->primaryService()->id,
             previousSubscriptionId: (int) $previous->id,
         );
 
     Livewire::actingAs(o3o4o5Staff())
         ->test(ExpiredSubscriptionModal::class)
-        ->call('open', $member->id, (int) $plan->service_id, $previous->id)
+        ->call('open', $member->id, (int) $plan->primaryService()->id, $previous->id)
         ->assertSet('planId', (int) $previous->plan_id)
         ->assertSet('paymentMethod', 'cash')
         ->assertSet('startDate', null)
@@ -162,7 +165,7 @@ it('renews via SubscriptionRenewalService and completes a normal check-in when f
 
     Livewire::actingAs(o3o4o5Staff())
         ->test(ExpiredSubscriptionModal::class)
-        ->call('open', $member->id, (int) $plan->service_id, $previous->id)
+        ->call('open', $member->id, (int) $plan->primaryService()->id, $previous->id)
         ->set('startDate', $startDate)
         ->set('paidAmount', 100)
         ->call('submit')
@@ -182,12 +185,12 @@ it('renews via SubscriptionRenewalService and completes a normal check-in when f
         ->and($renewal->invoices()->count())->toBe(1)
         ->and((float) $renewal->invoices()->first()->due_amount)->toBe(0.0)
         // Fully paid: no follow-up alert anywhere.
-        ->and(\App\Models\User::query()->get()->sum(fn (User $u) => $u->unreadNotifications()->count()))->toBe(0);
+        ->and(User::query()->get()->sum(fn (User $u) => $u->unreadNotifications()->count()))->toBe(0);
 
     Livewire::actingAs(o3o4o5Staff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', (int) $plan->service_id)
+        ->set('checkInServiceId', (int) $plan->primaryService()->id)
         ->call('completeResolvedCheckIn', (int) $renewal->id)
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', false);
@@ -210,7 +213,7 @@ it('fires the new_subscription follow-up alert when the renewed invoice is left 
 
     Livewire::actingAs(o3o4o5Staff())
         ->test(ExpiredSubscriptionModal::class)
-        ->call('open', $member->id, (int) $plan->service_id, $previous->id)
+        ->call('open', $member->id, (int) $plan->primaryService()->id, $previous->id)
         ->set('startDate', now()->toDateString())
         ->set('discountAmount', 10)
         ->set('paidAmount', 0)
@@ -226,7 +229,7 @@ it('fires the new_subscription follow-up alert when the renewed invoice is left 
     expect($payload['action'])->toBe('new_subscription')
         ->and($payload['subscription_id'])->toBe((int) $renewal->id)
         ->and($payload['invoice_id'])->toBe((int) $invoice->id)
-        ->and($payload['reason'])->toContain(\App\Helpers\Helpers::formatCurrency((float) $invoice->due_amount))
+        ->and($payload['reason'])->toContain(Helpers::formatCurrency((float) $invoice->due_amount))
         ->and((float) $invoice->due_amount)->toBeGreaterThan(0);
 });
 
@@ -237,7 +240,7 @@ it('refuses to renew the same expired subscription twice', function (): void {
 
     $component = Livewire::actingAs(o3o4o5Staff())
         ->test(ExpiredSubscriptionModal::class)
-        ->call('open', $member->id, (int) $plan->service_id, $previous->id)
+        ->call('open', $member->id, (int) $plan->primaryService()->id, $previous->id)
         ->set('startDate', now()->toDateString());
 
     $component->call('submit')->assertHasNoErrors();
@@ -245,7 +248,7 @@ it('refuses to renew the same expired subscription twice', function (): void {
     $countAfterFirst = Subscription::query()->where('member_id', $member->id)->count();
     expect($countAfterFirst)->toBe(2);
 
-    $component->call('open', $member->id, (int) $plan->service_id, $previous->id)
+    $component->call('open', $member->id, (int) $plan->primaryService()->id, $previous->id)
         ->set('startDate', now()->toDateString())
         ->call('submit')
         ->assertDispatched('notify');
@@ -267,7 +270,7 @@ it('blocks the renewal popup behind billing permissions', function (): void {
 
     Livewire::actingAs($limited)
         ->test(ExpiredSubscriptionModal::class)
-        ->call('open', $member->id, (int) $plan->service_id, $previous->id)
+        ->call('open', $member->id, (int) $plan->primaryService()->id, $previous->id)
         ->set('startDate', now()->toDateString())
         ->set('paidAmount', 100)
         ->call('submit');
@@ -295,8 +298,8 @@ it('sends an override_checkin alert with the system default reason when the mess
     Livewire::actingAs($staff)
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', (int) $plan->service_id)
-        ->call('openCheckInOverrideFor', (int) $plan->service_id)
+        ->set('checkInServiceId', (int) $plan->primaryService()->id)
+        ->call('openCheckInOverrideFor', (int) $plan->primaryService()->id)
         ->assertSet('checkInOverrideStep', true)
         ->call('confirmCheckInOverride')
         ->assertSet('showCheckInOverlay', false);
@@ -328,8 +331,8 @@ it('passes the typed optional message as the override_checkin alert reason', fun
     Livewire::actingAs($staff)
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', (int) $plan->service_id)
-        ->call('openCheckInOverrideFor', (int) $plan->service_id)
+        ->set('checkInServiceId', (int) $plan->primaryService()->id)
+        ->call('openCheckInOverrideFor', (int) $plan->primaryService()->id)
         ->assertSet('checkInOverrideStep', true)
         ->set('checkInOverrideReason', 'Came in for physio recovery session')
         ->call('confirmCheckInOverride')
@@ -358,8 +361,8 @@ it('keeps the generic override step exclusive to no-access rows', function (): v
     Livewire::actingAs(o3o4o5Staff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', (int) $plan->service_id)
-        ->call('openCheckInOverrideFor', (int) $plan->service_id)
+        ->set('checkInServiceId', (int) $plan->primaryService()->id)
+        ->call('openCheckInOverrideFor', (int) $plan->primaryService()->id)
         ->assertSet('checkInOverrideStep', false);
 
     expect(PlanCheckIn::count())->toBe(0)
@@ -397,7 +400,7 @@ it('shows two past-due buttons instead of the generic override and resolves the 
     $component = Livewire::actingAs(o3o4o5Staff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->call('selectCheckInService', (int) $plan->service_id);
+        ->call('selectCheckInService', (int) $plan->primaryService()->id);
 
     $html = $component->html();
 
@@ -405,11 +408,11 @@ it('shows two past-due buttons instead of the generic override and resolves the 
         ->and($html)->toContain('openChangeDueDateModal')
         ->not->toContain('openCheckInOverrideFor');
 
-    $component->call('openAddPaymentModal', (int) $plan->service_id)
+    $component->call('openAddPaymentModal', (int) $plan->primaryService()->id)
         ->assertDispatched('open-add-payment-modal', function (string $_, array $params): bool {
             return (int) $params['invoiceId'] > 0 && $params['subscriptionId'] !== null;
         })
-        ->call('openChangeDueDateModal', (int) $plan->service_id)
+        ->call('openChangeDueDateModal', (int) $plan->primaryService()->id)
         ->assertDispatched('open-change-due-date-modal');
 });
 
@@ -439,7 +442,7 @@ it('settles the balance in full, records one payment and completes a normal chec
 
     Livewire::actingAs(o3o4o5Staff())
         ->test(AddPaymentModal::class)
-        ->call('open', $member->id, $invoice->id, (int) $plan->service_id, (int) $subscription->id)
+        ->call('open', $member->id, $invoice->id, (int) $plan->primaryService()->id, (int) $subscription->id)
         ->assertSet('amount', 100.0)
         ->call('submit')
         ->assertHasNoErrors()
@@ -451,12 +454,12 @@ it('settles the balance in full, records one payment and completes a normal chec
     expect($invoice->status->value)->toBe('paid')
         ->and((float) $invoice->due_amount)->toBe(0.0)
         ->and(InvoiceTransaction::query()->where('invoice_id', $invoice->id)->where('type', 'payment')->count())->toBe(1)
-        ->and(\App\Models\User::query()->get()->sum(fn (User $u) => $u->unreadNotifications()->count()))->toBe(0);
+        ->and(User::query()->get()->sum(fn (User $u) => $u->unreadNotifications()->count()))->toBe(0);
 
     Livewire::actingAs(o3o4o5Staff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', (int) $plan->service_id)
+        ->set('checkInServiceId', (int) $plan->primaryService()->id)
         ->call('completeResolvedCheckIn', (int) $subscription->id)
         ->assertSet('showCheckInOverlay', false);
 
@@ -498,7 +501,7 @@ it('requires a future next-payment date for a partial balance and fires payment_
 
     $component = Livewire::actingAs(o3o4o5Staff())
         ->test(AddPaymentModal::class)
-        ->call('open', $member->id, $invoice->id, (int) $plan->service_id, (int) $subscription->id)
+        ->call('open', $member->id, $invoice->id, (int) $plan->primaryService()->id, (int) $subscription->id)
         ->set('amount', 40)
         ->call('submit');
 
@@ -530,13 +533,13 @@ it('requires a future next-payment date for a partial balance and fires payment_
 
     expect($payload['action'])->toBe('payment_added')
         ->and($payload['invoice_id'])->toBe((int) $invoice->id)
-        ->and($payload['reason'])->toContain(\App\Helpers\Helpers::formatCurrency(60.0));
+        ->and($payload['reason'])->toContain(Helpers::formatCurrency(60.0));
 
     Livewire::actingAs(o3o4o5Staff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', (int) $plan->service_id)
-        ->call('completeAssistedOverrideCheckIn', (int) $plan->service_id, 'Pays the rest next week');
+        ->set('checkInServiceId', (int) $plan->primaryService()->id)
+        ->call('completeAssistedOverrideCheckIn', (int) $plan->primaryService()->id, 'Pays the rest next week');
 
     $checkIn = PlanCheckIn::query()->first();
 
@@ -577,7 +580,7 @@ it('changes only the due date, fires due_date_changed and completes the override
 
     $component = Livewire::actingAs(o3o4o5Staff())
         ->test(ChangeDueDateModal::class)
-        ->call('open', $member->id, $invoice->id, (int) $plan->service_id, (int) $subscription->id)
+        ->call('open', $member->id, $invoice->id, (int) $plan->primaryService()->id, (int) $subscription->id)
         ->assertSet('newDueDate', null);
 
     expect($component->get('canConfirm'))->toBeFalse();
@@ -614,8 +617,8 @@ it('changes only the due date, fires due_date_changed and completes the override
     Livewire::actingAs(o3o4o5Staff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', (int) $plan->service_id)
-        ->call('completeAssistedOverrideCheckIn', (int) $plan->service_id, __('app.check_in.due_date_updated'));
+        ->set('checkInServiceId', (int) $plan->primaryService()->id)
+        ->call('completeAssistedOverrideCheckIn', (int) $plan->primaryService()->id, __('app.check_in.due_date_updated'));
 
     $checkIn = PlanCheckIn::query()->first();
 
@@ -652,7 +655,7 @@ it('blocks payment recording behind invoice update permissions', function (): vo
 
     Livewire::actingAs($limited)
         ->test(AddPaymentModal::class)
-        ->call('open', $member->id, $invoice->id, (int) $plan->service_id, (int) $subscription->id)
+        ->call('open', $member->id, $invoice->id, (int) $plan->primaryService()->id, (int) $subscription->id)
         ->call('submit')
         ->assertDispatched('notify');
 
@@ -668,7 +671,7 @@ it('removed the forced due-date detour outright (properties, actions and markup)
         ->and(method_exists(Reception::class, 'cancelDueDateChange'))->toBeFalse()
         ->and(property_exists(Reception::class, 'checkInOverrideDueDateStep'))->toBeFalse()
         ->and(property_exists(Reception::class, 'checkInOverrideNewDueDate'))->toBeFalse()
-        ->and(class_uses_recursive(Reception::class))->toContain(\App\Filament\Concerns\HandlesCheckInVerification::class);
+        ->and(class_uses_recursive(Reception::class))->toContain(HandlesCheckInVerification::class);
 
     $location = Location::factory()->create();
     $plan = o3o4o5Plan();
@@ -696,7 +699,7 @@ it('removed the forced due-date detour outright (properties, actions and markup)
     $html = Livewire::actingAs(o3o4o5Staff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->call('selectCheckInService', (int) $plan->service_id)
+        ->call('selectCheckInService', (int) $plan->primaryService()->id)
         ->html();
 
     expect($html)->not->toContain('confirmDueDateChange')

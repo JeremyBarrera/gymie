@@ -69,16 +69,28 @@ class PlanForm
                             ->preload()
                             ->live()
                             ->columnSpan(1),
-                        Select::make('service_id')
+                        Select::make('services')
                             ->label(__('app.fields.service'))
-                            ->relationship(name: 'service', titleAttribute: 'name', modifyQueryUsing: function (Builder $query, Get $get): void {
+                            ->relationship(name: 'services', titleAttribute: 'name', modifyQueryUsing: function (Builder $query, Get $get): void {
                                 $locationId = $get('location_id');
 
                                 if (filled($locationId)) {
                                     $query->where('location_id', $locationId);
                                 }
                             })
-                            ->placeholder(__('app.placeholders.select_service'))
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->placeholder(__('app.placeholders.select_services'))
+                            ->default(fn (Get $get): array => Service::query()
+                                ->when(
+                                    filled($get('location_id')),
+                                    fn (Builder $query, int $locationId): Builder => $query->where('location_id', $locationId),
+                                )
+                                ->orderBy('name')
+                                ->limit(1)
+                                ->pluck('id')
+                                ->all())
                             ->required()
                             ->createOptionModalHeading(__('app.actions.new', ['resource' => __('app.resources.services.singular')]))
                             ->createOptionForm(fn (Schema $schema): Schema => ServiceForm::configure($schema))
@@ -94,10 +106,11 @@ class PlanForm
                             })
                             ->columnSpan(2),
                         TextInput::make('days')
-                            ->required()
                             ->placeholder(__('app.placeholders.plan_days'))
                             ->numeric()
+                            ->minValue(1)
                             ->label(__('app.fields.days'))
+                            ->helperText(__('app.helpers.plan_days_optional'))
                             ->extraAttributes(['class' => 'verify-money-input'])
                             ->columnSpan(1),
                         TextInput::make('amount')

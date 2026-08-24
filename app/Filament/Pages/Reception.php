@@ -621,7 +621,7 @@ class Reception extends Page
                         Auth::user(),
                         null,
                         false,
-                        $subscription?->plan?->service_id,
+                        $subscription?->plan?->primaryService()?->id,
                     );
 
                     $entry->update([

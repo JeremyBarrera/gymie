@@ -64,7 +64,7 @@ class CheckInController extends ApiController
                 'id' => $sub->id,
                 'label' => $this->planCheckInService->subscriptionOptionLabel($sub),
                 'plan_id' => $sub->plan_id,
-                'service_id' => $sub->plan?->service_id,
+                'service_id' => $sub->plan?->primaryService()?->id,
                 'uses_remaining' => $this->planCheckInService->remainingUses($sub),
             ])
             ->values()

@@ -36,7 +36,7 @@ test('resources define meaningful global search attributes', function (): void {
         ->toContain('member.name', 'member.code', 'plan.name', 'plan.code');
 
     expect(PlanResource::getGloballySearchableAttributes())
-        ->toContain('name', 'code', 'service.name');
+        ->toContain('name', 'code', 'services.name');
 
     expect(ServiceResource::getGloballySearchableAttributes())
         ->toContain('name', 'description');

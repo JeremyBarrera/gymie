@@ -10,6 +10,7 @@ use App\Support\Billing\InvoiceCalculator;
 use App\Support\Billing\PaymentMethod;
 use App\Support\Data;
 use App\Support\Dates\DeviceDateFormat;
+use App\Support\Filament\SubscriptionDetails;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
@@ -33,6 +34,9 @@ class InvoiceForm
         return $schema
             ->columns(1)
             ->components([
+                SubscriptionDetails::section(fn (?Invoice $record): ?Subscription => $record?->subscription)
+                    ->visible(fn (?Invoice $record, string $operation): bool => self::hasFixedSubscription($record, $operation)),
+
                 Section::make('')
                     ->columns(4)
                     ->columnSpanFull()
@@ -63,6 +67,8 @@ class InvoiceForm
                                             ->orderByDesc('start_date'),
                                     )
                                     ->hiddenOn(InvoicesRelationManager::class)
+                                    ->hidden(fn (?Invoice $record, string $operation): bool => self::hasFixedSubscription($record, $operation))
+                                    ->dehydratedWhenHidden()
                                     ->getOptionLabelFromRecordUsing(fn (Subscription $record): string => self::formatSubscriptionOptionLabel($record))
                                     ->searchable()
                                     ->afterStateUpdated(
@@ -229,15 +235,21 @@ class InvoiceForm
      */
     private static function formatSubscriptionOptionLabel(Subscription $subscription): string
     {
-        $memberCode = $subscription->member->code ?? '—';
-        $memberName = $subscription->member->name ?? '—';
-        $planCode = $subscription->plan->code ?? '—';
-        $planName = $subscription->plan->name ?? '—';
-        $start = $subscription->start_date?->translatedFormat(DeviceDateFormat::date()) ?? '—';
-        $end = $subscription->end_date?->translatedFormat(DeviceDateFormat::date()) ?? '—';
-        $status = $subscription->status?->getLabel() ?? '—';
+        $memberName = $subscription->member?->name ?? '—';
+        $planName = $subscription->plan?->name ?? '—';
+        $start = DeviceDateFormat::format($subscription->start_date);
+        $end = DeviceDateFormat::format($subscription->end_date);
 
-        return "#{$subscription->id} — {$memberCode} {$memberName} • {$planCode} {$planName} • {$start} → {$end} • {$status}";
+        return "{$memberName} — {$planName} ({$start} → {$end})";
+    }
+
+    /**
+     * Whether the invoice's subscription is fixed: editing an invoice that
+     * already has one shows the read-only details instead of the select.
+     */
+    private static function hasFixedSubscription(?Invoice $record, string $operation): bool
+    {
+        return $operation === 'edit' && filled($record?->subscription_id);
     }
 
     private static function stringState(Get $get, string $path): ?string

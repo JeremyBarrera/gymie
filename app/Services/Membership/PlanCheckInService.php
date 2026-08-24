@@ -42,13 +42,15 @@ class PlanCheckInService
         $locationId = app(TenantContext::class)->locationId();
 
         return $member->subscriptions()
-            ->with(['plan.service', 'plan.location'])
+            ->with(['plan.services', 'plan.location'])
             ->whereIn('status', [Status::Ongoing->value, Status::Expiring->value])
             ->whereDate('start_date', '<=', $today)
             ->where(fn ($query) => $query
                 ->whereNull('end_date')
                 ->orWhereDate('end_date', '>=', $today))
-            ->whereHas('plan', fn ($query) => $query->where('status', Status::Active->value))
+            ->whereHas('plan', fn ($query) => $query
+                ->where('status', Status::Active->value)
+                ->has('services'))
             ->orderBy('end_date')
             ->get()
             ->filter(fn (Subscription $subscription): bool => (bool) $subscription->plan?->availableAt($locationId))
@@ -166,14 +168,14 @@ class PlanCheckInService
         $memberOverdueInvoice = $this->overdueInvoice($member);
 
         $allSubscriptions = $member->subscriptions()
-            ->with('plan')
+            ->with('plan.services')
             ->get();
 
         $states = [];
 
         foreach ($services as $service) {
             $best = $eligible
-                ->filter(fn (Subscription $subscription): bool => (int) $subscription->plan?->service_id === (int) $service->id)
+                ->filter(fn (Subscription $subscription): bool => (bool) $subscription->plan?->services?->contains('id', (int) $service->id))
                 ->sortByDesc('end_date')
                 ->first();
 
@@ -193,7 +195,7 @@ class PlanCheckInService
 
             if ($best === null) {
                 $hasAnySubscription = $allSubscriptions
-                    ->contains(fn (Subscription $s): bool => (int) $s->plan?->service_id === (int) $service->id);
+                    ->contains(fn (Subscription $s): bool => (bool) $s->plan?->services?->contains('id', (int) $service->id));
 
                 $state = $hasAnySubscription ? 'expired' : 'no_access';
 
@@ -312,7 +314,7 @@ class PlanCheckInService
                 'member_id' => $member->id,
                 'subscription_id' => $subscription->id,
                 'plan_id' => $plan->id,
-                'service_id' => $plan->service_id,
+                'service_id' => $plan->primaryService()?->id,
                 'location_id' => app(TenantContext::class)->locationId(),
                 'checked_in_by' => $staff?->id,
                 'checked_in_at' => now(AppConfig::timezone()),
@@ -359,7 +361,7 @@ class PlanCheckInService
                 'member_id' => $member->id,
                 'subscription_id' => $subscription?->id,
                 'plan_id' => $plan?->id,
-                'service_id' => $plan?->service_id ?? $serviceId,
+                'service_id' => $plan?->primaryService()?->id ?? $serviceId,
                 'override' => true,
                 'override_by_user_id' => $staff?->id,
                 'override_reason' => $reason,
@@ -375,9 +377,9 @@ class PlanCheckInService
      */
     public function subscriptionOptionLabel(Subscription $subscription): string
     {
-        $subscription->loadMissing(['plan.service']);
+        $subscription->loadMissing(['plan.services']);
         $plan = $subscription->plan;
-        $serviceName = $plan?->service?->name;
+        $serviceName = $plan?->primaryService()?->name;
         $remaining = $this->remainingUses($subscription);
 
         $usesLabel = $remaining === null

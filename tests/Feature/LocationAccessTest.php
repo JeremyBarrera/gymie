@@ -5,10 +5,11 @@ use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Models\Location;
 use App\Models\Member;
 use App\Models\Plan;
+use App\Models\Service;
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\Membership\PlanCheckInService;
 use App\Services\LocationTenantContext;
+use App\Services\Membership\PlanCheckInService;
 use App\Support\Locations\LocationAccess;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -142,6 +143,7 @@ it('excludes subscriptions for plans that are unavailable at the check-in locati
     $locationB = Location::factory()->create();
 
     $plan = Plan::factory()->create(['location_id' => $locationA->id, 'status' => 'active']);
+    $plan->services()->attach(Service::factory()->create());
 
     $memberA = Member::factory()->create(['status' => 'active']);
     $memberB = Member::factory()->create(['status' => 'active']);

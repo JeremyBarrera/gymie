@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -20,14 +21,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $code
  * @property string|null $description
  * @property int|null $location_id
- * @property int|null $service_id
  * @property float|int|string|null $amount
  * @property int|float|string|null $days
  * @property Status|null $status
  * @property bool $track_uses
  * @property int|null $uses_limit
  * @property-read Location|null $location
- * @property-read Service|null $service
+ * @property-read Collection<int, Service> $services
  * @property-read Collection<int, Subscription> $subscriptions
  * @property-read Collection<int, PlanCheckIn> $checkIns
  */
@@ -46,7 +46,6 @@ class Plan extends Model
         'name',
         'code',
         'description',
-        'service_id',
         'amount',
         'days',
         'status',
@@ -92,14 +91,31 @@ class Plan extends Model
     }
 
     /**
-     * Get the sevice for the plan.
+     * Get the services the plan grants access to.
+     *
+     * @return BelongsToMany<Service, $this>
      */
-    /**
-     * @return BelongsTo<Service, $this>
-     */
-    public function service(): BelongsTo
+    public function services(): BelongsToMany
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsToMany(Service::class, 'plan_services');
+    }
+
+    /**
+     * Deterministic single-service representative for surfaces that carry
+     * exactly one service (check-in records, scan/API payloads): the plan's
+     * alphabetically-first service.
+     */
+    public function primaryService(): ?Service
+    {
+        return $this->services->sortBy('name')->first();
+    }
+
+    /**
+     * Plans that grant access to the given service.
+     */
+    public function scopeForService(Builder $query, int $serviceId): Builder
+    {
+        return $query->whereHas('services', fn (Builder $related): Builder => $related->whereKey($serviceId));
     }
 
     /**

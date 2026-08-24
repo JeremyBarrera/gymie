@@ -9,6 +9,7 @@ use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property-read Invoice $record
@@ -16,6 +17,12 @@ use Filament\Resources\Pages\EditRecord;
 class EditInvoice extends EditRecord
 {
     protected static string $resource = InvoiceResource::class;
+
+    protected function resolveRecord(int|string $key): Model
+    {
+        return parent::resolveRecord($key)
+            ->loadMissing(['subscription.member', 'subscription.plan.services']);
+    }
 
     public function getTitle(): string
     {

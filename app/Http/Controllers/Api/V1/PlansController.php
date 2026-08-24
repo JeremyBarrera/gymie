@@ -10,6 +10,7 @@ use App\Services\Api\QueryFilters;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Plans CRUD endpoints.
@@ -25,7 +26,7 @@ class PlansController extends ApiController
     {
         $this->requirePermission($request, 'ViewAny:Plan');
 
-        $query = Plan::query()->with('service');
+        $query = Plan::query()->with('services');
 
         QueryFilters::applyIndexFilters($query, $request, self::RESOURCE_KEY);
 
@@ -41,8 +42,16 @@ class PlansController extends ApiController
     {
         $this->requirePermission($request, 'Create:Plan');
 
-        $plan = Plan::create($request->validated());
-        $plan->load('service');
+        ['data' => $data, 'service_ids' => $serviceIds] = self::splitPayload($request->validated());
+
+        $plan = DB::transaction(function () use ($data, $serviceIds): Plan {
+            $plan = Plan::create($data);
+            $plan->services()->sync($serviceIds);
+
+            return $plan;
+        });
+
+        $plan->load('services');
 
         return new PlanResource($plan);
     }
@@ -54,7 +63,7 @@ class PlansController extends ApiController
     {
         $this->requirePermission($request, 'View:Plan');
 
-        $plan->load('service');
+        $plan->load('services');
 
         return new PlanResource($plan);
     }
@@ -66,8 +75,17 @@ class PlansController extends ApiController
     {
         $this->requirePermission($request, 'Update:Plan');
 
-        $plan->update($request->validated());
-        $plan->load('service');
+        ['data' => $data, 'service_ids' => $serviceIds] = self::splitPayload($request->validated());
+
+        DB::transaction(function () use ($plan, $data, $serviceIds): void {
+            $plan->update($data);
+
+            if ($serviceIds !== null) {
+                $plan->services()->sync($serviceIds);
+            }
+        });
+
+        $plan->load('services');
 
         return new PlanResource($plan);
     }
@@ -86,7 +104,7 @@ class PlansController extends ApiController
     public function restore(Request $request, int $plan): PlanResource
     {
         $record = $this->restoreSoftDeleted($request, 'RestoreAny:Plan', Plan::class, $plan);
-        $record->load('service');
+        $record->load('services');
 
         return new PlanResource($record->refresh());
     }
@@ -99,5 +117,22 @@ class PlansController extends ApiController
         $this->forceDeleteSoftDeleted($request, 'ForceDeleteAny:Plan', Plan::class, $plan);
 
         return $this->noContent();
+    }
+
+    /**
+     * Separate the plan attributes from the service pivot ids.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array{data: array<string, mixed>, service_ids: list<int>|null}
+     */
+    private static function splitPayload(array $validated): array
+    {
+        $serviceIds = isset($validated['service_ids']) && is_array($validated['service_ids'])
+            ? array_map(intval(...), $validated['service_ids'])
+            : null;
+
+        unset($validated['service_ids']);
+
+        return ['data' => $validated, 'service_ids' => $serviceIds];
     }
 }

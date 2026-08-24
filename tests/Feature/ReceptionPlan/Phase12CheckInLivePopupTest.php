@@ -3,6 +3,7 @@
 use App\Enums\Status;
 use App\Filament\Livewire\LiveSignupPopup;
 use App\Filament\Pages\Reception;
+use App\Helpers\Helpers;
 use App\Models\Invoice;
 use App\Models\Location;
 use App\Models\LocationToken;
@@ -36,13 +37,14 @@ function liveCheckInStaff(): User
 function liveCheckInPlan(): Plan
 {
     $service = Service::factory()->create();
-
-    return Plan::factory()->create([
-        'service_id' => $service->id,
+    $plan = Plan::factory()->create([
         'amount' => 100,
         'track_uses' => false,
         'status' => Status::Active,
     ]);
+    $plan->services()->attach($service->id);
+
+    return $plan;
 }
 
 function liveCheckInMember(array $overrides = []): Member
@@ -209,7 +211,7 @@ it('approves a check-in from the live overlay and records the PlanCheckIn', func
     Livewire::actingAs(liveCheckInStaff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', $plan->service_id)
+        ->set('checkInServiceId', $plan->primaryService()->id)
         ->call('approveCheckIn')
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', false)
@@ -273,7 +275,7 @@ it('shows the candidate picker for ambiguous identifiers and selects the right m
         ->assertSet('selectedCheckInMemberId', null)
         ->call('selectCheckInMember', $second->id)
         ->assertSet('selectedCheckInMemberId', $second->id)
-        ->set('checkInServiceId', $plan->service_id)
+        ->set('checkInServiceId', $plan->primaryService()->id)
         ->call('approveCheckIn')
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', false);
@@ -319,7 +321,7 @@ it('blocks the approve when the member has an overdue invoice', function (): voi
     Livewire::actingAs(liveCheckInStaff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', $plan->service_id)
+        ->set('checkInServiceId', $plan->primaryService()->id)
         ->call('approveCheckIn')
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', true);
@@ -431,7 +433,7 @@ it('approves a check-in from the global popup and records the PlanCheckIn', func
     Livewire::actingAs(liveCheckInStaff())
         ->test(LiveSignupPopup::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', $plan->service_id)
+        ->set('checkInServiceId', $plan->primaryService()->id)
         ->call('approveCheckIn')
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', false);
@@ -559,8 +561,8 @@ it('lists every location service in the overlay and accepts picking an access se
     Livewire::actingAs(liveCheckInStaff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->call('selectCheckInService', $plan->service_id)
-        ->assertSet('checkInServiceId', $plan->service_id);
+        ->call('selectCheckInService', $plan->primaryService()->id)
+        ->assertSet('checkInServiceId', $plan->primaryService()->id);
 });
 
 it('approves against the eligible subscription with the latest end date for the picked service', function (): void {
@@ -574,7 +576,7 @@ it('approves against the eligible subscription with the latest end date for the 
     Livewire::actingAs(liveCheckInStaff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', $plan->service_id)
+        ->set('checkInServiceId', $plan->primaryService()->id)
         ->call('approveCheckIn')
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', false);
@@ -607,17 +609,17 @@ it('blocks the approve for an unpaid invoice and routes staff to the payment / d
     Livewire::actingAs(liveCheckInStaff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', $plan->service_id)
+        ->set('checkInServiceId', $plan->primaryService()->id)
         ->call('approveCheckIn')
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', true)
         // The generic override is gone for past-due states (O5): the footer
         // offers the payment / due-date modals and the action refuses.
-        ->call('openCheckInOverrideFor', $plan->service_id)
+        ->call('openCheckInOverrideFor', $plan->primaryService()->id)
         ->assertSet('checkInOverrideStep', false)
-        ->call('openAddPaymentModal', $plan->service_id)
+        ->call('openAddPaymentModal', $plan->primaryService()->id)
         ->assertDispatched('open-add-payment-modal')
-        ->call('openChangeDueDateModal', $plan->service_id)
+        ->call('openChangeDueDateModal', $plan->primaryService()->id)
         ->assertDispatched('open-change-due-date-modal');
 
     expect(PlanCheckIn::count())->toBe(0);
@@ -647,13 +649,13 @@ it('keeps the strict gate for an overdue member: approve and crafted overrides b
     Livewire::actingAs(liveCheckInStaff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', $plan->service_id)
+        ->set('checkInServiceId', $plan->primaryService()->id)
         ->call('approveCheckIn')
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', true)
-        ->call('openCheckInOverrideFor', $plan->service_id)
+        ->call('openCheckInOverrideFor', $plan->primaryService()->id)
         ->assertSet('checkInOverrideStep', false)
-        ->set('checkInServiceId', $plan->service_id)
+        ->set('checkInServiceId', $plan->primaryService()->id)
         ->call('confirmCheckInOverride')
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', true);
@@ -673,8 +675,8 @@ it('allows overriding a service the member has no subscription for and records t
     Livewire::actingAs(liveCheckInStaff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', $plan->service_id)
-        ->call('openCheckInOverrideFor', $plan->service_id)
+        ->set('checkInServiceId', $plan->primaryService()->id)
+        ->call('openCheckInOverrideFor', $plan->primaryService()->id)
         ->assertSet('checkInOverrideStep', true)
         ->call('confirmCheckInOverride')
         ->assertDispatched('notify')
@@ -685,7 +687,7 @@ it('allows overriding a service the member has no subscription for and records t
         ->and($checkIn->member_id)->toBe($member->id)
         ->and($checkIn->subscription_id)->toBeNull()
         ->and($checkIn->plan_id)->toBeNull()
-        ->and($checkIn->service_id)->toBe($plan->service_id)
+        ->and($checkIn->service_id)->toBe($plan->primaryService()->id)
         ->and($checkIn->override)->toBeTrue()
         ->and($checkIn->override_reason)->toBe('no_subscription')
         ->and($entry->refresh()->status)->toBe('approved');
@@ -781,7 +783,7 @@ it('creates a PlanCheckIn when the check-in toggle is opted in during signup', f
     expect($checkIn->member_id)->toBe($member->id)
         ->and($checkIn->subscription_id)->toBe($subscription->id)
         ->and($checkIn->plan_id)->toBe($plan->id)
-        ->and($checkIn->service_id)->toBe($plan->service_id);
+        ->and($checkIn->service_id)->toBe($plan->primaryService()->id);
 });
 
 it('skips the check-in and closes the overlay when the toggle is off', function (): void {
@@ -832,7 +834,7 @@ it('shows a warning toast when the post-signup check-in fails and still closes t
     Livewire::actingAs(liveCheckInStaff())
         ->test(Reception::class)
         ->set('verifyCreatedMember', $member)
-        ->set('verifyCheckInServiceId', $plan->service_id)
+        ->set('verifyCheckInServiceId', $plan->primaryService()->id)
         ->set('selectedQueueEntryId', $entry->id)
         ->call('confirmVerifyCheckIn')
         ->assertDispatched('notify')
@@ -895,9 +897,9 @@ it('computes verifyCheckInServices from the selected plan after signup is saved'
         ->assertSet('verifyStep', 4)
         ->assertSet('verifyCheckInServices', function ($services) use ($plan) {
             return count($services) === 1
-                && (int) $services[0]['id'] === (int) $plan->service_id
+                && (int) $services[0]['id'] === (int) $plan->primaryService()->id
                 && $services[0]['state'] === 'access'
-                && $services[0]['name'] === $plan->service->name;
+                && $services[0]['name'] === $plan->primaryService()->name;
         });
 });
 
@@ -910,14 +912,14 @@ it('paints the photo border from applicable statuses only, not every picker row'
     $entry = liveCheckInEntry($location, ['candidate_member_ids' => [$member->id]]);
 
     // Pin the expiring window so the far-out end date reads as valid green.
-    \App\Helpers\Helpers::setTestSettingsOverride([
+    Helpers::setTestSettingsOverride([
         'subscriptions' => ['expiring_days' => 7],
     ]);
 
     $component = Livewire::actingAs(liveCheckInStaff())
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('checkInServiceId', $entitled->service_id);
+        ->set('checkInServiceId', $entitled->primaryService()->id);
 
     // Valid member checking into their access row: the unrelated service
     // they are NOT entitled to must not paint the whole card red.
@@ -926,9 +928,9 @@ it('paints the photo border from applicable statuses only, not every picker row'
 
     // Deliberately picking the non-access row IS decision-relevant: the
     // border flips to danger and matches that row's badge.
-    $component->set('checkInServiceId', $unrelated->service_id);
+    $component->set('checkInServiceId', $unrelated->primaryService()->id);
 
     expect($component->html())->toContain('var(--danger-500)');
 
-    \App\Helpers\Helpers::setTestSettingsOverride(null);
+    Helpers::setTestSettingsOverride(null);
 });

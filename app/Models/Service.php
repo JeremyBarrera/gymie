@@ -8,7 +8,7 @@ use Database\Factories\ServiceFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -43,14 +43,14 @@ class Service extends Model
     }
 
     /**
-     * Get the plans for the service.
+     * Get the plans that grant access to the service.
      */
     /**
-     * @return HasMany<Plan, $this>
+     * @return BelongsToMany<Plan, $this>
      */
-    public function plans(): HasMany
+    public function plans(): BelongsToMany
     {
-        return $this->hasMany(Plan::class);
+        return $this->belongsToMany(Plan::class, 'plan_services');
     }
 
     /**

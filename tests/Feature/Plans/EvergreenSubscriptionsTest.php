@@ -4,19 +4,25 @@ use App\Console\Commands\MarkSubscriptionsStatus;
 use App\Enums\Status;
 use App\Models\Member;
 use App\Models\Plan;
+use App\Models\PlanCheckIn;
+use App\Models\Service;
 use App\Models\Subscription;
 use App\Services\Membership\PlanCheckInService;
 use App\Services\Subscriptions\SubscriptionRenewalService;
 use App\Support\Membership\MembershipStatus;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 function evergreenPlan(): Plan
 {
-    return Plan::factory()->create([
+    $plan = Plan::factory()->create([
         'days' => null,
         'status' => Status::Active,
     ]);
+    $plan->services()->attach(Service::factory()->create());
+
+    return $plan;
 }
 
 function evergreenSubscription(Member $member, Plan $plan): Subscription
@@ -42,14 +48,14 @@ it('treats a subscription without an end date as always eligible', function (): 
 });
 
 it('counts uses for an evergreen subscription across its whole lifetime', function (): void {
-    $service = \App\Models\Service::factory()->create();
+    $service = Service::factory()->create();
     $plan = evergreenPlan();
-    $plan->update(['service_id' => $service->id]);
+    $plan->services()->attach($service->id);
     $member = Member::factory()->create(['status' => Status::Active]);
     $subscription = evergreenSubscription($member, $plan);
 
     foreach ([20, 1] as $daysAgo) {
-        \App\Models\PlanCheckIn::create([
+        PlanCheckIn::create([
             'member_id' => $member->id,
             'subscription_id' => $subscription->id,
             'service_id' => $service->id,

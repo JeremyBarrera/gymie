@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Status;
 use App\Events\QueueEntryCreated;
 use App\Helpers\Helpers;
+use App\Jobs\ExpireQueueEntry;
 use App\Models\Location;
 use App\Models\LocationToken;
 use App\Models\Member;
@@ -168,7 +169,7 @@ class CheckInScanController extends Controller
                 'id' => $sub->id,
                 'label' => $this->planCheckInService->subscriptionOptionLabel($sub),
                 'plan_id' => $sub->plan_id,
-                'service_id' => $sub->plan?->service_id,
+                'service_id' => $sub->plan?->primaryService()?->id,
                 'uses_remaining' => $this->planCheckInService->remainingUses($sub),
             ])
             ->values()
@@ -212,7 +213,7 @@ class CheckInScanController extends Controller
 
         // Schedule auto-expiration at expires_at (event-driven, no polling)
         if (! app()->environment('testing')) {
-            \App\Jobs\ExpireQueueEntry::dispatch(
+            ExpireQueueEntry::dispatch(
                 $queueEntry->id,
                 $queueEntry->uuid,
                 $locationToken->token
@@ -317,7 +318,7 @@ class CheckInScanController extends Controller
 
         // Schedule auto-expiration at expires_at (event-driven, no polling)
         if (! app()->environment('testing')) {
-            \App\Jobs\ExpireQueueEntry::dispatch(
+            ExpireQueueEntry::dispatch(
                 $queueEntry->id,
                 $queueEntry->uuid,
                 $locationToken->token
@@ -395,7 +396,7 @@ class CheckInScanController extends Controller
 
         // Schedule auto-expiration at expires_at (event-driven, no polling)
         if (! app()->environment('testing')) {
-            \App\Jobs\ExpireQueueEntry::dispatch(
+            ExpireQueueEntry::dispatch(
                 $queueEntry->id,
                 $queueEntry->uuid,
                 $locationToken->token

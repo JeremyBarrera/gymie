@@ -5,11 +5,9 @@ namespace App\Filament\Resources\Subscriptions\Schemas;
 use App\Models\Invoice;
 use App\Models\Subscription;
 use App\Support\Filament\InvoiceSummaryRows;
-use Filament\Infolists\Components\TextEntry;
+use App\Support\Filament\SubscriptionDetails;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\HtmlString;
 
 class SubscriptionInfolist
 {
@@ -21,42 +19,9 @@ class SubscriptionInfolist
         return $schema
             ->columns(1)
             ->components([
-                Section::make()
-                    ->heading(function (Subscription $record): HtmlString {
-                        $status = $record->status;
-
-                        if ($status === null) {
-                            return new HtmlString(e(__('app.ui.details')));
-                        }
-
-                        $html = Blade::render(
-                            '<x-filament::badge class="inline-flex ml-2" :color="$color">
-                                {{ $label }}
-                            </x-filament::badge>',
-                            [
-                                'color' => $status->getColor(),
-                                'label' => $status->getLabel(),
-                            ]
-                        );
-
-                        return new HtmlString(e(__('app.ui.details')).' '.$html);
-                    })
-                    ->schema([
-                        TextEntry::make('member')
-                            ->label(__('app.fields.member'))
-                            ->columnSpan(2)
-                            ->formatStateUsing(fn ($record): string => "{$record->member->code} – {$record->member->name}"),
-                        TextEntry::make('plan')
-                            ->label(__('app.fields.plan'))
-                            ->columnSpan(2)
-                            ->formatStateUsing(fn ($record): string => "{$record->plan->code} – {$record->plan->name}"),
-                        TextEntry::make('start_date')
-                            ->label(__('app.fields.start_date'))
-                            ->date(),
-                        TextEntry::make('end_date')
-                            ->label(__('app.fields.end_date'))
-                            ->date(),
-                    ])->columns(6),
+                SubscriptionDetails::section(
+                    fn (Subscription $record): Subscription => $record,
+                ),
 
                 Section::make(__('app.titles.summary'))
                     ->schema(InvoiceSummaryRows::rows(

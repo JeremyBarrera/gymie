@@ -142,10 +142,10 @@ it('submits a checkin for an active member and creates a queue entry', function 
 
     $service = Service::factory()->create();
     $plan = Plan::factory()->create([
-        'service_id' => $service->id,
         'track_uses' => false,
         'status' => Status::Active,
     ]);
+    $plan->services()->attach($service->id);
     $member = Member::factory()->create([
         'contact' => '5551234567',
         'status' => Status::Active,
@@ -200,10 +200,10 @@ it('checks in a member by government id (unique identifier)', function (): void 
 
     $service = Service::factory()->create();
     $plan = Plan::factory()->create([
-        'service_id' => $service->id,
         'track_uses' => false,
         'status' => Status::Active,
     ]);
+    $plan->services()->attach($service->id);
     $member = Member::factory()->create([
         'government_id' => 'GOV-12345',
         'status' => Status::Active,
@@ -403,10 +403,10 @@ it('matches a member by formatted phone number when the country code is configur
 
     $service = Service::factory()->create();
     $plan = Plan::factory()->create([
-        'service_id' => $service->id,
         'track_uses' => false,
         'status' => Status::Active,
     ]);
+    $plan->services()->attach($service->id);
     $member = Member::factory()->create([
         'contact' => '+919876543210',
         'status' => Status::Active,

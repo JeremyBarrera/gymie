@@ -740,7 +740,6 @@ function liveCheckInOverlayMember(): Member
     ]);
 }
 
-
 it('removes resolved and claimed entries from the pending queue', function (): void {
     $location = Location::factory()->create();
     $resolved = liveReceptionSignupEntry($location, ['name' => 'Resolved Person']);

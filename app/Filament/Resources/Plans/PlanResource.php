@@ -40,7 +40,7 @@ class PlanResource extends Resource
         return [
             'name',
             'code',
-            'service.name',
+            'services.name',
         ];
     }
 
@@ -49,7 +49,7 @@ class PlanResource extends Resource
      */
     public static function modifyGlobalSearchQuery(Builder $query, string $search): void
     {
-        $query->with(['service']);
+        $query->with(['services']);
     }
 
     public static function getGlobalSearchResultDetails(Model $record): array
@@ -61,8 +61,8 @@ class PlanResource extends Resource
             $details[__('app.fields.code')] = $record->code;
         }
 
-        if ($record->service?->name) {
-            $details[__('app.fields.service')] = $record->service->name;
+        if ($record->services->isNotEmpty()) {
+            $details[__('app.fields.service')] = $record->services->map->name->implode(', ');
         }
 
         if (! is_null($record->amount)) {

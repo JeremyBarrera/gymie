@@ -529,8 +529,9 @@ class SubscriptionForm
 
             $plan = Plan::findOrFail(Data::int($data['plan_id'] ?? null));
             $startDate = Carbon::parse(Data::string($data['start_date'] ?? null))->toDateString();
+            // Evergreen plans (no day count) have no end date at all.
             $endDate = Data::string($data['end_date'] ?? null)
-                ?: Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id));
+                ?: ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id)));
 
             $status = Carbon::parse($startDate)->gt($today)
                 ? 'upcoming'
@@ -646,7 +647,7 @@ class SubscriptionForm
             $plan->name,
             Helpers::getCurrencySymbol(),
             round((float) $plan->amount),
-            __('app.units.days', ['count' => $plan->days]),
+            $plan->isEvergreen() ? __('app.fields.unlimited') : __('app.units.days', ['count' => $plan->days]),
         );
     }
 

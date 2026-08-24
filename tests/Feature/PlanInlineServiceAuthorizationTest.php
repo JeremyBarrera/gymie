@@ -27,7 +27,7 @@ it('denies inline service creation without service permission', function (): voi
         }
     };
     $schema = PlanForm::configure(Schema::make($livewire)->model(Plan::class));
-    $serviceField = $schema->getComponentByStatePath('service_id');
+    $serviceField = $schema->getComponentByStatePath('services');
 
     expect($serviceField)->toBeInstanceOf(Select::class)
         ->and($serviceField->getCreateOptionAction()?->isAuthorized())->toBeFalse();
@@ -51,7 +51,7 @@ it('allows inline service creation with service permission', function (): void {
         }
     };
     $schema = PlanForm::configure(Schema::make($livewire)->model(Plan::class));
-    $serviceField = $schema->getComponentByStatePath('service_id');
+    $serviceField = $schema->getComponentByStatePath('services');
 
     expect($serviceField)->toBeInstanceOf(Select::class)
         ->and($serviceField->getCreateOptionAction()?->isAuthorized())->toBeTrue();

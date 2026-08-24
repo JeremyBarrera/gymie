@@ -59,12 +59,14 @@ class SubscriptionsController extends ApiController
         $plan = Plan::findOrFail(Data::int($data['plan_id'] ?? null));
 
         $startDate = Carbon::parse(Data::string($data['start_date'] ?? null))->toDateString();
-        $endDate = Data::string($data['end_date'] ?? null) ?: Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id));
-        $endDate = Carbon::parse($endDate)->toDateString();
+        // Evergreen plans (no day count) have no end date at all.
+        $endDate = Data::string($data['end_date'] ?? null)
+            ?: ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id)));
+        $endDate = $endDate !== null ? Carbon::parse($endDate)->toDateString() : null;
 
         $status = $data['status'] ?? match (true) {
             Carbon::parse($startDate)->gt($today) => 'upcoming',
-            Carbon::parse($endDate)->lt($today) => 'expired',
+            $endDate !== null && Carbon::parse($endDate)->lt($today) => 'expired',
             default => 'ongoing',
         };
 

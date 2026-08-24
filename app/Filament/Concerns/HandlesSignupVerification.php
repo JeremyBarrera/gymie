@@ -10,6 +10,7 @@ use App\Models\LocationToken;
 use App\Models\Member;
 use App\Models\Plan;
 use App\Models\QueueEntry;
+use App\Models\Service;
 use App\Models\Subscription;
 use App\Services\Members\MemberApplicationService;
 use App\Services\Membership\PlanCheckInService;
@@ -65,7 +66,7 @@ trait HandlesSignupVerification
 
     /**
      * Per-service states for the just-created member (step 4).
-     * Only the plan's service shows `access` — others show `no_access`.
+     * Every service of the sold plan shows `access` — others show `no_access`.
      *
      * @return array<int, array{id: int, name: string, state: string, subscription_id: int|null, warning: string|null}>
      */
@@ -83,8 +84,9 @@ trait HandlesSignupVerification
             return [];
         }
 
-        $plan = Plan::find($planId);
-        if (! $plan || ! $plan->service_id) {
+        $plan = Plan::query()->with('services')->find($planId);
+
+        if (! $plan || $plan->services->isEmpty()) {
             return [];
         }
 
@@ -96,15 +98,17 @@ trait HandlesSignupVerification
             return [];
         }
 
-        return [
-            [
-                'id' => (int) $plan->service_id,
-                'name' => (string) $plan->service->name,
+        return $plan->services
+            ->sortBy('name')
+            ->values()
+            ->map(fn (Service $service): array => [
+                'id' => (int) $service->id,
+                'name' => (string) $service->name,
                 'state' => 'access',
                 'subscription_id' => $subscription->id,
                 'warning' => null,
-            ],
-        ];
+            ])
+            ->all();
     }
 
     public function getLocationTokens(): array
@@ -437,9 +441,9 @@ trait HandlesSignupVerification
 
         $serviceId = $this->verifyCheckInServiceId;
         $subscription = $this->verifyCreatedMember->subscriptions()
-            ->with('plan')
+            ->with('plan.services')
             ->get()
-            ->first(fn (Subscription $sub): bool => (int) ($sub->plan?->service_id) === $serviceId);
+            ->first(fn (Subscription $sub): bool => (bool) $sub->plan?->services?->contains('id', $serviceId));
 
         if (! $subscription) {
             $this->dispatch('notify',

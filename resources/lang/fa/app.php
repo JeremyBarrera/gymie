@@ -436,7 +436,6 @@ return [
             'email_address' => 'آدرس ایمیل',
             'contact_no' => 'شماره تماس',
             'prefix' => 'پیشوند فاکتور',
-            'last_number' => 'آخرین شماره فاکتور',
             'name_type' => 'نوع نمایش نام',
             'email_invoice_subject' => 'موضوع ایمیل فاکتور',
             'email_receipt_subject' => 'موضوع ایمیل رسید پرداخت',
@@ -897,6 +896,7 @@ return [
         'track_uses' => 'تعداد دفعات استفاده از طرح را پیگیری کنید.',
         'service_location' => 'ورودها در این مکان ثبت می‌شوند.',
         'all_locations' => 'برای فعال بودن طرح در همه مکان‌ها (از جمله مکان‌های آینده) این فیلد را خالی بگذارید.',
+        'plan_days_optional' => 'برای طرحی که هرگز منقضی نمی‌شود، این فیلد را خالی بگذارید.',
     ],
     'onboarding' => [
         'step1_title' => 'عضو جدید',
@@ -904,7 +904,7 @@ return [
     'pages' => [
         'first_subscription_title' => 'اولین اشتراک :member',
     ],
-'validation' => [
+    'validation' => [
         'founding_location_required' => 'مکان بنیان‌گذار الزامی است.',
         'location_outside_jurisdiction' => 'مکان انتخاب‌شده خارج از حوزه اختیارات شماست.',
         'role_outside_jurisdiction' => 'نقش انتخاب‌شده خارج از حوزه اختیارات شماست.',

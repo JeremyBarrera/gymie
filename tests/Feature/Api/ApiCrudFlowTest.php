@@ -40,11 +40,13 @@ it('supports core CRUD flows for integrations', function (): void {
     $plan = $this->postJson('/api/v1/plans', [
         'name' => 'Monthly',
         'code' => 'M-01',
-        'service_id' => $service['id'],
+        'service_ids' => [$service['id']],
         'days' => 30,
         'amount' => 1000,
         'status' => 'active',
     ])->assertSuccessful()->json('data');
+
+    expect($plan['services'][0]['id'])->toBe($service['id']);
 
     $member = $this->postJson('/api/v1/members', [
         'name' => 'Alex',

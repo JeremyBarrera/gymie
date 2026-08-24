@@ -46,13 +46,13 @@ function receptionSetup(?Location $location = null): array
 
     $service = Service::factory()->create(['name' => 'Gym Access']);
     $plan = Plan::factory()->create([
-        'service_id' => $service->id,
         'code' => 'GYM-01',
         'name' => 'Monthly',
         'track_uses' => true,
         'uses_limit' => 12,
         'status' => Status::Active,
     ]);
+    $plan->services()->attach($service->id);
 
     $member = Member::factory()->create([
         'name' => 'John Doe',

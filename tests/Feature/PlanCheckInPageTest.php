@@ -49,8 +49,8 @@ it('lists eligible subscriptions for a selected member', function (): void {
         'name' => 'Yoga 10 visits',
         'code' => 'Y10',
         'status' => Status::Active->value,
-        'service_id' => $service->id,
     ]);
+    $plan->services()->attach($service->id);
     $subscription = createEligibleSubscriptionForPage($member, $plan);
 
     $component = Livewire::test(PlanCheckIn::class)
@@ -72,8 +72,8 @@ it('signs in a member against their eligible subscription', function (): void {
         'name' => 'Yoga 10 visits',
         'code' => 'Y10',
         'status' => Status::Active->value,
-        'service_id' => $service->id,
     ]);
+    $plan->services()->attach($service->id);
     $subscription = createEligibleSubscriptionForPage($member, $plan);
 
     Livewire::test(PlanCheckIn::class)
@@ -99,6 +99,7 @@ it('blocks sign-in when the plan use limit is exceeded', function (): void {
 
     $member = Member::factory()->create(['status' => Status::Active->value]);
     $plan = Plan::factory()->withUseLimit(1)->create(['status' => Status::Active->value]);
+    $plan->services()->attach(Service::factory()->create());
     $subscription = createEligibleSubscriptionForPage($member, $plan);
 
     app(PlanCheckInService::class)
@@ -120,6 +121,7 @@ it('requires confirmation for a duplicate same-day check-in', function (): void 
 
     $member = Member::factory()->create(['status' => Status::Active->value]);
     $plan = Plan::factory()->withUseLimit(5)->create(['status' => Status::Active->value]);
+    $plan->services()->attach(Service::factory()->create());
     $subscription = createEligibleSubscriptionForPage($member, $plan);
 
     app(PlanCheckInService::class)

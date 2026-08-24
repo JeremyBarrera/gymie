@@ -32,25 +32,27 @@ it('supports allowlisted filters and includes', function (): void {
     $serviceA = Service::factory()->create(['name' => 'Service A']);
     $serviceB = Service::factory()->create(['name' => 'Service B']);
 
-    Plan::factory()->create([
-        'name' => 'Plan A',
-        'code' => 'A',
-        'service_id' => $serviceA->id,
-    ]);
+    Plan::factory()
+        ->create([
+            'name' => 'Plan A',
+            'code' => 'A',
+        ])
+        ->services()->attach($serviceA->id);
 
-    Plan::factory()->create([
-        'name' => 'Plan B',
-        'code' => 'B',
-        'service_id' => $serviceB->id,
-    ]);
+    Plan::factory()
+        ->create([
+            'name' => 'Plan B',
+            'code' => 'B',
+        ])
+        ->services()->attach($serviceB->id);
 
-    $response = $this->getJson("/api/v1/plans?filter[service_id]={$serviceA->id}&include=service&sort=name")
+    $response = $this->getJson("/api/v1/plans?filter[service_id]={$serviceA->id}&include=services&sort=name")
         ->assertSuccessful()
         ->json('data');
 
     expect($response)->toHaveCount(1);
     expect($response[0]['name'])->toBe('Plan A');
-    expect($response[0]['service']['id'])->toBe($serviceA->id);
+    expect($response[0]['services'][0]['id'])->toBe($serviceA->id);
 });
 
 it('returns 400 for invalid query parameters', function (): void {
