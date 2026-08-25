@@ -407,6 +407,10 @@ return [
         'unban_action' => 'Unban',
         'ban_confirm_title' => 'Ban member',
         'ban_confirm_body' => 'The member will be blocked from checking in at every location. You can unban them at any time.',
+        'banned_toast' => 'Member banned',
+        'unbanned_toast' => 'Member ban lifted',
+        'ban_reason' => 'Ban reason',
+        'ban_reason_optional' => 'Optional — visible to staff only',
     ],
     'settings' => [
         'title' => 'Settings',

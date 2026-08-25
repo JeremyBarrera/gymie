@@ -407,6 +407,10 @@ return [
         'unban_action' => 'رفع الحظر',
         'ban_confirm_title' => 'حظر العضو',
         'ban_confirm_body' => 'لن يتمكن العضو من تسجيل الدخول في أي موقع. يمكنك رفع الحظر في أي وقت.',
+        'banned_toast' => 'تم حظر العضو',
+        'unbanned_toast' => 'تم رفع الحظر عن العضو',
+        'ban_reason' => 'سبب الحظر',
+        'ban_reason_optional' => 'اختياري - يظهر للموظفين فقط',
     ],
     'settings' => [
         'title' => 'الاعدادات',

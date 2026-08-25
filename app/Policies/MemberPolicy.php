@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Member;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class MemberPolicy
 {
     use HandlesAuthorization;
-    
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:Member');
@@ -30,6 +30,21 @@ class MemberPolicy
     public function update(AuthUser $authUser, Member $member): bool
     {
         return $authUser->can('Update:Member');
+    }
+
+    public function ban(AuthUser $authUser, Member $member): bool
+    {
+        return $authUser->can('Ban:Member');
+    }
+
+    public function unban(AuthUser $authUser, Member $member): bool
+    {
+        return $authUser->can('Ban:Member');
+    }
+
+    public function banAny(AuthUser $authUser): bool
+    {
+        return $authUser->can('Ban:Member');
     }
 
     public function delete(AuthUser $authUser, Member $member): bool
@@ -66,5 +81,4 @@ class MemberPolicy
     {
         return $authUser->can('Reorder:Member');
     }
-
 }

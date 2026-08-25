@@ -407,6 +407,10 @@ return [
         'unban_action' => 'Desbloquear',
         'ban_confirm_title' => 'Bloquear socio',
         'ban_confirm_body' => 'El socio no podrá registrar entrada en ninguna sede. Puedes desbloquearlo en cualquier momento.',
+        'banned_toast' => 'Socio bloqueado',
+        'unbanned_toast' => 'Bloqueo del socio retirado',
+        'ban_reason' => 'Motivo del bloqueo',
+        'ban_reason_optional' => 'Opcional — visible solo para el personal',
     ],
     'settings' => [
         'title' => 'Configuración',

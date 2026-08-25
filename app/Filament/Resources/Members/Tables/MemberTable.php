@@ -2,11 +2,14 @@
 
 namespace App\Filament\Resources\Members\Tables;
 
+use App\Events\MemberBanChanged;
+use App\Models\LocationToken;
 use App\Models\Member;
 use App\Support\Dates\DeviceDateFormat;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -15,6 +18,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -24,11 +28,95 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\LazyCollection;
 use Throwable;
 
 class MemberTable
 {
+    /**
+     * Ban / unban toggles shared by the row dropdown, the member-view
+     * header and the bulk action. Custom abilities get no default policy
+     * authorization, so 'Ban:Member' is checked for rendering AND enforced
+     * again inside the action itself.
+     */
+    public static function banAction(): Action
+    {
+        return Action::make('ban')
+            ->authorize(fn (Member $record): bool => Gate::allows('ban', $record))
+            ->color('danger')
+            ->label(__('app.members.ban_action'))
+            ->icon('heroicon-m-no-symbol')
+            ->requiresConfirmation()
+            ->modalHeading(__('app.members.ban_confirm_title'))
+            ->modalDescription(__('app.members.ban_confirm_body'))
+            ->modalSubmitActionLabel(__('app.members.ban_action'))
+            ->schema([
+                Textarea::make('reason')
+                    ->label(__('app.members.ban_reason'))
+                    ->placeholder(__('app.members.ban_reason_optional'))
+                    ->maxLength(500)
+                    ->rows(3)
+                    ->columnSpanFull(),
+            ])
+            ->action(function (Member $record, array $data): void {
+                Gate::authorize('ban', $record);
+
+                DB::transaction(function () use ($record, $data): void {
+                    $record->update([
+                        'status' => 'banned',
+                        'ban_reason' => filled($data['reason'] ?? null) ? $data['reason'] : null,
+                    ]);
+                });
+
+                MemberBanChanged::dispatch(
+                    memberId: (int) $record->id,
+                    banned: true,
+                    locationTokens: LocationToken::query()->pluck('token')->all(),
+                );
+
+                Notification::make()
+                    ->title(__('app.members.banned_toast'))
+                    ->danger()
+                    ->send();
+            })
+            ->visible(fn (Member $record): bool => $record->status?->value !== 'banned');
+    }
+
+    public static function unbanAction(): Action
+    {
+        return Action::make('unban')
+            ->authorize(fn (Member $record): bool => Gate::allows('unban', $record))
+            ->color('success')
+            ->label(__('app.members.unban_action'))
+            ->icon('heroicon-m-check-circle')
+            ->requiresConfirmation()
+            ->modalSubmitActionLabel(__('app.members.unban_action'))
+            ->action(function (Member $record): void {
+                Gate::authorize('unban', $record);
+
+                DB::transaction(function () use ($record): void {
+                    $record->update([
+                        'status' => 'active',
+                        'ban_reason' => null,
+                    ]);
+                });
+
+                MemberBanChanged::dispatch(
+                    memberId: (int) $record->id,
+                    banned: false,
+                    locationTokens: LocationToken::query()->pluck('token')->all(),
+                );
+
+                Notification::make()
+                    ->title(__('app.members.unbanned_toast'))
+                    ->success()
+                    ->send();
+            })
+            ->visible(fn (Member $record): bool => $record->status?->value === 'banned');
+    }
+
     /**
      * Configure the member table schema.
      */
@@ -71,6 +159,9 @@ class MemberTable
                     ->label(__('app.fields.date')),
                 TextColumn::make('status')
                     ->badge()
+                    ->tooltip(fn (Member $record): ?string => $record->status?->value === 'banned'
+                        ? (string) $record->ban_reason
+                        : null)
                     ->label(__('app.fields.status')),
             ])
             ->emptyStateIcon('heroicon-o-user-group')
@@ -186,6 +277,8 @@ class MemberTable
                                     ->send();
                             }))
                             ->visible(fn ($record) => $record->status->value === 'active'),
+                        self::banAction(),
+                        self::unbanAction(),
                     ])->dropdown(false),
                     ActionGroup::make([
                         Action::make('heading_actions')
@@ -202,6 +295,52 @@ class MemberTable
             ])->recordUrl(fn ($record): string => route('filament.admin.resources.members.view', $record->id))
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('ban')
+                        ->authorize(fn (): bool => Gate::allows('banAny', Member::class))
+                        ->color('danger')
+                        ->icon('heroicon-m-no-symbol')
+                        ->label(__('app.members.ban_action'))
+                        ->requiresConfirmation()
+                        ->modalHeading(__('app.members.ban_confirm_title'))
+                        ->modalDescription(__('app.members.ban_confirm_body'))
+                        ->modalSubmitActionLabel(__('app.members.ban_action'))
+                        ->schema([
+                            Textarea::make('reason')
+                                ->label(__('app.members.ban_reason'))
+                                ->placeholder(__('app.members.ban_reason_optional'))
+                                ->maxLength(500)
+                                ->rows(3)
+                                ->columnSpanFull(),
+                        ])
+                        ->action(function (EloquentCollection $records, array $data): void {
+                            Gate::authorize('banAny', Member::class);
+
+                            $records->each(function (Member $record) use ($data): void {
+                                if ($record->status?->value === 'banned') {
+                                    return;
+                                }
+
+                                Gate::authorize('ban', $record);
+
+                                DB::transaction(function () use ($record, $data): void {
+                                    $record->update([
+                                        'status' => 'banned',
+                                        'ban_reason' => filled($data['reason'] ?? null) ? $data['reason'] : null,
+                                    ]);
+                                });
+
+                                MemberBanChanged::dispatch(
+                                    memberId: (int) $record->id,
+                                    banned: true,
+                                    locationTokens: LocationToken::query()->pluck('token')->all(),
+                                );
+                            });
+
+                            Notification::make()
+                                ->title(__('app.members.banned_toast'))
+                                ->danger()
+                                ->send();
+                        }),
                     DeleteBulkAction::make()
                         ->using(function (DeleteBulkAction $action, EloquentCollection|Collection|LazyCollection $records): void {
                             $records->each(static function (Member $record) use ($action): void {

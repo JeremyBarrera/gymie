@@ -407,6 +407,10 @@ return [
         'unban_action' => 'Débannir',
         'ban_confirm_title' => 'Bannir le membre',
         'ban_confirm_body' => 'Le membre ne pourra plus effectuer de check-in dans aucune salle. Vous pouvez le débannir à tout moment.',
+        'banned_toast' => 'Membre banni',
+        'unbanned_toast' => 'Bannissement du membre retiré',
+        'ban_reason' => 'Motif du bannissement',
+        'ban_reason_optional' => 'Optionnel — visible par le personnel uniquement',
     ],
     'settings' => [
         'title' => 'Paramètres',

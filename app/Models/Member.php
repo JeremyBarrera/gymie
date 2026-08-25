@@ -68,6 +68,7 @@ class Member extends Model
         'source',
         'goal',
         'status',
+        'ban_reason',
     ];
 
     protected $casts = ['dob' => 'date', 'status' => Status::class];

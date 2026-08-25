@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Members\Pages;
 
 use App\Filament\Resources\Members\MemberResource;
+use App\Filament\Resources\Members\Tables\MemberTable;
 use App\Models\Member;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -21,6 +22,8 @@ class ViewMember extends ViewRecord
             EditAction::make(),
             DeleteAction::make()
                 ->using(fn (Member $record): bool => $record->forceDelete()),
+            MemberTable::unbanAction(),
+            MemberTable::banAction(),
         ];
     }
 

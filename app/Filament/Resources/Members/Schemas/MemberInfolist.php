@@ -68,6 +68,11 @@ class MemberInfolist
                                 TextEntry::make('health_issue')
                                     ->label(__('app.fields.health_issues'))
                                     ->placeholder(__('app.placeholders.na')),
+                                TextEntry::make('ban_reason')
+                                    ->label(__('app.members.ban_reason'))
+                                    ->visible(fn (Member $record): bool => $record->status?->value === 'banned'
+                                        && filled($record->ban_reason))
+                                    ->placeholder(__('app.placeholders.na')),
                             ])->columnSpan(4)->columns(3)->extraAttributes(['class' => 'ps-4']),
                     ])->columns(5),
 

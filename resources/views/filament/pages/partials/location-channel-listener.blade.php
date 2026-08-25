@@ -37,6 +37,11 @@
                     })
                     .listen('QueueEntryExpired', (e) => {
                         @this.call('onQueueEntryExpired', e);
+                    })
+                    .listen('MemberBanChanged', () => {
+                        // Pure refresh signal: a member's access changed,
+                        // re-fetch the queue state from the database.
+                        @this.call(resync);
                     });
             });
         }
