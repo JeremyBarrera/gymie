@@ -15,13 +15,20 @@ use Endroid\QrCode\Writer\SvgWriter;
 
 class QrCodeService
 {
+    /**
+     * The URL a phone lands on when scanning this token's QR code. QR_BASE_URL
+     * wins when configured (phones scan from a different device than the
+     * server, so APP_URL is often unreachable); blank falls back to APP_URL.
+     */
     public function scanUrl(LocationToken $token): string
     {
-        if ($token->kind === 'signup') {
-            return route('signup.scan', ['token' => $token->token]);
-        }
+        $path = $token->kind === 'signup'
+            ? route('signup.scan', ['token' => $token->token], false)
+            : route('checkin.scan', ['token' => $token->token], false);
 
-        return route('checkin.scan', ['token' => $token->token]);
+        $base = rtrim((string) config('gymie.qr_base_url'), '/');
+
+        return $base === '' ? url($path) : $base.$path;
     }
 
     public function tokenForLocation(int $locationId, string $kind): ?LocationToken
