@@ -24,3 +24,5 @@ yarn-error.log
 
 # Dev TLS certificates (mkcert - see setup-dev-https.ps1)
 /storage/certs
+
+docker/nginx-tls.rendered.conf

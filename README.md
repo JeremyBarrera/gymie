@@ -452,8 +452,46 @@ docker compose exec app php artisan migrate --force   # migrations are NEVER aut
 - Nightly backups land in the `backups` volume at 03:00
   (`docker compose run --rm -v backups:/backups alpine ls /backups`).
 - HTTPS via DuckDNS + Let's Encrypt: fill `DUCKDNS_DOMAIN` /
-  `LETSENCRYPT_EMAIL` in `.env`, swap `docker/nginx-tls.conf` into the
-  webserver service, then `docker compose --profile https up -d certbot`.
+  `DUCKDNS_TOKEN` / `LETSENCRYPT_EMAIL` in `.env`, then:
+  ```bash
+  powershell -ExecutionPolicy Bypass -File scripts\render-nginx-tls.ps1   # renders nginx-tls.rendered.conf from .env
+  docker compose -f docker-compose.yml -f docker-compose.https.yml --profile https up -d
+  docker compose logs certbot          # watch the certificate issue
+  ```
+  The rendered TLS config force-redirects HTTP→HTTPS, sends HSTS, and
+  terminates `wss://` for Reverb at `/app/`.
+
+### Production server bootstrap (Toro GYM plan)
+
+One-time setup on the server PC, from an **elevated** PowerShell:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts\register-production-tasks.ps1
+```
+
+This registers the inbound firewall rules (TCP 80/443) and a scheduled task
+(`GymieDuckDNSUpdater`, every 5 min as SYSTEM) that keeps
+`torogym.duckdns.org` pointed at the machine's current public IP. The task
+reads `DUCKDNS_DOMAIN`/`DUCKDNS_TOKEN` from `.env` — no secret is stored in
+the task definition. Check it is working:
+
+```bash
+Get-Content storage\logs\duckdns-update.log -Tail 5      # expect "OK: ... -> <ip>"
+Get-ScheduledTask GymieDuckDNSUpdater | Get-ScheduledTaskInfo   # LastTaskResult 0 = healthy
+```
+
+Offsite backups (Phase 6): configure rclone once (`rclone config`, name the
+remote `gdrive`, type `drive`), then schedule daily after the container's
+03:00 dump:
+
+```bash
+schtasks /Create /TN GymieOffsiteBackup /SC DAILY /ST 04:00 /TR ^
+  "powershell -NoProfile -ExecutionPolicy Bypass -File C:\<repo>\scripts\backup-to-gdrive.ps1"
+```
+
+Restore walkthrough: sync down `gdrive:gymie/backups`, gunzip the latest
+dump, pipe it into the `db` service's MySQL, and restore `storage/app`
+photos from `gdrive:gymie/storage`. Rehearse this before you need it.
 
 ### Environment separation & data refresh (Phase 10.5)
 

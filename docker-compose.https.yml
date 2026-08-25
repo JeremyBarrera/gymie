@@ -1,0 +1,22 @@
+# HTTPS override for the DuckDNS + Let's Encrypt deployment.
+#
+# Usage (from the repo root, after DUCKDNS_DOMAIN / DUCKDNS_TOKEN /
+# LETSENCRYPT_EMAIL exist in .env):
+#
+#   powershell -File scripts\render-nginx-tls.ps1
+#   docker compose -f docker-compose.yml -f docker-compose.https.yml \
+#       --profile https up -d
+#
+# The render script substitutes DUCKDNS_DOMAIN from .env into
+# docker/nginx-tls.rendered.conf (git-ignored); this override swaps the
+# plain-HTTP nginx config for that rendered TLS config and exposes the
+# certbot volumes read-only. Activate certbot with --profile https (the
+# sidecar is declared once, in docker-compose.yml). Nothing in
+# docker-compose.yml is edited.
+
+services:
+  webserver:
+    volumes:
+      - ./docker/nginx-tls.rendered.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot-www:/var/www/certbot:ro
+      - certbot-etc:/etc/letsencrypt:ro
