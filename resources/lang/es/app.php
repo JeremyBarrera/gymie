@@ -772,6 +772,8 @@ return [
         'service_no_access' => 'Sin acceso a este servicio',
         'service_expired_short' => 'Expirada',
         'service_expired' => 'Suscripción expirada para este servicio',
+        'service_uses_exhausted_short' => 'Sin usos',
+        'service_uses_exhausted' => 'Sin usos restantes en :plan',
         'service_unpaid' => 'Pago vence el :date — :amount pendiente',
         'service_overdue' => 'Pago vencido desde el :date',
         'override_confirm_title' => 'Forzar registro de entrada',
@@ -794,6 +796,7 @@ return [
         'verify_duplicate' => 'Ya existe un miembro con este contacto o identificación',
         'check_in_member_inactive' => 'El miembro no está activo.',
         'check_in_not_eligible' => 'El miembro no tiene una suscripción elegible.',
+        'check_in_see_front_desk' => 'No pudimos completar tu registro. Por favor, acude a recepción.',
         'verify_failed' => 'Algo salió mal al crear el miembro. Inténtalo de nuevo.',
         'verify_success_title' => 'Miembro creado',
         'confirm' => [
@@ -818,6 +821,7 @@ return [
         'alert_new_subscription' => ':actor añadió una nueva suscripción para :member',
         'alert_payment_added' => ':actor registró un pago para :member',
         'alert_due_date_changed' => ':actor cambió la fecha de vencimiento del pago de :member',
+        'alert_uses_exhausted_override' => ':actor autorizó un ingreso especial para :member (sin usos restantes)',
     ],
 
     'check_in' => [

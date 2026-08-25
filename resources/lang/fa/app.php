@@ -772,6 +772,8 @@ return [
         'service_no_access' => 'بدون دسترسی به این سرویس',
         'service_expired_short' => 'منقضی شده',
         'service_expired' => 'اشتراک برای این سرویس منقضی شده',
+        'service_uses_exhausted_short' => 'استفاده‌ای باقی نمانده',
+        'service_uses_exhausted' => 'هیچ استفاده‌ای برای :plan باقی نمانده است',
         'service_unpaid' => 'سررسید پرداخت :date — باقی‌مانده :amount',
         'service_overdue' => 'پرداخت از :date معوق است',
         'override_confirm_title' => 'نادیده‌گرفتن ورود',
@@ -794,6 +796,7 @@ return [
         'verify_duplicate' => 'عضوی با این شماره تماس یا شناسه قبلاً ثبت شده است',
         'check_in_member_inactive' => 'عضو فعال نیست.',
         'check_in_not_eligible' => 'عضو اشتراک واجد شرایطی ندارد.',
+        'check_in_see_front_desk' => 'ثبت ورود شما کامل نشد. لطفاً به پذیرش مراجعه کنید.',
         'verify_failed' => 'هنگام ایجاد عضو خطایی رخ داد. لطفاً دوباره تلاش کنید.',
         'verify_success_title' => 'عضو ایجاد شد',
         'confirm' => [
@@ -818,6 +821,7 @@ return [
         'alert_new_subscription' => ':actor یک اشتراک جدید برای :member ثبت کرد',
         'alert_payment_added' => ':actor برای :member پرداختی ثبت کرد',
         'alert_due_date_changed' => ':actor تاریخ سررسید پرداخت :member را تغییر داد',
+        'alert_uses_exhausted_override' => ':actor ورود :member را به‌صورت استثنایی ثبت کرد (استفاده‌ای باقی نمانده)',
     ],
 
     'check_in' => [

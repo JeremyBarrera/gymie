@@ -433,9 +433,9 @@ trait HandlesCheckInVerification
      * Move the overlay to the override confirm step for the given service:
      * shows who will be notified, with an optional reason.
      *
-     * Only the no-access state offers the generic override — expired goes
-     * through the renewal modal and past-due states through the payment /
-     * due-date modals instead.
+     * The no-access and uses-exhausted states offer the generic override —
+     * expired goes through the renewal modal and past-due states through the
+     * payment / due-date modals instead.
      */
     public function openCheckInOverrideFor(int $serviceId): void
     {
@@ -447,7 +447,7 @@ trait HandlesCheckInVerification
 
         $row = collect($this->checkInServices)->firstWhere('id', $serviceId);
 
-        if (($row['state'] ?? null) !== 'no_access') {
+        if (! in_array($row['state'] ?? null, ['no_access', 'uses_exhausted'], true)) {
             return;
         }
 
@@ -485,12 +485,14 @@ trait HandlesCheckInVerification
         $row = collect($this->checkInServices)->firstWhere('id', $this->checkInServiceId);
         $member = Member::find($this->selectedCheckInMemberId);
         $subscription = $row ? Subscription::find($row['subscription_id']) : null;
-        $overrideReason = match ($row['state'] ?? null) {
+        $state = $row['state'] ?? null;
+        $overrideReason = match ($state) {
             'no_access' => 'no_subscription',
+            'uses_exhausted' => 'uses_exhausted',
             default => null,
         };
 
-        if (! $member || ($row['state'] ?? null) !== 'no_access') {
+        if (! $member || ! in_array($state, ['no_access', 'uses_exhausted'], true)) {
             $this->dispatch('notify',
                 type: 'danger',
                 message: __('app.notifications.check_in_failed'),
@@ -531,7 +533,7 @@ trait HandlesCheckInVerification
         }
 
         FollowUpAlert::send(
-            action: 'override_checkin',
+            action: $state === 'uses_exhausted' ? 'uses_exhausted_override' : 'override_checkin',
             member: $member,
             actor: Auth::user(),
             reason: $reason,
@@ -560,7 +562,7 @@ trait HandlesCheckInVerification
         $member = Member::find($this->selectedCheckInMemberId);
         $row = collect($this->checkInServices)->firstWhere('id', $serviceId);
 
-        if (! $member || ! $row || ($row['state'] ?? null) !== 'expired') {
+        if (! $member || ! $row || ! in_array($row['state'] ?? null, ['expired', 'uses_exhausted'], true)) {
             return;
         }
 

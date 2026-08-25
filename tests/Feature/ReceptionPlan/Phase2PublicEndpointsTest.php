@@ -16,6 +16,10 @@ use Illuminate\Support\Facades\Event;
 
 uses(RefreshDatabase::class);
 
+afterEach(function (): void {
+    Helpers::setTestSettingsOverride(null);
+});
+
 it('renders the check-in scan page for a valid checkin token', function (): void {
     $location = Location::factory()->create(['theme_color' => 'indigo']);
     $token = LocationToken::factory()->checkin()->create([
@@ -227,7 +231,7 @@ it('checks in a member by government id (unique identifier)', function (): void 
         ->assertJsonPath('member.id', $member->id);
 });
 
-it('reports a localized reason when the matching member has no eligible subscription', function (): void {
+it('answers a member without an eligible subscription with the neutral front-desk refusal', function (): void {
     $location = Location::factory()->create();
     $token = LocationToken::factory()->checkin()->create([
         'tokenable_type' => Location::class,
@@ -248,7 +252,7 @@ it('reports a localized reason when the matching member has no eligible subscrip
         ->assertOk()
         ->assertJson([
             'match' => false,
-            'message' => __('app.reception.check_in_not_eligible'),
+            'message' => __('app.reception.check_in_see_front_desk'),
         ]);
 });
 

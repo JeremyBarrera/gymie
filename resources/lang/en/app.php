@@ -768,6 +768,8 @@ return [
         'service_no_access' => 'No access to this service',
         'service_expired_short' => 'Expired',
         'service_expired' => 'Subscription expired for this service',
+        'service_uses_exhausted_short' => 'No uses left',
+        'service_uses_exhausted' => 'No uses left on :plan',
         'service_unpaid' => 'Payment due :date — :amount remaining',
         'service_overdue' => 'Payment past due since :date',
         'override_confirm_title' => 'Override check-in',
@@ -790,6 +792,7 @@ return [
         'verify_duplicate' => 'A member with this contact or ID already exists',
         'check_in_member_inactive' => 'Member is not active.',
         'check_in_not_eligible' => 'Member has no eligible subscription.',
+        'check_in_see_front_desk' => 'We couldn\'t complete your check-in. Please see the front desk.',
         'verify_failed' => 'Something went wrong while creating the member. Please try again.',
         'verify_success_title' => 'Member Created',
         'confirm' => [
@@ -814,6 +817,7 @@ return [
         'alert_new_subscription' => ':actor added a new subscription for :member',
         'alert_payment_added' => ':actor recorded a payment for :member',
         'alert_due_date_changed' => ':actor changed the payment due date for :member',
+        'alert_uses_exhausted_override' => ':actor overrode a check-in for :member (no uses left)',
     ],
 
     'check_in' => [

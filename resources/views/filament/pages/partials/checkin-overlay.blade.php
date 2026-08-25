@@ -15,13 +15,13 @@
         : null;
 
     // Single severity order for the member card:
-    // ok (success) < attention (unpaid / expiring) < blocked (overdue / expired / no access).
+    // ok (success) < attention (unpaid / expiring) < blocked (overdue / expired / no access / uses exhausted).
     // The photo border always shows the WORST applicable status across the
     // plan-expiry badge and every payment/service state, so border and
     // badges can never disagree.
     $cardSeverityRank = function (string $stateOrColor): int {
         return match (true) {
-            in_array($stateOrColor, ['overdue', 'expired', 'no_access', 'danger'], true) => 2,
+            in_array($stateOrColor, ['overdue', 'expired', 'no_access', 'uses_exhausted', 'danger'], true) => 2,
             in_array($stateOrColor, ['unpaid', 'warning'], true) => 1,
             default => 0,
         };
@@ -66,6 +66,7 @@
             'overdue' => __('app.reception.service_overdue_short'),
             'expired' => __('app.reception.service_expired_short'),
             'no_access' => __('app.reception.service_no_access_short'),
+            'uses_exhausted' => __('app.reception.service_uses_exhausted_short'),
             'unpaid' => __('app.reception.service_unpaid_short'),
             default => (string) ($checkInStatus['label'] ?? ''),
         }
@@ -78,6 +79,7 @@
         'unpaid' => __('app.reception.service_unpaid_short'),
         'overdue' => __('app.reception.service_overdue_short'),
         'expired' => __('app.reception.service_expired_short'),
+        'uses_exhausted' => __('app.reception.service_uses_exhausted_short'),
         default => __('app.reception.service_no_access_short'),
     };
 
@@ -85,7 +87,7 @@
     // attention is amber.
     $selectedStateColor = match ($checkInSelectedRow['state'] ?? 'access') {
         'unpaid' => 'warning',
-        'overdue', 'expired', 'no_access' => 'danger',
+        'overdue', 'expired', 'no_access', 'uses_exhausted' => 'danger',
         default => 'success',
     };
 
@@ -412,6 +414,29 @@
                                     wire:loading.attr="disabled"
                                 >
                                     {{ __('app.check_in.add_subscription') }}
+                                </x-filament::button>
+                            @elseif(($checkInSelectedRow['state'] ?? null) === 'uses_exhausted')
+                                <x-filament::button
+                                    wire:key="checkin-renew"
+                                    color="success"
+                                    icon="heroicon-m-plus-circle"
+                                    size="md"
+                                    class="min-w-28"
+                                    wire:click="openExpiredSubscriptionModal({{ $checkInSelectedRow['id'] }})"
+                                    wire:loading.attr="disabled"
+                                >
+                                    {{ __('app.check_in.add_subscription') }}
+                                </x-filament::button>
+
+                                <x-filament::button
+                                    wire:key="checkin-override"
+                                    color="info"
+                                    icon="heroicon-m-wrench"
+                                    size="md"
+                                    class="min-w-28"
+                                    wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
+                                >
+                                    {{ __('app.reception.override') }}
                                 </x-filament::button>
                             @elseif(($checkInSelectedRow['state'] ?? null) === 'no_access')
                                 <x-filament::button

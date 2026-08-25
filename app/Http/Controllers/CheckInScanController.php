@@ -131,6 +131,20 @@ class CheckInScanController extends Controller
         }
     }
 
+    /**
+     * The one public check-in refusal: identical shape and copy no matter
+     * why the identifier cannot self-check-in (unknown, inactive, expired,
+     * uses exhausted). Anyone holding the location QR can probe this
+     * endpoint, so it must never reveal membership status (AGENTS.md UI-11).
+     */
+    private function neutralCheckInRefusal(): JsonResponse
+    {
+        return response()->json([
+            'match' => false,
+            'message' => __('app.reception.check_in_see_front_desk'),
+        ]);
+    }
+
     private function handleCheckIn(Request $request, Location $location, array $validated): JsonResponse
     {
         $identifierType = $validated['identifier_type'];
@@ -143,19 +157,14 @@ class CheckInScanController extends Controller
         };
 
         if ($matches->isEmpty()) {
-            return response()->json([
-                'match' => false,
-            ]);
+            return $this->neutralCheckInRefusal();
         }
 
         $activeMatches = $matches->filter(fn (Member $member): bool => $member->status === Status::Active)
             ->values();
 
         if ($activeMatches->isEmpty()) {
-            return response()->json([
-                'match' => false,
-                'message' => __('app.reception.check_in_member_inactive'),
-            ]);
+            return $this->neutralCheckInRefusal();
         }
 
         if ($activeMatches->count() > 1) {
@@ -176,10 +185,7 @@ class CheckInScanController extends Controller
             ->all();
 
         if (empty($eligibleSubscriptions)) {
-            return response()->json([
-                'match' => false,
-                'message' => __('app.reception.check_in_not_eligible'),
-            ]);
+            return $this->neutralCheckInRefusal();
         }
 
         // Get location token for this location (checkin kind)

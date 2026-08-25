@@ -772,6 +772,8 @@ return [
         'service_no_access' => 'لا وصول إلى هذه الخدمة',
         'service_expired_short' => 'منتهي',
         'service_expired' => 'انتهت صلاحية الاشتراك لهذه الخدمة',
+        'service_uses_exhausted_short' => 'لا استخدامات متبقية',
+        'service_uses_exhausted' => 'لا توجد استخدامات متبقية في :plan',
         'service_unpaid' => 'الدفع مستحق في :date — المتبقي :amount',
         'service_overdue' => 'الدفع متأخر منذ :date',
         'override_confirm_title' => 'تجاوز تسجيل الدخول',
@@ -794,6 +796,7 @@ return [
         'verify_duplicate' => 'يوجد عضو مسجل بالفعل بهذا الهاتف أو الهوية',
         'check_in_member_inactive' => 'العضو غير نشط.',
         'check_in_not_eligible' => 'لا يوجد اشتراك مؤهل لهذا العضو.',
+        'check_in_see_front_desk' => 'لم نتمكن من إتمام تسجيل الوصول. يرجى مراجعة الاستقبال.',
         'verify_failed' => 'حدث خطأ أثناء إنشاء العضو. يرجى المحاولة مرة أخرى.',
         'verify_success_title' => 'تم إنشاء العضو',
         'confirm' => [
@@ -818,6 +821,7 @@ return [
         'alert_new_subscription' => 'أضاف :actor اشتراكًا جديدًا للعضو :member',
         'alert_payment_added' => 'سجّل :actor دفعة للعضو :member',
         'alert_due_date_changed' => 'غيّر :actor تاريخ استحقاق الدفع للعضو :member',
+        'alert_uses_exhausted_override' => ':actor تجاوز تسجيل الدخول لـ :member (لا استخدامات متبقية)',
     ],
 
     'check_in' => [

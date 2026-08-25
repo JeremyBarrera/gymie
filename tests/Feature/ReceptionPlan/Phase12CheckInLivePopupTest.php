@@ -512,7 +512,7 @@ it('returns every active candidate when an identifier matches multiple members',
         ->and($entry->payload['member_id'] ?? null)->toBeNull();
 });
 
-it('returns match false with an inactive message when all matches are inactive', function (): void {
+it('returns the neutral front-desk refusal when all matches are inactive', function (): void {
     $location = Location::factory()->create();
     $token = LocationToken::factory()->checkin()->create([
         'tokenable_type' => Location::class,
@@ -529,7 +529,7 @@ it('returns match false with an inactive message when all matches are inactive',
     ])
         ->assertOk()
         ->assertJson(['match' => false])
-        ->assertJsonPath('message', __('app.reception.check_in_member_inactive'));
+        ->assertJsonPath('message', __('app.reception.check_in_see_front_desk'));
 
     expect(QueueEntry::count())->toBe(0);
 });

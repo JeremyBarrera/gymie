@@ -31,6 +31,7 @@ class NotificationBell extends Component
         'new_subscription',
         'payment_added',
         'due_date_changed',
+        'uses_exhausted_override',
     ];
 
     public const PER_LOAD = 20;

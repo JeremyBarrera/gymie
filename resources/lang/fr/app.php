@@ -772,6 +772,8 @@ return [
         'service_no_access' => 'Pas d\'accès à ce service',
         'service_expired_short' => 'Expiré',
         'service_expired' => 'Abonnement expiré pour ce service',
+        'service_uses_exhausted_short' => 'Plus d’utilisations',
+        'service_uses_exhausted' => 'Plus d’utilisations restantes sur :plan',
         'service_unpaid' => 'Paiement dû le :date — :amount restant',
         'service_overdue' => 'Paiement en retard depuis le :date',
         'override_confirm_title' => 'Outrepasser l\'enregistrement',
@@ -794,6 +796,7 @@ return [
         'verify_duplicate' => 'Un membre avec ce contact ou cet identifiant existe déjà',
         'check_in_member_inactive' => 'Le membre n’est pas actif.',
         'check_in_not_eligible' => 'Le membre n’a aucun abonnement éligible.',
+        'check_in_see_front_desk' => 'Nous n’avons pas pu effectuer votre enregistrement. Veuillez vous présenter à l’accueil.',
         'verify_failed' => 'Une erreur est survenue lors de la création du membre. Veuillez réessayer.',
         'verify_success_title' => 'Membre créé',
         'confirm' => [
@@ -818,6 +821,7 @@ return [
         'alert_new_subscription' => ':actor a ajouté un nouvel abonnement pour :member',
         'alert_payment_added' => ':actor a enregistré un paiement pour :member',
         'alert_due_date_changed' => ':actor a modifié la date d’échéance du paiement de :member',
+        'alert_uses_exhausted_override' => ':actor a autorisé un enregistrement exceptionnel pour :member (plus d’utilisations)',
     ],
 
     'check_in' => [

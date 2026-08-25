@@ -148,6 +148,11 @@ class PlanCheckInService
      *                 is not paid in full yet (due date in the future).
      *  - `overdue`:   the member has money overdue (member-global hard gate),
      *                 or this service's invoice is past due.
+     *  - `expired`:   the member had a subscription for this service but none
+     *                 is eligible anymore.
+     *  - `uses_exhausted`: the eligible subscription is date-valid and paid,
+     *                 but its plan tracked every allowed use already. Staff
+     *                 resolve it through renewal or an audited override.
      *  - `no_access`: no eligible subscription for this service.
      *
      * Non-access rows carry a translated `warning` and the subscription the
@@ -238,6 +243,23 @@ class PlanCheckInService
                     'warning' => __('app.reception.service_unpaid', [
                         'date' => DeviceDateFormat::format($invoice->due_date),
                         'amount' => Helpers::formatCurrency((float) $invoice->due_amount),
+                    ]),
+                ];
+
+                continue;
+            }
+
+            // Date-valid and paid, but the plan's use quota is spent. Renewal
+            // resolves it like an expiry; an override records an audited,
+            // quota-free check-in.
+            if ($this->remainingUses($best) === 0) {
+                $states[] = [
+                    'id' => (int) $service->id,
+                    'name' => (string) $service->name,
+                    'state' => 'uses_exhausted',
+                    'subscription_id' => $best->id,
+                    'warning' => __('app.reception.service_uses_exhausted', [
+                        'plan' => (string) $best->plan?->name,
                     ]),
                 ];
 
