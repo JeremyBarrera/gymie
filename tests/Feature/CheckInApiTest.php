@@ -149,7 +149,7 @@ class CheckInApiTest extends TestCase
         $response->assertOk()->assertJson(['match' => true]);
     }
 
-    public function test_checkin_lookup_returns_match_false_for_inactive_member(): void
+    public function test_checkin_lookup_matches_pending_members_with_an_empty_eligible_list(): void
     {
         $member = Member::factory()->create([
             'contact' => '5550000000',
@@ -161,7 +161,10 @@ class CheckInApiTest extends TestCase
             'value' => '5550000000',
         ]);
 
-        $response->assertOk()->assertJson(['match' => false]);
+        $response->assertOk()
+            ->assertJsonPath('match', true)
+            ->assertJsonPath('member.id', $member->id)
+            ->assertJsonPath('member.eligible', []);
     }
 
     public function test_signup_apply_creates_member_application(): void

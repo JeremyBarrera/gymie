@@ -138,14 +138,26 @@ it('notifies when no active member matches the walk-up search', function (): voi
         ->assertSet('checkInManualMode', false);
 });
 
-it('warns when every walk-up match is inactive', function (): void {
-    manualMember(['name' => 'Sleepy Inactive', 'status' => Status::Inactive]);
+it('walks up an inactive member like anyone else — lifecycle no longer gates check-in', function (): void {
+    $plan = manualPlan();
+    manualSubscription(manualMember(['name' => 'Sleepy Inactive', 'status' => Status::Inactive]), $plan);
 
     Livewire::actingAs(manualStaff())
         ->test(Reception::class)
         ->set('manualCheckInSearch', 'Sleepy')
         ->call('openManualCheckInOverlay')
-        ->assertDispatched('notify', type: 'warning', message: __('app.reception.check_in_member_inactive'))
+        ->assertSet('showCheckInOverlay', true)
+        ->assertSet('checkInManualMode', true);
+});
+
+it('refuses a banned walk-up with the banned toast', function (): void {
+    manualMember(['name' => 'Banned Bob', 'status' => Status::Banned]);
+
+    Livewire::actingAs(manualStaff())
+        ->test(Reception::class)
+        ->set('manualCheckInSearch', 'Banned')
+        ->call('openManualCheckInOverlay')
+        ->assertDispatched('notify', type: 'danger', message: __('app.reception.check_in_member_banned'))
         ->assertSet('showCheckInOverlay', false);
 });
 

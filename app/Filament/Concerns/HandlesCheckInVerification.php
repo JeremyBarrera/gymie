@@ -96,24 +96,25 @@ trait HandlesCheckInVerification
             return;
         }
 
-        $activeMatches = Member::searchByIdentifier($search)
-            ->filter(fn (Member $member): bool => $member->status === Status::Active)
+        $matches = Member::searchByIdentifier($search);
+        $eligible = $matches
+            ->filter(fn (Member $member): bool => $member->checkInBlocker() === null)
             ->values();
 
-        if ($activeMatches->isEmpty()) {
-            $hasInactiveMatches = Member::searchByIdentifier($search)->isNotEmpty();
-
+        if ($eligible->isEmpty()) {
+            // Banned is the only member-level refusal; lifecycle statuses
+            // walk up like anyone else.
             $this->dispatch('notify',
-                type: $hasInactiveMatches ? 'warning' : 'danger',
-                message: $hasInactiveMatches
-                    ? __('app.reception.check_in_member_inactive')
+                type: 'danger',
+                message: $matches->isNotEmpty()
+                    ? __('app.reception.check_in_member_banned')
                     : __('app.reception.manual_no_match', ['search' => $search]),
             );
 
             return;
         }
 
-        $this->beginManualCheckIn($activeMatches);
+        $this->beginManualCheckIn($eligible);
     }
 
     /**

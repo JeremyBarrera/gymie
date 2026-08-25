@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\Status;
 use App\Helpers\Helpers;
 use App\Models\LocationToken;
 use App\Models\Member;
@@ -53,7 +52,7 @@ class CheckInController extends ApiController
             ]);
         }
 
-        if ($member->status !== Status::Active) {
+        if ($member->checkInBlocker() !== null) {
             return response()->json([
                 'match' => false,
             ]);

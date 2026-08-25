@@ -31,7 +31,9 @@ class PlanCheckInService
      */
     public function eligibleSubscriptions(Member $member): Collection
     {
-        if ($member->status !== Status::Active) {
+        // Banned is the only member-level hard gate; lifecycle statuses
+        // (inactive/pending) check in like anyone else.
+        if ($member->checkInBlocker() !== null) {
             return new Collection;
         }
 
@@ -293,8 +295,8 @@ class PlanCheckInService
         ?User $staff = null,
         bool $confirmDuplicate = false,
     ): PlanCheckIn {
-        if ($member->status !== Status::Active) {
-            throw new MemberInactiveException(__('app.notifications.check_in_member_inactive'));
+        if ($member->checkInBlocker() === 'banned') {
+            throw new MemberInactiveException(__('app.reception.check_in_member_banned'));
         }
 
         if ($this->hasOverdueInvoice($member)) {
@@ -359,8 +361,10 @@ class PlanCheckInService
         bool $skipOverdueCheck = false,
         ?int $serviceId = null,
     ): PlanCheckIn {
-        if ($member->status !== Status::Active) {
-            throw new MemberInactiveException(__('app.notifications.check_in_member_inactive'));
+        $blocker = $member->checkInBlocker();
+
+        if ($blocker === 'banned') {
+            throw new MemberInactiveException(__('app.reception.check_in_member_banned'));
         }
 
         if (! $skipOverdueCheck && $this->hasOverdueInvoice($member)) {

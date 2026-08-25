@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Status;
 use App\Events\QueueEntryCreated;
 use App\Helpers\Helpers;
 use App\Jobs\ExpireQueueEntry;
@@ -160,18 +159,21 @@ class CheckInScanController extends Controller
             return $this->neutralCheckInRefusal();
         }
 
-        $activeMatches = $matches->filter(fn (Member $member): bool => $member->status === Status::Active)
+        // Banned is the only member-level gate; lifecycle statuses check in
+        // like anyone else. Refused members get the same neutral body as any
+        // other non-match — no status detail leaves publicly.
+        $eligibleMatches = $matches->filter(fn (Member $member): bool => $member->checkInBlocker() === null)
             ->values();
 
-        if ($activeMatches->isEmpty()) {
+        if ($eligibleMatches->isEmpty()) {
             return $this->neutralCheckInRefusal();
         }
 
-        if ($activeMatches->count() > 1) {
-            return $this->createAmbiguousCheckIn($location, $activeMatches, $identifierType, $value);
+        if ($eligibleMatches->count() > 1) {
+            return $this->createAmbiguousCheckIn($location, $eligibleMatches, $identifierType, $value);
         }
 
-        $member = $activeMatches->first();
+        $member = $eligibleMatches->first();
 
         $eligibleSubscriptions = $this->planCheckInService->eligibleSubscriptions($member)
             ->map(fn ($sub) => [

@@ -95,13 +95,21 @@ it('requires confirmation for duplicate same-day check-ins', function (): void {
     expect($service->usedCount($subscription))->toBe(2);
 });
 
-it('rejects inactive members', function (): void {
+it('checks in inactive members but rejects banned ones', function (): void {
     $service = app(PlanCheckInService::class);
-    $member = Member::factory()->create(['status' => Status::Inactive->value]);
     $plan = Plan::factory()->create(['status' => Status::Active->value]);
-    $subscription = createEligibleSubscription($member, $plan);
+    attachPlanServices($plan);
 
-    expect(fn () => $service->checkIn($member, $subscription))
+    $inactive = Member::factory()->create(['status' => Status::Inactive->value]);
+    $subscription = createEligibleSubscription($inactive, $plan);
+    $checkIn = $service->checkIn($inactive, $subscription);
+
+    expect((bool) $checkIn->override)->toBeFalse();
+
+    $banned = Member::factory()->create(['status' => Status::Banned->value]);
+    $bannedSubscription = createEligibleSubscription($banned, $plan);
+
+    expect(fn () => $service->checkIn($banned, $bannedSubscription))
         ->toThrow(MemberInactiveException::class);
 });
 

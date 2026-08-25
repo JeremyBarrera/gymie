@@ -512,14 +512,14 @@ it('returns every active candidate when an identifier matches multiple members',
         ->and($entry->payload['member_id'] ?? null)->toBeNull();
 });
 
-it('returns the neutral front-desk refusal when all matches are inactive', function (): void {
+it('creates an ambiguous queue entry when only inactive members share the identifier', function (): void {
     $location = Location::factory()->create();
     $token = LocationToken::factory()->checkin()->create([
         'tokenable_type' => Location::class,
         'tokenable_id' => $location->id,
     ]);
-    liveCheckInMember(['contact' => '5559876543', 'status' => Status::Inactive]);
-    liveCheckInMember(['contact' => '5559876543', 'status' => Status::Inactive]);
+    $first = liveCheckInMember(['contact' => '5559876543', 'status' => Status::Inactive]);
+    $second = liveCheckInMember(['contact' => '5559876543', 'status' => Status::Inactive]);
 
     $this->postJson(route('checkin.submit'), [
         'kind' => 'checkin',
@@ -528,10 +528,12 @@ it('returns the neutral front-desk refusal when all matches are inactive', funct
         'token' => $token->token,
     ])
         ->assertOk()
-        ->assertJson(['match' => false])
-        ->assertJsonPath('message', __('app.reception.check_in_see_front_desk'));
+        ->assertJson(['match' => true])
+        ->assertJsonPath('members.0.id', $first->id)
+        ->assertJsonPath('members.1.id', $second->id);
 
-    expect(QueueEntry::count())->toBe(0);
+    $entry = QueueEntry::where('kind', 'checkin')->first();
+    expect($entry->payload['candidate_member_ids'])->toBe([$first->id, $second->id]);
 });
 
 it('returns match false when the identifier matches nothing', function (): void {

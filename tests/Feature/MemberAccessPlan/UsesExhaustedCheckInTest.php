@@ -335,19 +335,30 @@ it('routes a uses-exhausted member into the staff queue like any other match', f
         ->and($entry->payload['member_id'])->toBe((int) $member->id);
 });
 
-it('answers the api lookup identically for unknown and inactive members', function (): void {
-    m5Member(['status' => Status::Inactive, 'contact' => '5551112222']);
+it('answers the api lookup for pending, inactive and banned members per the blocker rule', function (): void {
+    $pending = m5Member(['status' => Status::Pending, 'contact' => '5554446666']);
+    $banned = m5Member(['status' => Status::Banned, 'contact' => '5551112222']);
+
+    $pendingLookup = $this->postJson('/api/v1/checkin/lookup', [
+        'identifier_type' => 'contact',
+        'value' => '5554446666',
+    ]);
+
+    expect($pendingLookup->json('match'))->toBeTrue()
+        ->and($pendingLookup->json('member.id'))->toBe((int) $pending->id)
+        ->and($pendingLookup->json('member.eligible'))->toBe([]);
+
+    $refused = $this->postJson('/api/v1/checkin/lookup', [
+        'identifier_type' => 'contact',
+        'value' => '5551112222',
+    ]);
 
     $unknown = $this->postJson('/api/v1/checkin/lookup', [
         'identifier_type' => 'contact',
         'value' => '5550000000',
     ]);
 
-    $inactive = $this->postJson('/api/v1/checkin/lookup', [
-        'identifier_type' => 'contact',
-        'value' => '5551112222',
-    ]);
-
-    expect($unknown->json())->toBe($inactive->json())
-        ->and($unknown->json('match'))->toBeFalse();
+    expect($refused->json())->toBe($unknown->json())
+        ->and($refused->json('match'))->toBeFalse()
+        ->and($banned->refresh()->status)->toBe(Status::Banned);
 });
