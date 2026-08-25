@@ -20,6 +20,7 @@ use App\Services\LocationTenantContext;
 use App\Support\Data;
 use App\Support\Dates\DeviceDateFormat;
 use App\Support\Permissions\PermissionFeatureFlags;
+use Carbon\Carbon;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Filament\Actions\Action;
@@ -89,7 +90,7 @@ class AppServiceProvider extends ServiceProvider
             }
 
             try {
-                $date = \Carbon\Carbon::parse($value);
+                $date = Carbon::parse($value);
             } catch (\Throwable) {
                 return false;
             }

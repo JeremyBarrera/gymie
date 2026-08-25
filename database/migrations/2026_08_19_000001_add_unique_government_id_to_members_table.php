@@ -38,10 +38,10 @@ return new class extends Migration
             ->value('government_id');
 
         if ($duplicate !== null) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "Duplicate members with government_id '{$duplicate}' exist (including soft-deleted records). "
-                . 'Run `php artisan members:merge-duplicates` to merge live duplicates and permanently delete '
-                . 'any soft-deleted duplicates from the trash before migrating.'
+                .'Run `php artisan members:merge-duplicates` to merge live duplicates and permanently delete '
+                .'any soft-deleted duplicates from the trash before migrating.'
             );
         }
 

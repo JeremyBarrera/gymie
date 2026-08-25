@@ -23,14 +23,14 @@
             </x-slot>
 
             <div class="grid gap-4">
-                <div class="truncate text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">
+                <div class="fi-wi-chart-text-color truncate text-3xl font-semibold tracking-tight">
                     {{ $totalExpense }}
                 </div>
 
                 <div class="grid gap-8">
-                    <div class="h-8 w-full overflow-hidden rounded-md bg-gray-100 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-800 dark:ring-white/10">
+                    <div class="fi-wi-chart-bg-color h-8 w-full overflow-hidden rounded-md shadow-sm">
                         @if ($segments->isEmpty())
-                        <div class="flex h-full items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+                        <div class="fi-wi-chart-text-color flex h-full items-center justify-center text-sm">
                             {{ __('app.widgets.no_expenses_in_period') }}
                         </div>
                         @else
@@ -54,10 +54,10 @@
                                 style="background-color: {{ $segment['color'] }};"></span>
 
                             <div class="grid gap-1">
-                                <div class="text-sm text-gray-600 dark:text-gray-300">
+                                <div class="fi-wi-chart-text-color text-sm">
                                     {{ $segment['label'] }}
                                 </div>
-                                <div class="text-base font-semibold text-gray-950 dark:text-white">
+                                <div class="fi-wi-chart-text-color text-base font-semibold">
                                     {{ \App\Helpers\Helpers::formatCurrency($segment['total']) }}
                                 </div>
                             </div>

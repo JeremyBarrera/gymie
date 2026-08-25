@@ -11,12 +11,12 @@ return new class extends Migration
 
     public function up(): void
     {
-        static::rename(static::OLD_NAME, static::NEW_NAME);
+        self::rename(self::OLD_NAME, self::NEW_NAME);
     }
 
     public function down(): void
     {
-        static::rename(static::NEW_NAME, static::OLD_NAME);
+        self::rename(self::NEW_NAME, self::OLD_NAME);
     }
 
     /**

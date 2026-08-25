@@ -14,6 +14,7 @@ use App\Support\Locations\LocationAccess;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Laravel\Pennant\Feature;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
@@ -186,7 +187,7 @@ it('exposes the locations resource to location staff', function (): void {
     $location = Location::query()->create(['name' => 'Main Location']);
     $owner = User::factory()->create()->assignRole('owner');
 
-    $permission = Spatie\Permission\Models\Permission::findOrCreate('ViewAny:Location', 'web');
+    $permission = Permission::findOrCreate('ViewAny:Location', 'web');
     $staffRole = Role::findOrCreate('location-staff', 'web');
     $staffRole->givePermissionTo($permission);
 

@@ -96,7 +96,7 @@ class MergeDuplicateMembers extends Command
 
             $this->line($dryRun
                 ? 'Would merge '.count($members)." members into {$canonical->name} (#{$canonical->id})."
-                : "Merged ".count($members)." members into {$canonical->name} (#{$canonical->id})"
+                : 'Merged '.count($members)." members into {$canonical->name} (#{$canonical->id})"
                     ." — moved {$moved['subscriptions']} subscription(s), {$moved['check_ins']} check-in(s).");
         }
 

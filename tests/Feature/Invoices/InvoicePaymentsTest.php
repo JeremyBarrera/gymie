@@ -3,8 +3,8 @@
 use App\Filament\Resources\Invoices\Pages\EditInvoice;
 use App\Filament\Resources\Invoices\Pages\ViewInvoice;
 use App\Models\Invoice;
-use App\Models\InvoiceTransaction;
 use App\Models\Subscription;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 
@@ -16,7 +16,7 @@ beforeEach(function (): void {
 
 function paymentsStaff()
 {
-    $staff = \App\Models\User::factory()->create();
+    $staff = User::factory()->create();
     $staff->assignRole('owner');
 
     return $staff;

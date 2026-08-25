@@ -277,7 +277,7 @@
                     </x-filament::section>
 
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" wire:model.live="verifyCheckIn" class="fi-checkbox-input rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-500" />
+                        <input type="checkbox" wire:model.live="verifyCheckIn" class="fi-checkbox-input rounded shadow-sm" />
                         <span class="fi-text text-sm font-medium">{{ __('app.reception.verify_checkin_toggle') }}</span>
                     </label>
                 </div>

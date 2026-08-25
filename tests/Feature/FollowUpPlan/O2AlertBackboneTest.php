@@ -1,6 +1,7 @@
 <?php
 
 use App\Events\FollowUpEscalated;
+use App\Helpers\Helpers;
 use App\Models\Invoice;
 use App\Models\Member;
 use App\Models\Subscription;
@@ -21,7 +22,7 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 afterEach(function (): void {
-    \App\Helpers\Helpers::setTestSettingsOverride(null);
+    Helpers::setTestSettingsOverride(null);
 });
 
 /**
@@ -42,7 +43,7 @@ function o2Payload(array $overrides = []): array
 
 function o2PinUsers(User ...$users): void
 {
-    \App\Helpers\Helpers::setTestSettingsOverride([
+    Helpers::setTestSettingsOverride([
         'notifications' => [
             'follow_up' => [
                 'roles' => ['manager'],

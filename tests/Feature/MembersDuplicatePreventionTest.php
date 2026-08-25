@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Enums\Status;
 use App\Models\Location;

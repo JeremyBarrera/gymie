@@ -69,5 +69,3 @@ it('broadcasts SoundAlertsToggled on the toggling user private channel only', fu
         ->and($event->userId)->toBe(42)
         ->and($event->enabled)->toBeTrue();
 });
-
-
