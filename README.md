@@ -1,4 +1,4 @@
-﻿<p align="center"><img width="160" src=".github/assets/logo.svg"></p>
+<p align="center"><img width="160" src=".github/assets/logo.svg"></p>
 
 ![Gymie](.github/assets/banner.png)
 
@@ -435,6 +435,38 @@ After changing `VITE_*` variables, rebuild the frontend bundle:
 - **Multiple nodes**: set `REVERB_SCALING_ENABLED=true` and point
   `REDIS_HOST` at a shared Redis. Every web node, queue worker and Reverb
   node must share the same Redis so broadcasts fan out across nodes.
+
+### Docker deployment (Phase 10)
+
+The repo ships a full compose stack (app, webserver, db, redis, reverb,
+queue worker, scheduler, nightly DB backups):
+
+```bash
+cp .env.example .env      # fill in DB_PASSWORD, APP_KEY, QR_BASE_URL, ...
+docker compose up -d      # builds the app image, starts everything
+docker compose exec app php artisan migrate --force   # migrations are NEVER automatic
+```
+
+- Migrations are deliberately **not** run at container start - always apply
+  them explicitly against a tested database copy first.
+- Nightly backups land in the `backups` volume at 03:00
+  (`docker compose run --rm -v backups:/backups alpine ls /backups`).
+- HTTPS via DuckDNS + Let's Encrypt: fill `DUCKDNS_DOMAIN` /
+  `LETSENCRYPT_EMAIL` in `.env`, swap `docker/nginx-tls.conf` into the
+  webserver service, then `docker compose --profile https up -d certbot`.
+
+### Environment separation & data refresh (Phase 10.5)
+
+Production and dev run **separate stacks, databases, Redis and storage** -
+they never share a live database. To pull a sanitized production copy into
+dev (dump, transfer, load, PII masking, migrations):
+
+```bash
+./scripts/refresh-dev-data.sh user@prod-host          # local dev stack
+./scripts/refresh-dev-data.sh user@prod-host user@dev-host
+```
+
+Dev data is disposable; production data is never modified by this script.
 
 ## API (JSON, v1)
 
