@@ -156,6 +156,7 @@ return [
     'status' => [
         'active' => 'Active',
         'inactive' => 'Inactive',
+        'banned' => 'Banned',
         'lead' => 'Lead',
         'member' => 'Member',
         'lost' => 'Lost',
@@ -399,6 +400,13 @@ return [
         'help_expired_on' => 'Membership expired on :date — renew to check in',
         'help_expires_in_days' => 'Membership expires in :count days — renew to avoid interruption',
         'help_valid_until' => 'Membership valid until :date',
+    ],
+    'members' => [
+        'banned' => 'Banned',
+        'ban_action' => 'Ban',
+        'unban_action' => 'Unban',
+        'ban_confirm_title' => 'Ban member',
+        'ban_confirm_body' => 'The member will be blocked from checking in at every location. You can unban them at any time.',
     ],
     'settings' => [
         'title' => 'Settings',
@@ -793,6 +801,7 @@ return [
         'check_in_member_inactive' => 'Member is not active.',
         'check_in_not_eligible' => 'Member has no eligible subscription.',
         'check_in_see_front_desk' => 'We couldn\'t complete your check-in. Please see the front desk.',
+        'check_in_member_banned' => 'Member is banned.',
         'verify_failed' => 'Something went wrong while creating the member. Please try again.',
         'verify_success_title' => 'Member Created',
         'confirm' => [

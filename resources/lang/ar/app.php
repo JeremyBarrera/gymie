@@ -156,6 +156,7 @@ return [
     'status' => [
         'active' => 'نشط',
         'inactive' => 'غير نشط',
+        'banned' => 'محظور',
         'lead' => 'مهتم',
         'member' => 'عضو',
         'lost' => 'مفقود',
@@ -399,6 +400,13 @@ return [
         'help_expired_on' => 'انتهت العضوية في :date — جدد للسماح بتسجيل الدخول',
         'help_expires_in_days' => 'تنتهي العضوية خلال :count أيام — جدد لتجنب الانقطاع',
         'help_valid_until' => 'العضوية سارية حتى :date',
+    ],
+    'members' => [
+        'banned' => 'محظور',
+        'ban_action' => 'حظر',
+        'unban_action' => 'رفع الحظر',
+        'ban_confirm_title' => 'حظر العضو',
+        'ban_confirm_body' => 'لن يتمكن العضو من تسجيل الدخول في أي موقع. يمكنك رفع الحظر في أي وقت.',
     ],
     'settings' => [
         'title' => 'الاعدادات',
@@ -797,6 +805,7 @@ return [
         'check_in_member_inactive' => 'العضو غير نشط.',
         'check_in_not_eligible' => 'لا يوجد اشتراك مؤهل لهذا العضو.',
         'check_in_see_front_desk' => 'لم نتمكن من إتمام تسجيل الوصول. يرجى مراجعة الاستقبال.',
+        'check_in_member_banned' => 'العضو محظور.',
         'verify_failed' => 'حدث خطأ أثناء إنشاء العضو. يرجى المحاولة مرة أخرى.',
         'verify_success_title' => 'تم إنشاء العضو',
         'confirm' => [

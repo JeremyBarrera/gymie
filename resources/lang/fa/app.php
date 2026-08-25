@@ -156,6 +156,7 @@ return [
     'status' => [
         'active' => 'فعال',
         'inactive' => 'غیرفعال',
+        'banned' => 'مسدود شده',
         'lead' => 'سرنخ / لید',
         'member' => 'عضو',
         'lost' => 'از دست رفته',
@@ -399,6 +400,13 @@ return [
         'help_expired_on' => 'عضویت در :date منقضی شده — برای ورود تمدید کنید',
         'help_expires_in_days' => 'عضویت تا :count روز دیگر منقضی می‌شود — برای جلوگیری از وقفه تمدید کنید',
         'help_valid_until' => 'عضویت تا :date معتبر است',
+    ],
+    'members' => [
+        'banned' => 'مسدود شده',
+        'ban_action' => 'مسدود کردن',
+        'unban_action' => 'رفع مسدودی',
+        'ban_confirm_title' => 'مسدود کردن عضو',
+        'ban_confirm_body' => 'عضو نمی‌تواند در هیچ موقعیتی ورود را ثبت کند. می‌توانید در هر زمان مسدودی را رفع کنید.',
     ],
     'settings' => [
         'title' => 'تنظیمات',
@@ -797,6 +805,7 @@ return [
         'check_in_member_inactive' => 'عضو فعال نیست.',
         'check_in_not_eligible' => 'عضو اشتراک واجد شرایطی ندارد.',
         'check_in_see_front_desk' => 'ثبت ورود شما کامل نشد. لطفاً به پذیرش مراجعه کنید.',
+        'check_in_member_banned' => 'عضو مسدود شده است.',
         'verify_failed' => 'هنگام ایجاد عضو خطایی رخ داد. لطفاً دوباره تلاش کنید.',
         'verify_success_title' => 'عضو ایجاد شد',
         'confirm' => [

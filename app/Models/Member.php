@@ -6,6 +6,7 @@ use App\Enums\Status;
 use App\Helpers\Helpers;
 use App\Models\Concerns\CascadesSoftDeletes;
 use App\Models\Concerns\ScopedByLocation;
+use App\Support\AppConfig;
 use Database\Factories\MemberFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -91,6 +92,35 @@ class Member extends Model
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * Whether the member holds at least one date-valid subscription
+     * (ongoing/expiring, started, not ended) in the app timezone. Pure
+     * membership signal — no plan-availability or location filtering, those
+     * stay in PlanCheckInService::eligibleSubscriptions().
+     */
+    public function hasOngoingSubscription(): bool
+    {
+        $today = Carbon::today(AppConfig::timezone())->toDateString();
+
+        return $this->subscriptions()
+            ->whereIn('status', [Status::Ongoing->value, Status::Expiring->value])
+            ->whereDate('start_date', '<=', $today)
+            ->where(fn ($query) => $query
+                ->whereNull('end_date')
+                ->orWhereDate('end_date', '>=', $today))
+            ->exists();
+    }
+
+    /**
+     * The single hard check-in blocker, or null when the member may proceed
+     * to the normal eligibility flow. Banned is the only unconditional gate;
+     * subscription problems route to the renewal / payment flows instead.
+     */
+    public function checkInBlocker(): ?string
+    {
+        return $this->status === Status::Banned ? 'banned' : null;
     }
 
     /**

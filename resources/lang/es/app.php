@@ -156,6 +156,7 @@ return [
     'status' => [
         'active' => 'Activo',
         'inactive' => 'Inactivo',
+        'banned' => 'Bloqueado',
         'lead' => 'Prospecto',
         'member' => 'Socio',
         'lost' => 'Perdido',
@@ -399,6 +400,13 @@ return [
         'help_expired_on' => 'Membresía vencida el :date: renueva para entrar',
         'help_expires_in_days' => 'La membresía vence en :count días: renová para evitar interrupciones',
         'help_valid_until' => 'Membresía válida hasta el :date',
+    ],
+    'members' => [
+        'banned' => 'Bloqueado',
+        'ban_action' => 'Bloquear',
+        'unban_action' => 'Desbloquear',
+        'ban_confirm_title' => 'Bloquear socio',
+        'ban_confirm_body' => 'El socio no podrá registrar entrada en ninguna sede. Puedes desbloquearlo en cualquier momento.',
     ],
     'settings' => [
         'title' => 'Configuración',
@@ -797,6 +805,7 @@ return [
         'check_in_member_inactive' => 'El miembro no está activo.',
         'check_in_not_eligible' => 'El miembro no tiene una suscripción elegible.',
         'check_in_see_front_desk' => 'No pudimos completar tu registro. Por favor, acude a recepción.',
+        'check_in_member_banned' => 'El socio está bloqueado.',
         'verify_failed' => 'Algo salió mal al crear el miembro. Inténtalo de nuevo.',
         'verify_success_title' => 'Miembro creado',
         'confirm' => [

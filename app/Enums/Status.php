@@ -13,6 +13,7 @@ enum Status: string implements HasColor, HasLabel
     case Done = 'done';
     case Active = 'active';
     case Inactive = 'inactive';
+    case Banned = 'banned';
     case Issued = 'issued';
     case Cancelled = 'cancelled';
     case Refund = 'refund';
@@ -33,6 +34,7 @@ enum Status: string implements HasColor, HasLabel
         self::Done->value => 'success',
         self::Active->value => 'success',
         self::Inactive->value => 'danger',
+        self::Banned->value => 'danger',
         self::Issued->value => 'gray',
         self::Cancelled->value => 'danger',
         self::Refund->value => 'danger',

@@ -156,6 +156,7 @@ return [
     'status' => [
         'active' => 'Actif',
         'inactive' => 'Inactif',
+        'banned' => 'Banni',
         'lead' => 'Prospect',
         'member' => 'Membre',
         'lost' => 'Perdu',
@@ -399,6 +400,13 @@ return [
         'help_expired_on' => 'Adhésion expirée le :date — renouvelez pour entrer',
         'help_expires_in_days' => 'L\'adhésion expire dans :count jours — renouvelez pour éviter l\'interruption',
         'help_valid_until' => 'Adhésion valide jusqu\'au :date',
+    ],
+    'members' => [
+        'banned' => 'Banni',
+        'ban_action' => 'Bannir',
+        'unban_action' => 'Débannir',
+        'ban_confirm_title' => 'Bannir le membre',
+        'ban_confirm_body' => 'Le membre ne pourra plus effectuer de check-in dans aucune salle. Vous pouvez le débannir à tout moment.',
     ],
     'settings' => [
         'title' => 'Paramètres',
@@ -797,6 +805,7 @@ return [
         'check_in_member_inactive' => 'Le membre n’est pas actif.',
         'check_in_not_eligible' => 'Le membre n’a aucun abonnement éligible.',
         'check_in_see_front_desk' => 'Nous n’avons pas pu effectuer votre enregistrement. Veuillez vous présenter à l’accueil.',
+        'check_in_member_banned' => 'Le membre est banni.',
         'verify_failed' => 'Une erreur est survenue lors de la création du membre. Veuillez réessayer.',
         'verify_success_title' => 'Membre créé',
         'confirm' => [
