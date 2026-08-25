@@ -36,6 +36,10 @@ class ListMembers extends ListRecords
                 ->badge(Member::query()->where('status', 'inactive')->count())
                 ->badgeColor(Status::Inactive->getColor())
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', 'inactive')),
+            'banned' => Tab::make(__('app.status.banned'))
+                ->badge(Member::query()->where('status', 'banned')->count())
+                ->badgeColor(Status::Banned->getColor())
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', 'banned')),
         ];
     }
 
