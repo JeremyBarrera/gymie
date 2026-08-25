@@ -24,6 +24,7 @@
 [CmdletBinding()]
 param(
     [switch]$Vite,
+    [switch]$Https,
     [string]$BindHost = '0.0.0.0'
 )
 
@@ -123,6 +124,34 @@ if ($workers) {
     Write-Host "[queue]  started (pid $($p.Id))" -ForegroundColor Green
 }
 
+# --- TLS reverse proxy (optional, -Https): https://:8443 with websocket
+# upgrades for Reverb. Requires .\setup-dev-https.ps1 to have been run. ---
+if ($Https) {
+    $caddy = (Get-Command caddy -ErrorAction SilentlyContinue).Source
+    $certFile = Join-Path $root 'storage\certs\localhost.pem'
+    if (-not $caddy -or -not (Test-Path $certFile)) {
+        Write-Host '[https]  skipped - run .\setup-dev-https.ps1 first' -ForegroundColor Yellow
+    } elseif (Get-NetTCPConnection -LocalPort 8443 -State Listen -ErrorAction SilentlyContinue) {
+        Write-Host '[https]  already running on :8443 - skipped' -ForegroundColor Yellow
+    } else {
+        $p = Start-Process -FilePath $caddy `
+            -ArgumentList @('run', '--config', (Join-Path $root 'Caddyfile.dev')) `
+            -WorkingDirectory $root -WindowStyle Hidden `
+            -RedirectStandardOutput (Join-Path $logDir 'gymie-caddy.log') `
+            -RedirectStandardError (Join-Path $logDir 'gymie-caddy-error.log') `
+            -PassThru
+        Start-Sleep -Seconds 2
+        $listening = Get-NetTCPConnection -LocalPort 8443 -State Listen -ErrorAction SilentlyContinue
+        if (-not $listening) {
+            Write-Host '[https]  FAILED to start - see gymie-caddy-error.log' -ForegroundColor Red
+        } else {
+            $pids['caddy'] = $p.Id
+            Save-Pids
+            Write-Host "[https]  started (pid $($p.Id), https://localhost:8443)" -ForegroundColor Green
+        }
+    }
+}
+
 # --- Vite (optional, hot reload) ---
 if ($Vite) {
     $npm = (Get-Command npm -ErrorAction SilentlyContinue).Source
@@ -143,8 +172,13 @@ if ($Vite) {
 
 Write-Host ''
 Write-Host 'Running:'
-Write-Host '  App:       http://localhost:8000'
-Write-Host '  Reverb WS: ws://localhost:8080'
+if ($Https -and (Get-NetTCPConnection -LocalPort 8443 -State Listen -ErrorAction SilentlyContinue)) {
+    Write-Host '  App:       https://localhost:8443 (also via LAN IP - see QR_BASE_URL)'
+    Write-Host '  Reverb WS: wss://localhost:8443/app/... (proxied)'
+} else {
+    Write-Host '  App:       http://localhost:8000'
+    Write-Host '  Reverb WS: ws://localhost:8080'
+}
 Write-Host '  Logs:      storage/logs/gymie-*.log'
 Write-Host '  Stop all:  .\stop-dev.ps1'
 Write-Host ''

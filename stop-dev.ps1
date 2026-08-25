@@ -33,11 +33,11 @@ foreach ($prop in $pids.PSObject.Properties) {
 
 # Also kill anything still holding our ports (covers stale instances the pid
 # file never knew about, e.g. a server started manually in a terminal).
-foreach ($port in 8000, 8080) {
+foreach ($port in 8000, 8080, 8443) {
     $conns = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
     foreach ($c in $conns) {
         $proc = Get-CimInstance Win32_Process -Filter "ProcessId = $($c.OwningProcess)" -ErrorAction SilentlyContinue
-        if ($proc -and $proc.CommandLine -match 'artisan (serve|reverb)|php.* -S ') {
+        if ($proc -and ($proc.CommandLine -match 'artisan (serve|reverb)|php.* -S ' -or $proc.Name -eq 'caddy.exe')) {
             Stop-Process -Id $c.OwningProcess -Force -ErrorAction SilentlyContinue
             Write-Host "[cleanup] stopped stale listener on :$port (pid $($c.OwningProcess))" -ForegroundColor Green
         }

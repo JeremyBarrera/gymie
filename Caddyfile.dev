@@ -1,0 +1,25 @@
+# Dev-only TLS reverse proxy (Phase 9.6): serves the stack over https://:8443
+# with a locally-trusted mkcert certificate so phones grant camera access
+# (secure context). Websocket upgrades for Reverb pass through under /app.
+#
+# Prerequisites: .\setup-dev-https.ps1   (installs mkcert + Caddy, makes certs)
+# Start with:    .\start-dev.ps1 -Https
+#
+# Cert paths are resolved relative to this file (repo root).
+
+{
+	auto_https off
+	admin off
+}
+
+:8443 {
+	tls storage/certs/localhost.pem storage/certs/localhost-key.pem
+
+	handle /app/* {
+		reverse_proxy localhost:8080
+	}
+
+	handle {
+		reverse_proxy localhost:8000
+	}
+}
