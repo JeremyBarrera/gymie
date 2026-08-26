@@ -120,14 +120,6 @@ class PlanForm
                             ->helperText(__('app.helpers.plan_days_optional'))
                             ->extraAttributes(['class' => 'verify-money-input'])
                             ->columnSpan(1),
-                        TextInput::make('amount')
-                            ->placeholder(__('app.placeholders.plan_amount'))
-                            ->numeric()
-                            ->prefix(Helpers::getCurrencySymbol())
-                            ->label(__('app.fields.amount'))
-                            ->required()
-                            ->extraAttributes(['class' => 'verify-money-input'])
-                            ->columnSpan(1),
                         TextInput::make('uses_limit')
                             ->label(__('app.fields.uses_limit'))
                             ->numeric()
@@ -137,6 +129,14 @@ class PlanForm
                             ->visible(fn (Get $get): bool => (bool) $get('track_uses'))
                             ->extraAttributes(['class' => 'verify-money-input'])
                             ->columnSpan(1),
+                        TextInput::make('amount')
+                            ->placeholder(__('app.placeholders.plan_amount'))
+                            ->numeric()
+                            ->prefix(Helpers::getCurrencySymbol())
+                            ->label(__('app.fields.amount'))
+                            ->required()
+                            ->extraAttributes(['class' => 'verify-money-input'])
+                            ->columnSpanFull(),
                         TextInput::make('description')
                             ->placeholder(__('app.placeholders.plan_description'))
                             ->label(__('app.fields.description'))
