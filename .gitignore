@@ -29,6 +29,7 @@ docker/nginx-tls.rendered.conf
 
 /DEPLOYMENT.md
 /deployment.local.md
+/AGENTS.md
 
 # Working planning documents stay local-only
 /*_PLAN.md
