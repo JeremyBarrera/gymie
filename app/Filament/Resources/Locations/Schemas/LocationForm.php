@@ -49,15 +49,15 @@ class LocationForm
                                     ->options(fn ($get) => Helpers::getStates($get('country')))
                                     ->searchable()
                                     ->reactive()
-                                    ->hidden(fn ($get) => blank($get('country')))
+                                    ->hidden(fn ($get) => empty(Helpers::getStates($get('country'))))
                                     ->afterStateUpdated(fn ($state, callable $set) => $set('city', null)),
                                 Select::make('city')
                                     ->label(__('app.fields.city'))
                                     ->placeholder(__('app.placeholders.select_city'))
-                                    ->options(fn ($get) => Helpers::getCities($get('state')))
+                                    ->options(fn ($get) => Helpers::getCities($get('state'), $get('country')))
                                     ->searchable()
                                     ->reactive()
-                                    ->hidden(fn ($get) => blank($get('state'))),
+                                    ->hidden(fn ($get) => empty(Helpers::getCities($get('state'), $get('country')))),
                                 TextInput::make('pincode')
                                     ->label(__('app.fields.pincode'))
                                     ->maxLength(20),
