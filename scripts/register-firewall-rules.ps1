@@ -12,7 +12,7 @@ foreach ($port in 80, 443) {
     $existing = Get-NetFirewallRule -DisplayName "Gymie $port" -ErrorAction SilentlyContinue
 
     if ($existing) {
-        Write-Output "Rule 'Gymie $port' already exists — skipping."
+        Write-Output "Rule 'Gymie $port' already exists - skipping."
         continue
     }
 

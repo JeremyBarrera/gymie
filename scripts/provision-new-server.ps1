@@ -65,6 +65,17 @@ if (-not $suffix) { Write-Error 'Tailscale login did not complete within 5 minut
 $fqdn = "$MachineName.$suffix"
 Write-Output "This server is now: $fqdn"
 
+Write-Output 'Enabling OpenSSH Server (lets the old server push its data with one command)...'
+$sshCap = Get-WindowsCapability -Online -Name 'OpenSSH.Server*' -ErrorAction SilentlyContinue
+if ($sshCap -and $sshCap[0].State -ne 'Installed') {
+    Add-WindowsCapability -Online -Name $sshCap[0].Name | Out-Null
+}
+Set-Service sshd -StartupType Automatic -ErrorAction SilentlyContinue
+Start-Service sshd -ErrorAction SilentlyContinue
+if (-not (Get-NetFirewallRule -DisplayName 'OpenSSH Server (Toro)' -ErrorAction SilentlyContinue)) {
+    New-NetFirewallRule -DisplayName 'OpenSSH Server (Toro)' -Direction Inbound -Protocol TCP -LocalPort 22 -Action Allow -Profile Any | Out-Null
+}
+
 if (-not (Test-Path '.env')) {
     Copy-Item .env.example .env
     Write-Output @'
