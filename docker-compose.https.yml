@@ -18,6 +18,12 @@
 #   - certbot: runs the mounted shell script instead of fragile inline YAML.
 
 services:
+  app:
+    environment:
+      - FUNNEL_HOST=${FUNNEL_HOST}
+    volumes:
+      - app-public:/var/www/public-hosted
+
   tls-init:
     image: alpine:3.21
     profiles: ["https"]
