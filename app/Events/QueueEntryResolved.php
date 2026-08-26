@@ -30,4 +30,25 @@ class QueueEntryResolved implements ShouldBroadcast
             new Channel('queue.'.$this->uuid),
         ];
     }
+
+    /**
+     * Both channels get the same payload, and `queue.{uuid}` is public —
+     * any visitor who knows the uuid can subscribe. The queue entry payload
+     * carries applicant PII (name, contact, government ID), so only the
+     * fields the waiting page actually renders may leave; staff listeners
+     * re-fetch the record from the database.
+     *
+     * @return array<string, mixed>
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'queueEntryId' => $this->queueEntryId,
+            'uuid' => $this->uuid,
+            'kind' => $this->kind,
+            'approved' => $this->approved,
+            'deniedReason' => $this->deniedReason,
+            'checkedIn' => $this->checkedIn,
+        ];
+    }
 }

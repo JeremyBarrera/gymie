@@ -20,7 +20,3 @@ Broadcast::channel('location.{token}', function ($user, string $token) {
 
     return LocationAccess::canAccess($user, (int) $locationToken->tokenable_id);
 });
-
-Broadcast::channel('queue.{uuid}', function ($user, string $uuid) {
-    return true;
-});
