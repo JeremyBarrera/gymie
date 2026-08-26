@@ -21,7 +21,7 @@ $repo = Split-Path -Parent $PSScriptRoot
 $stamp = Get-Date -Format 'yyyyMMdd-HHmm'
 
 Write-Output '[push 1/4] dumping database...'
-docker compose exec db sh -c 'exec mysqldump -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --single-transaction "$MYSQL_DATABASE"' | Out-File -Encoding ascii (Join-Path $env:TEMP 'toro-db.sql')
+docker compose exec db sh -c 'exec mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --single-transaction "$MYSQL_DATABASE"' | Out-File -Encoding ascii (Join-Path $env:TEMP 'toro-db.sql')
 if ($LASTEXITCODE -ne 0) { Write-Error 'mysqldump failed.' }
 
 tar -czf (Join-Path $env:TEMP 'toro-db.sql.gz') -C $env:TEMP 'toro-db.sql'

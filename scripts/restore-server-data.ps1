@@ -56,7 +56,7 @@ while ((Get-Date) -lt $deadline) {
 }
 
 Write-Output '[restore] importing database...'
-Get-Content $dbDump -Raw | docker compose exec -T db sh -c 'exec mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"'
+Get-Content $dbDump -Raw | docker compose exec -T db sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"'
 if ($LASTEXITCODE -ne 0) { Write-Error 'mysql import failed.' }
 
 Write-Output '[restore] extracting member photos / uploads...'
