@@ -917,6 +917,7 @@ return [
         'service_location' => 'Check-ins are recorded against this location.',
         'all_locations' => 'Leave empty to make the plan available at every location, including locations created in the future.',
         'plan_days_optional' => 'Leave empty for a plan that never expires.',
+        'uses_limit' => 'Number of times the plan can be used.',
     ],
     'onboarding' => [
         'step1_title' => 'New Member',
@@ -929,6 +930,20 @@ return [
         'location_outside_jurisdiction' => 'The selected location is outside your jurisdiction.',
         'role_outside_jurisdiction' => 'The selected role is outside your jurisdiction.',
         'unknown_location' => 'an unknown location',
+    ],
+    'legal' => [
+        'rights_reserved' => 'All rights reserved',
+        'copyright' => '© :year :name.',
+        'agree_prefix' => 'By using this application you agree to our',
+        'terms_link' => 'Terms and Conditions',
+        'modal_title' => 'Terms and Conditions',
+        'modal_intro' => 'By accessing or using the check-in and sign-up services of :name you agree to the following terms.',
+        'item_data' => 'We collect only data you actively provide (name, contact, government ID when required, and photos where enabled) to manage your membership and access.',
+        'item_purpose' => 'Your data is used solely for membership management, access control, and service delivery within this gym.',
+        'item_retention' => 'Data is retained while your membership is active or as required by law. You may request deletion at the front desk at any time.',
+        'item_security' => 'Sensitive identifiers are encrypted at rest and access is restricted to authorized staff with scoped permissions.',
+        'item_consent' => 'Continued use of the QR code, form submission, or waiting page constitutes acceptance of these terms. Contact administration for full details.',
+        'close' => 'Close',
     ],
     'roles' => [
         'guard_web' => 'Admin Panel',

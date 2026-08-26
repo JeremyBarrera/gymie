@@ -917,6 +917,7 @@ return [
         'service_location' => 'Los registros de entrada se guardan en esta ubicación.',
         'all_locations' => 'Déjalo vacío para que el plan esté disponible en todas las ubicaciones, incluidas las que se creen en el futuro.',
         'plan_days_optional' => 'Déjalo vacío para un plan que nunca caduca.',
+        'uses_limit' => 'Número de veces que se puede usar el plan.',
     ],
     'onboarding' => [
         'step1_title' => 'Nuevo miembro',
@@ -930,7 +931,21 @@ return [
         'role_outside_jurisdiction' => 'El rol seleccionado está fuera de su jurisdicción.',
         'unknown_location' => 'una ubicación desconocida',
     ],
+    'legal' => [
+        'rights_reserved' => 'Todos los derechos reservados',
+        'copyright' => '© :year :name.',
+        'agree_prefix' => 'Al usar esta aplicación aceptas nuestros',
+        'terms_link' => 'Términos y Condiciones',
+        'modal_title' => 'Términos y Condiciones',
+        'modal_intro' => 'Al acceder o usar los servicios de registro y alta de :name aceptas los siguientes términos.',
+        'item_data' => 'Solo recopilamos los datos que proporcionas activamente (nombre, contacto, documento de identidad cuando se requiere y fotos cuando está habilitado) para gestionar tu membresía y acceso.',
+        'item_purpose' => 'Tus datos se utilizan únicamente para la gestión de membresías, control de acceso y prestación de servicios dentro del gimnasio.',
+        'item_retention' => 'Los datos se conservan mientras tu membresía esté activa o según lo exija la ley. Puedes solicitar la eliminación en la recepción en cualquier momento.',
+        'item_security' => 'Los identificadores sensibles se almacenan cifrados y el acceso está restringido al personal autorizado con permisos delimitados.',
+        'item_consent' => 'El uso continuado del código QR, el envío del formulario o la página de espera constituye la aceptación de estos términos. Contacta con la administración para más detalles.',
+        'close' => 'Cerrar',
+    ],
     'roles' => [
-        'guard_web' => 'Panel de administración',
+        'guard_web' => 'Admin Panel',
     ],
 ];

@@ -917,6 +917,7 @@ return [
         'service_location' => 'Les enregistrements d\'entrée sont consignés dans cet emplacement.',
         'all_locations' => 'Laissez vide pour que le plan soit disponible dans tous les emplacements, y compris ceux créés à l\'avenir.',
         'plan_days_optional' => 'Laissez vide pour un plan qui n\'expire jamais.',
+        'uses_limit' => 'Nombre de fois que le plan peut être utilisé.',
     ],
     'onboarding' => [
         'step1_title' => 'Nouveau membre',
@@ -929,6 +930,20 @@ return [
         'location_outside_jurisdiction' => 'L\'emplacement sélectionné est hors de votre juridiction.',
         'role_outside_jurisdiction' => 'Le rôle sélectionné est hors de votre juridiction.',
         'unknown_location' => 'un lieu inconnu',
+    ],
+    'legal' => [
+        'rights_reserved' => 'Tous droits réservés',
+        'copyright' => '© :year :name.',
+        'agree_prefix' => 'En utilisant cette application, vous acceptez nos',
+        'terms_link' => 'Conditions Générales',
+        'modal_title' => 'Conditions Générales',
+        'modal_intro' => 'En accédant ou en utilisant les services d’enregistrement et d’inscription de :name, vous acceptez les conditions suivantes.',
+        'item_data' => 'Nous collectons uniquement les données que vous fournissez activement (nom, contact, pièce d’identité si requise et photos lorsque activé) pour gérer votre adhésion et votre accès.',
+        'item_purpose' => 'Vos données sont utilisées uniquement pour la gestion des adhésions, le contrôle d’accès et la prestation de services au sein de la salle.',
+        'item_retention' => 'Les données sont conservées tant que votre adhésion est active ou comme l’exige la loi. Vous pouvez demander leur suppression à l’accueil à tout moment.',
+        'item_security' => 'Les identifiants sensibles sont chiffrés au repos et l’accès est limité au personnel autorisé avec des permissions délimitées.',
+        'item_consent' => 'La poursuite de l’utilisation du QR code, de l’envoi du formulaire ou de la page d’attente vaut acceptation de ces conditions. Contactez l’administration pour plus de détails.',
+        'close' => 'Fermer',
     ],
     'roles' => [
         'guard_web' => 'Panneau d’administration',
