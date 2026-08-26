@@ -53,23 +53,23 @@
                 </div>
             </div>
 
-            <div class="grid gap-4 sm:grid-cols-3">
-                <div>
-                    <label for="expired-payment-method" class="fi-text text-base font-semibold">
-                        {{ __('app.fields.payment_method') }}
-                    </label>
-                    <x-filament::input.wrapper class="mt-2">
-                        <x-filament::input.select id="expired-payment-method" wire:model="paymentMethod">
-                            @foreach(\App\Support\Billing\PaymentMethod::options() as $methodValue => $methodLabel)
-                                <option value="{{ $methodValue }}" @selected($methodValue === $paymentMethod)>
-                                    {{ $methodLabel }}
-                                </option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                    @error('paymentMethod') <p class="fi-text mt-1 text-sm text-danger-500">{{ $message }}</p> @enderror
-                </div>
+            <div>
+                <label for="expired-payment-method" class="fi-text text-base font-semibold">
+                    {{ __('app.fields.payment_method') }}
+                </label>
+                <x-filament::input.wrapper class="mt-2">
+                    <x-filament::input.select id="expired-payment-method" wire:model="paymentMethod">
+                        @foreach(\App\Support\Billing\PaymentMethod::options() as $methodValue => $methodLabel)
+                            <option value="{{ $methodValue }}" @selected($methodValue === $paymentMethod)>
+                                {{ $methodLabel }}
+                            </option>
+                        @endforeach
+                    </x-filament::input.select>
+                </x-filament::input.wrapper>
+                @error('paymentMethod') <p class="fi-text mt-1 text-sm text-danger-500">{{ $message }}</p> @enderror
+            </div>
 
+            <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label for="expired-discount" class="fi-text text-base font-semibold">
                         {{ __('app.fields.discount') }}
