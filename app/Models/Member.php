@@ -286,6 +286,10 @@ class Member extends Model
                 $member->government_id_hash = BlindIndex::compute($member->government_id);
             }
         });
+
+        static::forceDeleted(function (self $member): void {
+            Helpers::deleteStoredPhoto($member->photo);
+        });
     }
 
     /**

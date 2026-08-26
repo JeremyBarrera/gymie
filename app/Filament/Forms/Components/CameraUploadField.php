@@ -4,7 +4,6 @@ namespace App\Filament\Forms\Components;
 
 use App\Helpers\Helpers;
 use Filament\Forms\Components\Field;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * A photo field that lets the user either upload an image file or capture one
@@ -41,8 +40,7 @@ class CameraUploadField extends Field
     }
 
     /**
-     * Remove a previously stored photo file from the public disk, ignoring
-     * absolute/data URLs that were never stored by this component.
+     * Remove a previously stored photo file from the public disk.
      */
     protected static function deleteStoredPhoto(?string $path, ?string $keep = null): void
     {
@@ -50,10 +48,6 @@ class CameraUploadField extends Field
             return;
         }
 
-        if (filter_var($path, FILTER_VALIDATE_URL) !== false || str_starts_with($path, 'data:')) {
-            return;
-        }
-
-        Storage::disk('public')->delete($path);
+        Helpers::deleteStoredPhoto($path);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Helpers\Helpers;
 use App\Http\Requests\Api\V1\MemberStoreRequest;
 use App\Http\Requests\Api\V1\MemberUpdateRequest;
 use App\Http\Resources\V1\MemberResource;
@@ -72,7 +73,13 @@ class MembersController extends ApiController
         $data = $request->validated();
 
         if ($request->hasFile('photo')) {
+            $previousPhoto = $member->getRawOriginal('photo');
+
             $data['photo'] = $request->file('photo')->storePublicly('images', 'public');
+
+            if ($previousPhoto !== null && $previousPhoto !== $data['photo']) {
+                Helpers::deleteStoredPhoto($previousPhoto);
+            }
         }
 
         $member->update($data);

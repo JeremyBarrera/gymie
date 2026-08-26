@@ -438,6 +438,23 @@ class Helpers
     }
 
     /**
+     * Remove a stored photo file from the public disk, ignoring absolute/
+     * data URLs that were never stored by this app.
+     */
+    public static function deleteStoredPhoto(?string $path): void
+    {
+        if (blank($path) || $path === '0') {
+            return;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL) !== false || str_starts_with($path, 'data:')) {
+            return;
+        }
+
+        Storage::disk(self::PHOTO_DISK)->delete($path);
+    }
+
+    /**
      * Decode a base64 image data URL and store it on the public disk.
      *
      * @throws InvalidArgumentException When the data URL is not a supported image or is too large.
