@@ -29,6 +29,9 @@ server {
 server {
     listen 80;
     add_header X-Block funnel always;
+    # TLS terminates on tailscaled before this block sees the request, so
+    # browsers only ever reach it over https://*.ts.net and HSTS is valid.
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     server_name ${FUNNEL_HOST};
 
     root /var/www/public;
