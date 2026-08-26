@@ -35,7 +35,7 @@ composer run setup        # blank production setup (migrations + world data + Sh
 composer run setup-demo   # demo data (erases existing data — local only)
 ```
 
-`setup` does not create an admin. Create the owner afterwards — see Quick Start. Demo credentials are `test@example.com` / `test`.
+`setup` runs migrations, world data, Shield permissions, and creates the owner from `.env`. Demo credentials are `test@example.com` / `test`.
 
 ## Quick Start (from zero)
 ```bash
