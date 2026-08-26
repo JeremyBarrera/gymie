@@ -7,12 +7,39 @@ Laravel based web application for gym & club management. Currently being used by
 
 Gymie handles members, subscriptions, invoices, check-ins, and a live reception desk. Public QR codes let members check in or apply to join; staff claim and resolve the queue in real time.
 
-## Quick Start (Docker)
+## Requirements
+- PHP >= 8.2
+- Laravel Framework ^12.0
+- Filament Admin Panel 5.x
+- Livewire ^3.0
+- nnjeim/world ^1.1
+- barryvdh/laravel-dompdf ^3.1
+- Laravel Herd _(optional for local development)_
 
-The only prerequisite is [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+## Quick Start (from zero)
+```bash
+git clone git@github.com:JeremyBarrera/gymie
+cd gymie
+composer install
+composer run prepare-env
+# configure .env — set OWNER_NAME, OWNER_EMAIL, OWNER_PASSWORD, database, APP_URL
+composer run setup
+php artisan serve --host=0.0.0.0 --no-reload
+php artisan reverb:start
+php artisan queue:work
+```
+
+`reverb` and `queue` are required for the live reception flow. On Windows use `.\start-dev.ps1` / `.\stop-dev.ps1` instead of three terminals.
+
+## Startup & First-Run Setup
+The owner account is created automatically from `.env` (`OWNER_NAME` / `OWNER_EMAIL` / `OWNER_PASSWORD`) during `composer run setup`. No manual owner-creation step needed.
+
+## Self-Hosting with Docker (Recommended)
+
+[Docker Desktop](https://www.docker.com/products/docker-desktop/) is the easiest way to run Gymie in production — no PHP, Node, or MySQL installed on the host.
 
 ```bash
-git clone https://github.com/JeremyBarrera/gymie.git
+git clone git@github.com:JeremyBarrera/gymie
 cd gymie
 cp .env.example .env
 ```
@@ -36,7 +63,7 @@ Open `APP_URL` in your browser and log in with the owner credentials you set.
 
 **What's running:** nginx (web), PHP-FPM (app), MySQL, Redis, Reverb (websockets), queue worker, scheduler, and nightly backups — all managed by Docker Compose.
 
-## HTTPS (optional)
+### HTTPS
 
 For production with TLS via DuckDNS + Let's Encrypt:
 
@@ -45,21 +72,6 @@ For production with TLS via DuckDNS + Let's Encrypt:
 powershell -ExecutionPolicy Bypass -File scripts\render-nginx-tls.ps1
 docker compose -f docker-compose.yml -f docker-compose.https.yml --profile https up -d
 ```
-
-## Local Development (without Docker)
-
-Requires PHP 8.2+, Composer, Node.js, and MySQL:
-
-```bash
-composer install
-composer run prepare-env
-composer run setup
-php artisan serve --host=0.0.0.0 --no-reload
-php artisan reverb:start
-php artisan queue:work
-```
-
-On Windows use `.\start-dev.ps1` / `.\stop-dev.ps1` to run all three processes.
 
 ## How It Works
 A location token powers public pages (`/checkin/{token}`, `/signup/{token}`) where members submit check-ins or sign-up forms. Each submission creates a queue entry that appears instantly on the Reception page; staff claim it so no two people handle the same guest, then approve or deny. Overrides, subscription use limits, and follow-up alerts are handled through the same flow.
@@ -73,6 +85,8 @@ vendor/bin/pint
 npm run dev     # hot reload while working on JS/CSS
 npm run build   # compiled bundle for production
 ```
+
+See [DEVELOPERS.md](DEVELOPERS.md) for resetting the database, owner handling, Reverb proxy, Docker, and production supervision.
 
 ## License
 Gymie is open-sourced under the [MIT license](LICENSE).
