@@ -74,14 +74,14 @@
             "@prepare-env",
             "@php artisan migrate:fresh --seed --ansi",
             "@php artisan shield:generate --all --panel=admin --ansi",
-            "@php artisan gymie:complete-setup --ansi"
+            "@php artisan db:seed --class=UserSeeder --ansi"
         ],
         "setup": [
             "@prepare-env",
             "@php artisan migrate:fresh --ansi",
             "@php artisan db:seed --class=WorldSeeder --ansi",
-            "@php artisan shield:generate --all --panel=admin --ansi",
-            "@php artisan gymie:setup-guidance --ansi"
+            "@php artisan db:seed --class=UserSeeder --ansi",
+            "@php artisan shield:generate --all --panel=admin --ansi"
         ]
     },
     "extra": {
