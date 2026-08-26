@@ -19,8 +19,8 @@
             min-height: 100dvh;
             background-color: var(--c-bg-b);
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
             padding: calc(20px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px)) 20px;
         }
         .contact-container {
@@ -93,11 +93,16 @@
     </style>
 </head>
 <body>
+    <div class="public-main">
     @include('checkin.partials.contact-front-desk', [
         'heading' => __('app.scan.contact_front_desk_heading'),
         'body' => __('app.scan.contact_front_desk_body'),
         'contact' => __('app.scan.contact_front_desk_contact'),
         'signupUrl' => null,
     ])
+    </div>
+
+    @include('checkin.partials.public-footer')
+
 </body>
 </html>

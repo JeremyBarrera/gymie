@@ -20,8 +20,8 @@
             min-height: 100dvh;
             background-color: var(--c-bg-b);
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
             padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)) 16px;
         }
         @keyframes cardIn {
@@ -290,6 +290,7 @@
             @endforeach
         </select>
     </div>
+    <div class="public-main">
     <div class="scan-container scan-container--{{ $kind }}">
         <div class="scan-hero scan-hero--{{ $kind }}">
             <span class="kind-chip">
@@ -442,6 +443,9 @@
         <p class="signup-note">{{ __('app.scan.signup_member_note') }}</p>
         @endif
     </div>
+    </div>
+
+    @include('checkin.partials.public-footer')
 
     <script>
         const form = document.getElementById('scan-form');

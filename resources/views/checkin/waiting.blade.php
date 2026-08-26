@@ -20,8 +20,8 @@
             min-height: 100dvh;
             background-color: var(--c-bg-b);
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
             padding: calc(20px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px)) 20px;
         }
         .waiting-container {
@@ -175,6 +175,7 @@
     </style>
 </head>
 <body>
+    <div class="public-main">
     <div class="waiting-container">
         <h1 class="location-name">{{ $location->name }}</h1>
 
@@ -195,6 +196,9 @@
         <a href="/signup/{{ $signupToken }}?locale={{ app()->getLocale() }}" class="waiting-btn" onclick="localStorage.removeItem('pendingSignupUuid')">{{ __('app.scan.sign_up_another') }}</a>
         @endif
     </div>
+    </div>
+
+    @include('checkin.partials.public-footer')
 
     <div id="result-overlay" class="result-overlay">
         <div class="result-card">
