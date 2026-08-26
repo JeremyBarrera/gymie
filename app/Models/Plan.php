@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property float|int|string|null $amount
  * @property int|float|string|null $days
  * @property Status|null $status
- * @property bool $track_uses
+ * @property bool $limit_uses
  * @property int|null $uses_limit
  * @property-read Location|null $location
  * @property-read Collection<int, Service> $services
@@ -49,13 +49,13 @@ class Plan extends Model
         'amount',
         'days',
         'status',
-        'track_uses',
+        'limit_uses',
         'uses_limit',
     ];
 
     protected $casts = [
         'status' => Status::class,
-        'track_uses' => 'boolean',
+        'limit_uses' => 'boolean',
         'uses_limit' => 'integer',
     ];
 
@@ -67,7 +67,7 @@ class Plan extends Model
         parent::boot();
 
         static::saving(function (self $plan): void {
-            if (! $plan->track_uses) {
+            if (! $plan->limit_uses) {
                 $plan->uses_limit = null;
             }
         });

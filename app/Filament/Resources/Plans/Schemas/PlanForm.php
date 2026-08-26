@@ -106,9 +106,9 @@ class PlanForm
                                 ])->getKey());
                             })
                             ->columnSpan(2),
-                        Toggle::make('track_uses')
-                            ->label(__('app.fields.track_uses'))
-                            ->helperText(__('app.helpers.track_uses'))
+                        Toggle::make('limit_uses')
+                            ->label(__('app.fields.limit_uses'))
+                            ->helperText(__('app.helpers.limit_uses'))
                             ->live()
                             ->default(false)
                             ->columnSpan(1),
@@ -133,8 +133,8 @@ class PlanForm
                             ->numeric()
                             ->minValue(1)
                             ->helperText(__('app.helpers.uses_limit'))
-                            ->required(fn (Get $get): bool => (bool) $get('track_uses'))
-                            ->visible(fn (Get $get): bool => (bool) $get('track_uses'))
+                            ->required(fn (Get $get): bool => (bool) $get('limit_uses'))
+                            ->visible(fn (Get $get): bool => (bool) $get('limit_uses'))
                             ->extraAttributes(['class' => 'verify-money-input'])
                             ->columnSpan(1),
                         TextInput::make('description')

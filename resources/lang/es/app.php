@@ -103,7 +103,7 @@ return [
         'slug' => 'Slug',
         'theme_color' => 'Color del tema',
         'theme_color_hint' => 'Color usado para el tema de administración.',
-        'track_uses' => 'Limitar usos',
+        'limit_uses' => 'Limitar usos',
         'uses_limit' => 'Número máximo de usos',
     ],
     'placeholders' => [
@@ -913,7 +913,7 @@ return [
         'overridden' => 'Forzado',
     ],
     'helpers' => [
-        'track_uses' => 'Limita cuántas veces se puede usar el plan.',
+        'limit_uses' => 'Limita cuántas veces se puede usar el plan.',
         'service_location' => 'Los registros de entrada se guardan en esta ubicación.',
         'all_locations' => 'Déjalo vacío para que el plan esté disponible en todas las ubicaciones, incluidas las que se creen en el futuro.',
         'plan_days_optional' => 'Déjalo vacío para un plan que nunca caduca.',

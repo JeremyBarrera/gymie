@@ -46,7 +46,7 @@ class CheckInApiTest extends TestCase
         $plan = Plan::factory()->create([
             'code' => 'GYM-01',
             'name' => 'Monthly',
-            'track_uses' => true,
+            'limit_uses' => true,
             'uses_limit' => 12,
             'status' => Status::Active,
         ]);
@@ -93,7 +93,7 @@ class CheckInApiTest extends TestCase
     {
         $service = Service::factory()->create();
         $plan = Plan::factory()->create([
-            'track_uses' => false,
+            'limit_uses' => false,
             'status' => Status::Active,
         ]);
         $plan->services()->attach($service->id);
@@ -123,7 +123,7 @@ class CheckInApiTest extends TestCase
     {
         $service = Service::factory()->create();
         $plan = Plan::factory()->create([
-            'track_uses' => false,
+            'limit_uses' => false,
             'status' => Status::Active,
         ]);
         $plan->services()->attach($service->id);

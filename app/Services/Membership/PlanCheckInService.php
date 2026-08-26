@@ -88,7 +88,7 @@ class PlanCheckInService
         $subscription->loadMissing('plan');
         $plan = $subscription->plan;
 
-        if ($plan === null || ! $plan->track_uses) {
+        if ($plan === null || ! $plan->limit_uses) {
             return null;
         }
 

@@ -48,7 +48,7 @@ function receptionSetup(?Location $location = null): array
     $plan = Plan::factory()->create([
         'code' => 'GYM-01',
         'name' => 'Monthly',
-        'track_uses' => true,
+        'limit_uses' => true,
         'uses_limit' => 12,
         'status' => Status::Active,
     ]);

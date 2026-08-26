@@ -24,7 +24,7 @@ class PlanFactory extends Factory
             'days' => $this->faker->numberBetween(1, 365),
             'amount' => $this->faker->randomFloat(2, 10, 1000),
             'status' => $this->faker->randomElement(['active', 'inactive']),
-            'track_uses' => false,
+            'limit_uses' => false,
             'uses_limit' => null,
         ];
     }
@@ -35,7 +35,7 @@ class PlanFactory extends Factory
     public function withUseLimit(int $limit = 10): static
     {
         return $this->state(fn (): array => [
-            'track_uses' => true,
+            'limit_uses' => true,
             'uses_limit' => $limit,
         ]);
     }

@@ -35,7 +35,7 @@ function manualPlan(): Plan
     $service = Service::factory()->create();
     $plan = Plan::factory()->create([
         'amount' => 100,
-        'track_uses' => false,
+        'limit_uses' => false,
         'status' => Status::Active,
     ]);
     $plan->services()->attach($service->id);

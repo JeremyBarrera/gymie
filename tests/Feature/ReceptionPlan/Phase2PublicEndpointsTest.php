@@ -146,7 +146,7 @@ it('submits a checkin for an active member and creates a queue entry', function 
 
     $service = Service::factory()->create();
     $plan = Plan::factory()->create([
-        'track_uses' => false,
+        'limit_uses' => false,
         'status' => Status::Active,
     ]);
     $plan->services()->attach($service->id);
@@ -204,7 +204,7 @@ it('checks in a member by government id (unique identifier)', function (): void 
 
     $service = Service::factory()->create();
     $plan = Plan::factory()->create([
-        'track_uses' => false,
+        'limit_uses' => false,
         'status' => Status::Active,
     ]);
     $plan->services()->attach($service->id);
@@ -407,7 +407,7 @@ it('matches a member by formatted phone number when the country code is configur
 
     $service = Service::factory()->create();
     $plan = Plan::factory()->create([
-        'track_uses' => false,
+        'limit_uses' => false,
         'status' => Status::Active,
     ]);
     $plan->services()->attach($service->id);

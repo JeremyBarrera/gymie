@@ -59,14 +59,14 @@ class PlanInfolist
                         TextEntry::make('amount')
                             ->label(__('app.fields.amount'))
                             ->money(Helpers::getCurrencyCode()),
-                        TextEntry::make('track_uses')
-                            ->label(__('app.fields.track_uses'))
-                            ->formatStateUsing(fn (Plan $record): string => $record->track_uses
+                        TextEntry::make('limit_uses')
+                            ->label(__('app.fields.limit_uses'))
+                            ->formatStateUsing(fn (Plan $record): string => $record->limit_uses
                                 ? __('app.common.yes')
                                 : __('app.common.no')),
                         TextEntry::make('uses_limit')
                             ->label(__('app.fields.uses_limit'))
-                            ->formatStateUsing(fn (Plan $record): string => $record->track_uses
+                            ->formatStateUsing(fn (Plan $record): string => $record->limit_uses
                                 ? (string) ($record->uses_limit ?? 0)
                                 : __('app.fields.unlimited')),
                         TextEntry::make('description')

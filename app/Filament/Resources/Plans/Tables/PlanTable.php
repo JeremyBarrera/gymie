@@ -103,12 +103,12 @@ class PlanTable
                     ->searchable()
                     ->label(__('app.fields.amount'))
                     ->money(Helpers::getCurrencyCode()),
-                IconColumn::make('track_uses')
-                    ->label(__('app.fields.track_uses'))
+                IconColumn::make('limit_uses')
+                    ->label(__('app.fields.limit_uses'))
                     ->boolean(),
                 TextColumn::make('uses_limit')
                     ->label(__('app.fields.uses_limit'))
-                    ->formatStateUsing(fn (Plan $record): string => $record->track_uses
+                    ->formatStateUsing(fn (Plan $record): string => $record->limit_uses
                         ? (string) ($record->uses_limit ?? 0)
                         : __('app.fields.unlimited'))
                     ->placeholder(__('app.fields.unlimited')),

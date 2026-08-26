@@ -56,8 +56,8 @@ final class PlanSchema
             'amount' => ['required', 'numeric', 'min:0'],
             'days' => ['nullable', 'integer', 'min:1'],
             'status' => ['nullable', 'string'],
-            'track_uses' => ['nullable', 'boolean'],
-            'uses_limit' => ['nullable', 'integer', 'min:1', 'required_if:track_uses,true'],
+            'limit_uses' => ['nullable', 'boolean'],
+            'uses_limit' => ['nullable', 'integer', 'min:1', 'required_if:limit_uses,true'],
         ];
     }
 
@@ -75,8 +75,8 @@ final class PlanSchema
             'amount' => ['sometimes', 'numeric', 'min:0'],
             'days' => ['sometimes', 'nullable', 'integer', 'min:1'],
             'status' => ['sometimes', 'nullable', 'string'],
-            'track_uses' => ['sometimes', 'boolean'],
-            'uses_limit' => ['nullable', 'integer', 'min:1', 'required_if:track_uses,true'],
+            'limit_uses' => ['sometimes', 'boolean'],
+            'uses_limit' => ['nullable', 'integer', 'min:1', 'required_if:limit_uses,true'],
         ];
     }
 
@@ -93,8 +93,8 @@ final class PlanSchema
             'amount' => (float) ($plan->amount ?? 0),
             'days' => $plan->days !== null ? (int) $plan->days : null,
             'status' => Status::valueOf($plan->status),
-            'track_uses' => (bool) $plan->track_uses,
-            'uses_limit' => $plan->track_uses ? ($plan->uses_limit !== null ? (int) $plan->uses_limit : null) : null,
+            'limit_uses' => (bool) $plan->limit_uses,
+            'uses_limit' => $plan->limit_uses ? ($plan->uses_limit !== null ? (int) $plan->uses_limit : null) : null,
             'created_at' => $plan->created_at?->toISOString(),
             'updated_at' => $plan->updated_at?->toISOString(),
             'deleted_at' => $plan->deleted_at?->toISOString(),

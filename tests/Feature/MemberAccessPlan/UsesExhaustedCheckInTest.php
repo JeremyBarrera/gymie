@@ -42,7 +42,7 @@ function m5LimitedPlan(int $limit): Plan
     $service = Service::factory()->create();
     $plan = Plan::factory()->create([
         'amount' => 100,
-        'track_uses' => true,
+        'limit_uses' => true,
         'uses_limit' => $limit,
         'status' => Status::Active,
     ]);
@@ -137,7 +137,7 @@ it('keeps unlimited plans and subscriptions with uses left on access', function 
     $service = Service::factory()->create();
     $unlimitedPlan = Plan::factory()->create([
         'amount' => 50,
-        'track_uses' => false,
+        'limit_uses' => false,
         'status' => Status::Active,
     ]);
     $unlimitedPlan->services()->attach($service->id);
@@ -249,7 +249,7 @@ it('keeps the override step exclusive to no-access and uses-exhausted rows', fun
     $location = Location::factory()->create();
     $unlimitedPlan = Plan::factory()->create([
         'amount' => 50,
-        'track_uses' => false,
+        'limit_uses' => false,
         'status' => Status::Active,
     ]);
     $unlimitedPlan->services()->attach(Service::factory()->create(['name' => 'Crossfit'])->id);

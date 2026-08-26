@@ -66,7 +66,7 @@ it('allows unlimited check-ins when plan does not track uses', function (): void
     $member = Member::factory()->create(['status' => Status::Active->value]);
     $plan = Plan::factory()->create([
         'status' => Status::Active->value,
-        'track_uses' => false,
+        'limit_uses' => false,
         'uses_limit' => null,
     ]);
     attachPlanServices($plan);
