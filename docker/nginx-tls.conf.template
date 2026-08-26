@@ -8,6 +8,8 @@
 
 server {
     listen 80;
+    # Ops marker: identifies which door answered, regardless of redirects.
+    add_header X-Block duckdns always;
     server_name ${DUCKDNS_DOMAIN}.duckdns.org;
 
     # ACME challenge for issuance/renewal.
@@ -26,6 +28,7 @@ server {
 # /admin is answered with 404 so no admin surface exists on the internet.
 server {
     listen 80;
+    add_header X-Block funnel always;
     server_name ${FUNNEL_HOST};
 
     root /var/www/public;
@@ -67,8 +70,16 @@ server {
 # Default door — LAN IPs, tailnet hostnames, localhost. Full app including
 # the Filament admin panel; reachable only from private networks because the
 # ISP blocks inbound and the funnel maps exclusively to ${FUNNEL_HOST}.
+#
+# Port 81 is the ADMIN HTTPS door: tailscaled terminates TLS on :8443 for
+# tailnet devices (valid certificate -> camera capture works) and proxies
+# here. SERVER_PORT is rewritten so Laravel generates absolute URLs that
+# keep the :8443 origin, and HTTPS is asserted so sessions/cookies are
+# marked secure and URL::forceScheme applies.
 server {
     listen 80 default_server;
+    listen 81 default_server;
+    add_header X-Block private always;
 
     root /var/www/public;
     index index.php;
@@ -92,8 +103,14 @@ server {
     location ~ \.php$ {
         fastcgi_pass app:9000;
         fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
+        # Overrides must come AFTER the include - fastcgi_params sets
+        # SERVER_PORT from $server_port, and the admin door (:81) has to
+        # present as its public :8443 origin so URLs, secure cookies and
+        # the panel host-guard all agree.
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_param SERVER_PORT 8443;
+        fastcgi_param HTTPS on;
         fastcgi_hide_header X-Powered-By;
     }
 

@@ -98,7 +98,13 @@ class AppServiceProvider extends ServiceProvider
             return $date->year >= 1900 && $date->year <= 3000;
         }, 'The :attribute must be a valid date between 1900 and 3000.');
 
-        if (str_starts_with(Data::string(config('app.url')), 'https://') || $request->isSecure()) {
+        // Force https only on the internet-facing funnel door (Tailscale
+        // terminates TLS upstream, so generated links must be https/wss).
+        // Private doors (LAN IP, tailnet) keep the arriving scheme — forcing
+        // https there would bounce browsers at the placeholder certificate.
+        $funnelHost = rtrim((string) config('gymie.funnel_host'), '.');
+
+        if ($request->isSecure() || ($funnelHost !== '' && strcasecmp($request->getHost(), $funnelHost) === 0)) {
             URL::forceScheme('https');
         }
         $this->configureApiRateLimiting();

@@ -54,6 +54,7 @@ services:
         condition: service_completed_successfully
     ports:
       - "${HTTPS_PORT:-443}:443"
+      - "${ADMIN_PORT:-81}:81"
     entrypoint:
       - /bin/sh
       - -c
