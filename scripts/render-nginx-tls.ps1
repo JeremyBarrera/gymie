@@ -19,7 +19,11 @@ if ([string]::IsNullOrWhiteSpace($domain)) {
     Write-Error 'DUCKDNS_DOMAIN is empty in .env — fill it in before rendering.'
 }
 
+$funnelMatch = Select-String -Path $envFile -Pattern '^FUNNEL_HOST=(.*)$'
+$funnelHost = if ($funnelMatch) { $funnelMatch.Matches.Groups[1].Value.Trim() } else { '' }
+
 $rendered = (Get-Content $templatePath -Raw) -replace '\$\{DUCKDNS_DOMAIN\}', $domain
+$rendered = $rendered -replace '\$\{FUNNEL_HOST\}', $(if ($funnelHost) { $funnelHost } else { 'funnel-not-configured.invalid' })
 Set-Content -Path $renderedPath -Value $rendered -Encoding ASCII -NoNewline
 
-Write-Output "Rendered $renderedPath for ${domain}.duckdns.org"
+Write-Output "Rendered $renderedPath for ${domain}.duckdns.org$(if ($funnelHost) { " + funnel host $funnelHost" })"

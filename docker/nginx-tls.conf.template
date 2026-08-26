@@ -1,7 +1,10 @@
 # TLS server block for the DuckDNS + Let's Encrypt deployment (Phase 10).
-# Used by the webserver service when the `https` compose profile is active:
-# certificates are issued/renewed by the certbot sidecar into the shared
-# `certbot` volume; the ACME http-01 challenge is served from webroot.
+# Mounted as an nginx TEMPLATE so ${DUCKDNS_DOMAIN} is substituted by the
+# image's envsubst at container start (official nginx image processes
+# /etc/nginx/templates/*.template). Used by the webserver service when the
+# `https` compose override is active; certificates are issued/renewed by the
+# certbot sidecar into the shared volume; the ACME http-01 challenge is
+# served from webroot.
 
 server {
     listen 80;
@@ -17,6 +20,88 @@ server {
     }
 }
 
+# Tailscale Funnel vhost (TORO plan pivot: ISP blocks all inbound ports, so
+# public traffic arrives via tailscaled terminating TLS for *.ts.net and
+# proxying here over plain HTTP). This is the MEMBER-FACING door:
+# /admin is answered with 404 so no admin surface exists on the internet.
+server {
+    listen 80;
+    server_name ${FUNNEL_HOST};
+
+    root /var/www/public;
+    index index.php;
+
+    client_max_body_size 20m;
+    charset utf-8;
+
+    location /admin {
+        return 404;
+    }
+
+    location /app/ {
+        proxy_pass http://reverb:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 120s;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass app:9000;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+        fastcgi_hide_header X-Powered-By;
+    }
+
+    location ~ /\.(?!well-known) {
+        deny all;
+    }
+}
+
+# Default door — LAN IPs, tailnet hostnames, localhost. Full app including
+# the Filament admin panel; reachable only from private networks because the
+# ISP blocks inbound and the funnel maps exclusively to ${FUNNEL_HOST}.
+server {
+    listen 80 default_server;
+
+    root /var/www/public;
+    index index.php;
+
+    client_max_body_size 20m;
+    charset utf-8;
+
+    location /app/ {
+        proxy_pass http://reverb:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 120s;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass app:9000;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+        fastcgi_hide_header X-Powered-By;
+    }
+
+    location ~ /\.(?!well-known) {
+        deny all;
+    }
+}
+
 server {
     listen 443 ssl;
     http2 on;
@@ -26,6 +111,11 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/${DUCKDNS_DOMAIN}.duckdns.org/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers off;
+
+    # HSTS — browsers pin HTTPS for a year (TORO_GYM_PLAN Phase 4). Repeated
+    # in /build/ below because nginx add_header does not inherit into
+    # locations that declare their own headers.
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
     root /var/www/public;
     index index.php;
@@ -55,6 +145,7 @@ server {
     location /build/ {
         expires 1y;
         add_header Cache-Control "public, immutable";
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
         try_files $uri =404;
     }
 

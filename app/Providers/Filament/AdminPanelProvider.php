@@ -19,6 +19,7 @@ use App\Filament\Resources\Services\ServiceResource;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Filament\Shield\RoleResource;
+use App\Http\Middleware\RestrictPanelToPrivateHosts;
 use App\Http\Middleware\SetAppLocale;
 use App\Http\Middleware\SetCurrentLocation;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -108,6 +109,7 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                RestrictPanelToPrivateHosts::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

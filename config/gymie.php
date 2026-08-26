@@ -4,6 +4,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public funnel host
+    |--------------------------------------------------------------------------
+    |
+    | The internet-facing hostname served through Tailscale Funnel. Panel
+    | routes answer 404 for requests arriving with this host so no admin
+    | surface exists publicly; LAN and tailnet hostnames keep full access.
+    |
+    */
+
+    'funnel_host' => env('FUNNEL_HOST', ''),
+
+    /*
+    |--------------------------------------------------------------------------
     | Owner account
     |--------------------------------------------------------------------------
     |
