@@ -7,53 +7,59 @@ Laravel based web application for gym & club management. Currently being used by
 
 Gymie handles members, subscriptions, invoices, check-ins, and a live reception desk. Public QR codes let members check in or apply to join; staff claim and resolve the queue in real time.
 
-For developer setup, architecture, and advanced commands see [DEVELOPERS.md](DEVELOPERS.md). For a private deployment with real credentials, copy `DEPLOYMENT.example.md` to `DEPLOYMENT.md` (ignored by git) and fill in your host-specific values.
+## Quick Start (Docker)
 
-## Requirements
-- PHP >= 8.2
-- Laravel Framework ^12.0
-- Filament Admin Panel 5.x
-- Livewire ^3.0
-- nnjeim/world ^1.1
-- barryvdh/laravel-dompdf ^3.1
-- Laravel Herd _(optional for local development)_
+The only prerequisite is [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
-## Installation
 ```bash
-git clone git@github.com:JeremyBarrera/gymie
+git clone https://github.com/JeremyBarrera/gymie.git
 cd gymie
-composer install
-composer run prepare-env
+cp .env.example .env
 ```
 
-`prepare-env` copies `.env.example` to `.env` (if missing), clears config cache, generates `APP_KEY`, and links storage. Then configure `.env` database credentials and `APP_URL`.
+Edit `.env` — set at minimum:
+- `APP_URL` — your server's public URL (e.g. `http://192.168.1.100`)
+- `OWNER_NAME`, `OWNER_EMAIL`, `OWNER_PASSWORD` — your admin login
+- `DB_PASSWORD` — a strong random string
 
-Database setup:
+Then:
 
 ```bash
-composer run setup        # blank production setup (migrations + world data + Shield)
-composer run setup-demo   # demo data (erases existing data — local only)
+docker compose up -d
+docker compose exec app php artisan migrate --force
+docker compose exec app php artisan db:seed --class=WorldSeeder
+docker compose exec app php artisan db:seed --class=UserSeeder
+docker compose exec app php artisan shield:generate --all --panel=admin
 ```
 
-`setup` runs migrations, world data, Shield permissions, and creates the owner from `.env`. Demo credentials are `test@example.com` / `test`.
+Open `APP_URL` in your browser and log in with the owner credentials you set.
 
-## Quick Start (from zero)
+**What's running:** nginx (web), PHP-FPM (app), MySQL, Redis, Reverb (websockets), queue worker, scheduler, and nightly backups — all managed by Docker Compose.
+
+## HTTPS (optional)
+
+For production with TLS via DuckDNS + Let's Encrypt:
+
 ```bash
-git clone git@github.com:JeremyBarrera/gymie
-cd gymie
+# Add to .env: DUCKDNS_DOMAIN, DUCKDNS_TOKEN, LETSENCRYPT_EMAIL
+powershell -ExecutionPolicy Bypass -File scripts\render-nginx-tls.ps1
+docker compose -f docker-compose.yml -f docker-compose.https.yml --profile https up -d
+```
+
+## Local Development (without Docker)
+
+Requires PHP 8.2+, Composer, Node.js, and MySQL:
+
+```bash
 composer install
 composer run prepare-env
-# configure .env — set OWNER_NAME, OWNER_EMAIL, OWNER_PASSWORD, database, APP_URL
 composer run setup
 php artisan serve --host=0.0.0.0 --no-reload
 php artisan reverb:start
 php artisan queue:work
 ```
 
-`reverb` and `queue` are required for the live reception flow. On Windows use `.\start-dev.ps1` / `.\stop-dev.ps1` instead of three terminals.
-
-## Startup & First-Run Setup
-The owner account is created automatically from `.env` (`OWNER_NAME` / `OWNER_EMAIL` / `OWNER_PASSWORD`) during `composer run setup`. No manual owner-creation step needed.
+On Windows use `.\start-dev.ps1` / `.\stop-dev.ps1` to run all three processes.
 
 ## How It Works
 A location token powers public pages (`/checkin/{token}`, `/signup/{token}`) where members submit check-ins or sign-up forms. Each submission creates a queue entry that appears instantly on the Reception page; staff claim it so no two people handle the same guest, then approve or deny. Overrides, subscription use limits, and follow-up alerts are handled through the same flow.
@@ -67,8 +73,6 @@ vendor/bin/pint
 npm run dev     # hot reload while working on JS/CSS
 npm run build   # compiled bundle for production
 ```
-
-See [DEVELOPERS.md](DEVELOPERS.md) for resetting the database, owner handling, Reverb proxy, Docker, and production supervision.
 
 ## License
 Gymie is open-sourced under the [MIT license](LICENSE).

@@ -123,8 +123,12 @@ Rebuild frontend after changing `VITE_*`.
 
 ```bash
 cp .env.example .env
+# Edit .env: APP_URL, OWNER_NAME/EMAIL/PASSWORD, DB_PASSWORD
 docker compose up -d
 docker compose exec app php artisan migrate --force
+docker compose exec app php artisan db:seed --class=WorldSeeder
+docker compose exec app php artisan db:seed --class=UserSeeder
+docker compose exec app php artisan shield:generate --all --panel=admin
 ```
 
 Migrations are never automatic. Nightly backups land in the `backups` volume at 03:00. HTTPS via DuckDNS + Let's Encrypt:
