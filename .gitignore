@@ -26,3 +26,6 @@ yarn-error.log
 /storage/certs
 
 docker/nginx-tls.rendered.conf
+
+# Working planning documents stay local-only
+/*_PLAN.md
