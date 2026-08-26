@@ -1,22 +1,72 @@
 # HTTPS override for the DuckDNS + Let's Encrypt deployment.
 #
 # Usage (from the repo root, after DUCKDNS_DOMAIN / DUCKDNS_TOKEN /
-# LETSENCRYPT_EMAIL exist in .env):
+# LETSENCRYPT_EMAIL / DB_PASSWORD / MYSQL_ROOT_PASSWORD exist in .env):
 #
 #   powershell -File scripts\render-nginx-tls.ps1
-#   docker compose -f docker-compose.yml -f docker-compose.https.yml \
+#   docker compose -f docker-compose.yml -f docker-compose.https.yml `
 #       --profile https up -d
 #
-# The render script substitutes DUCKDNS_DOMAIN from .env into
-# docker/nginx-tls.rendered.conf (git-ignored); this override swaps the
-# plain-HTTP nginx config for that rendered TLS config and exposes the
-# certbot volumes read-only. Activate certbot with --profile https (the
-# sidecar is declared once, in docker-compose.yml). Nothing in
-# docker-compose.yml is edited.
+# What this override does:
+#   - tls-init: one-shot alpine container that generates a throwaway
+#     self-signed pair when no Let's Encrypt cert exists yet, so nginx can
+#     boot and serve the ACME challenge (chicken-and-egg fix). Certbot
+#     replaces it on first successful issuance.
+#   - webserver: swaps in the rendered TLS config, mounts the challenge +
+#     cert volumes read-only, and reloads nginx periodically so renewed
+#     certificates are picked up without manual action.
+#   - certbot: runs the mounted shell script instead of fragile inline YAML.
 
 services:
+  tls-init:
+    image: alpine:3.21
+    profiles: ["https"]
+    environment:
+      - DUCKDNS_DOMAIN=${DUCKDNS_DOMAIN}
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+    command:
+      - /bin/sh
+      - -c
+      - |
+        apk add --no-cache openssl >/dev/null || exit 1
+        D="/etc/letsencrypt/live/$${DUCKDNS_DOMAIN}.duckdns.org"
+        if [ ! -f "$$D/fullchain.pem" ]; then
+          mkdir -p "$$D"
+          openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
+            -keyout "$$D/privkey.pem" -out "$$D/fullchain.pem" \
+            -subj "/CN=$${DUCKDNS_DOMAIN}.duckdns.org" \
+          || exit 1
+          echo "[tls-init] placeholder certificate generated"
+        else
+          echo "[tls-init] real certificate already present"
+        fi
+
   webserver:
+    depends_on:
+      tls-init:
+        condition: service_completed_successfully
+    ports:
+      - "${HTTPS_PORT:-443}:443"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        ( sleep 120; while :; do nginx -s reload 2>/dev/null || true; sleep 6h; done ) &
+        exec nginx -g "daemon off;"
+    environment:
+      - DUCKDNS_DOMAIN=${DUCKDNS_DOMAIN}
     volumes:
       - ./docker/nginx-tls.rendered.conf:/etc/nginx/conf.d/default.conf:ro
       - certbot-www:/var/www/certbot:ro
       - certbot-etc:/etc/letsencrypt:ro
+
+  certbot:
+    environment:
+      - DUCKDNS_DOMAIN=${DUCKDNS_DOMAIN}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    volumes:
+      - ./docker/certbot-entrypoint.sh:/usr/local/bin/certbot-entrypoint.sh:ro
+    entrypoint:
+      - /bin/sh
+      - /usr/local/bin/certbot-entrypoint.sh
