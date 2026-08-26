@@ -301,6 +301,14 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api-signup', function (Request $request): Limit {
             return Limit::perMinute(10)->by((string) $request->ip());
         });
+
+        RateLimiter::for('scan-page', function (Request $request): Limit {
+            return Limit::perMinute(60)->by((string) $request->ip());
+        });
+
+        RateLimiter::for('scan-submit', function (Request $request): Limit {
+            return Limit::perMinute(30)->by((string) $request->ip());
+        });
     }
 
     /**

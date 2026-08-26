@@ -22,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->throttleApi();
+
         // Plain cookies written by resources/js/device-locale.js must not be
         // encrypted by the framework's EncryptCookies middleware.
         $middleware->encryptCookies(except: [
