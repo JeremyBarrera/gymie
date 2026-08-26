@@ -104,7 +104,8 @@ services:
     # Alpine + MariaDB client (speaks caching_sha2_password to MySQL 8) +
     # busybox crond. Nightly 03:00 single-transaction dump into a dedicated
     # volume, independent of the live DB volume (disaster recovery + prod
-    # data copies for dev/migration testing - Phase 10.5).
+    # data copies for dev/migration testing - Phase 10.5). Dumps older than
+    # 14 days are pruned at 03:30 so the volume cannot fill the disk.
     image: alpine:3.21
     restart: unless-stopped
     environment:
@@ -115,6 +116,7 @@ services:
       /bin/sh -c '
       apk add --no-cache mariadb-client >/dev/null
       && echo "0 3 * * * mysqldump -h db -u root --single-transaction ${DB_DATABASE} > /backups/${DB_DATABASE}-\$$(date +%Y%m%d).sql" > /etc/crontabs/root
+      && echo "30 3 * * * find /backups -type f -name \"*.sql\" -mtime +13 -delete" >> /etc/crontabs/root
       && crond -f -l 2'
     depends_on:
       db:
