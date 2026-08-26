@@ -151,7 +151,7 @@ class CheckInScanController extends Controller
 
         $matches = match ($identifierType) {
             'contact' => $this->lookupMembersByContact($value),
-            'government_id' => Member::where('government_id', $value)->orderBy('id')->get(),
+            'government_id' => Member::query()->whereGovernmentId($value)->orderBy('id')->get(),
             'code' => Member::where('code', $value)->orderBy('id')->get(),
         };
 

@@ -2,6 +2,7 @@
 
 namespace App\Services\Api;
 
+use App\Support\BlindIndex;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -216,10 +217,14 @@ final class QueryFilters
     /**
      * Apply a simple multi-column "contains" search using `?q=...`.
      *
+     * Columns may be declared as `column => mode` with mode `like`
+     * (default) or `hmac` for encrypted columns matched via their blind
+     * index hash.
+     *
      * @template TModel of \Illuminate\Database\Eloquent\Model
      *
      * @param  Builder<TModel>  $query
-     * @param  list<string>  $columns
+     * @param  array<int|string, string>  $columns
      * @return Builder<TModel>
      */
     public static function applySearch(Builder $query, ?string $q, array $columns): Builder
@@ -231,7 +236,13 @@ final class QueryFilters
         }
 
         return $query->where(function (Builder $sub) use ($q, $columns): void {
-            foreach ($columns as $column) {
+            foreach ($columns as $key => $column) {
+                if (is_string($key) && $column === 'hmac') {
+                    $sub->orWhere($key, BlindIndex::compute($q));
+
+                    continue;
+                }
+
                 $sub->orWhere($column, 'like', "%{$q}%");
             }
         });

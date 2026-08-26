@@ -97,9 +97,12 @@ it('broadcasts QueueEntryResolved on both staff and member channels', function (
     expect($channels[1]->name)->toContain('queue.');
 });
 
-it('registers the location and queue uuid channels', function (): void {
+it('registers the private location channel and keeps queue.{uuid} public', function (): void {
     channelClosure('location.{token}');
-    channelClosure('queue.{uuid}');
+
+    $broadcaster = app('Illuminate\Broadcasting\BroadcastManager')->connection();
+
+    expect($broadcaster->getChannels()['queue.{uuid}'] ?? null)->toBeNull();
 });
 
 it('authorizes a staff member attached to the location on the private channel', function (): void {
@@ -153,10 +156,22 @@ it('authorizes an owner with no user_locations row for the private channel', fun
     expect($closure($owner, $token->token))->toBeTrue();
 });
 
-it('allows anyone to subscribe to the public queue uuid channel', function (): void {
-    $closure = channelClosure('queue.{uuid}');
+it('resolves queue entries for waiting visitors without exposing applicant PII', function (): void {
+    $event = new QueueEntryResolved(
+        1,
+        Str::uuid()->toString(),
+        'loc-token-1',
+        'signup',
+        ['name' => 'Applicant Name', 'government_id' => 'ID-1234567890'],
+        true,
+        null,
+    );
 
-    expect($closure(User::factory()->create(), Str::uuid()->toString()))->toBeTrue();
+    $channels = collect($event->broadcastOn())->map(fn ($channel) => $channel->name)->all();
+
+    expect($channels)->toContain('queue.'.$event->uuid)
+        ->and(array_key_exists('payload', $event->broadcastWith()))->toBeFalse()
+        ->and($event->broadcastWith())->not->toContain('Applicant Name');
 });
 
 it('authorizes only the owning user on the private user channel', function (): void {

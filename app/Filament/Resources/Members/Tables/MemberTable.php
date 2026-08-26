@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Members\Tables;
 use App\Events\MemberBanChanged;
 use App\Models\LocationToken;
 use App\Models\Member;
+use App\Support\BlindIndex;
 use App\Support\Dates\DeviceDateFormat;
 use Carbon\Carbon;
 use Filament\Actions\Action;
@@ -140,7 +141,10 @@ class MemberTable
                     ->searchable()
                     ->label(__('app.fields.email')),
                 TextColumn::make('government_id')
-                    ->searchable()
+                    ->searchable(query: fn (Builder $query, string $search): Builder => $query->where(
+                        'government_id_hash',
+                        BlindIndex::compute($search),
+                    ))
                     ->label(__('app.fields.government_id')),
                 TextColumn::make('gender')
                     ->searchable()

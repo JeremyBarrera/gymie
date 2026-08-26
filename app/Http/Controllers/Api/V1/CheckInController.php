@@ -42,7 +42,7 @@ class CheckInController extends ApiController
 
         $member = match ($identifierType) {
             'contact' => $this->lookupMemberByContact($value),
-            'government_id' => Member::where('government_id', $value)->first(),
+            'government_id' => Member::query()->whereGovernmentId($value)->first(),
             'code' => Member::where('code', $value)->first(),
         };
 

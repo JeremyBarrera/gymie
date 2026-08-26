@@ -71,13 +71,13 @@ class MergeDuplicateMembers extends Command
 
         $mergedCount = 0;
 
-        foreach ($duplicateGovernmentIds as $governmentId) {
-            $members = $this->membersWithGovernmentId((string) $governmentId);
+        foreach ($duplicateGovernmentIds as $governmentIdHash) {
+            $members = $this->membersWithGovernmentId((string) $governmentIdHash);
 
             $canonical = $this->pickCanonical($members);
 
             $this->line('');
-            $this->line("Government ID: {$governmentId}");
+            $this->line("Government ID: {$canonical->government_id}");
             $this->renderGroup($members, $canonical);
 
             $proceed = $dryRun || $this->confirm(
@@ -115,21 +115,21 @@ class MergeDuplicateMembers extends Command
     {
         return Member::query()
             ->withoutGlobalScope('location')
-            ->select('government_id')
-            ->whereNotNull('government_id')
-            ->groupBy('government_id')
+            ->select('government_id_hash')
+            ->whereNotNull('government_id_hash')
+            ->groupBy('government_id_hash')
             ->havingRaw('COUNT(*) > 1')
-            ->pluck('government_id');
+            ->pluck('government_id_hash');
     }
 
     /**
      * @return Collection<int, Member>
      */
-    private function membersWithGovernmentId(string $governmentId): Collection
+    private function membersWithGovernmentId(string $governmentIdHash): Collection
     {
         return Member::query()
             ->withoutGlobalScope('location')
-            ->where('government_id', $governmentId)
+            ->where('government_id_hash', $governmentIdHash)
             ->orderBy('id')
             ->get();
     }

@@ -39,7 +39,7 @@ final class ResourceQueryRules
     ];
 
     /**
-     * @return list<string>
+     * @return array<int|string, string>
      */
     public static function searchable(string $resourceKey): array
     {
@@ -82,7 +82,7 @@ final class ResourceQueryRules
 
     /**
      * @return array{
-     *   searchable: list<string>,
+     *   searchable: array<int|string, string>,
      *   sortable: list<string>,
      *   default_sort: string,
      *   status_column: string|null,
@@ -103,7 +103,7 @@ final class ResourceQueryRules
         }
 
         /** @var array{
-         *   searchable: list<string>,
+         *   searchable: array<int|string, string>,
          *   sortable: list<string>,
          *   default_sort: string,
          *   status_column: string|null,

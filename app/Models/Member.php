@@ -7,6 +7,7 @@ use App\Helpers\Helpers;
 use App\Models\Concerns\CascadesSoftDeletes;
 use App\Models\Concerns\ScopedByLocation;
 use App\Support\AppConfig;
+use App\Support\BlindIndex;
 use Database\Factories\MemberFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -71,7 +72,7 @@ class Member extends Model
         'ban_reason',
     ];
 
-    protected $casts = ['dob' => 'date', 'status' => Status::class];
+    protected $casts = ['dob' => 'date', 'status' => Status::class, 'government_id' => 'encrypted'];
 
     /**
      * The attributes that should be mutated to dates.
@@ -173,6 +174,19 @@ class Member extends Model
     }
 
     /**
+     * Exact-match scope against the encrypted government ID via its blind
+     * index. Null/blank values match rows without a government ID.
+     */
+    public function scopeWhereGovernmentId(Builder $query, ?string $value): Builder
+    {
+        $hash = BlindIndex::compute($value);
+
+        return filled($hash)
+            ? $query->where('government_id_hash', $hash)
+            : $query->whereNull('government_id_hash');
+    }
+
+    /**
      * Find a member that is a duplicate of the given identifiers: the
      * member's name, contact, government ID and email must ALL match the
      * submitted values (empty values only match empty values). `contact`
@@ -210,19 +224,20 @@ class Member extends Model
             })
             ->where(function (Builder $query) use ($governmentId): void {
                 filled($governmentId)
-                    ? $query->where('government_id', $governmentId)
-                    : $query->whereNull('government_id');
+                    ? $query->where('government_id_hash', BlindIndex::compute($governmentId))
+                    : $query->whereNull('government_id_hash');
             })
             ->first();
     }
 
     /**
      * Shared identifier search for staff-facing member pickers and the
-     * reception walk-up check-in: matches name, member code, government
-     * ID and contact. Contact matches the raw term plus its normalized
-     * phone form, so a number typed without the country code still finds
-     * members stored with one. Queries run through the location global
-     * scope (accessible locations / current TenantContext location).
+     * reception walk-up check-in: matches name, member code, contact and
+     * government ID. Contact matches the raw term plus its normalized
+     * phone form; the government ID matches exactly (encrypted at rest,
+     * so partial matching is not possible). Queries run through the
+     * location global scope (accessible locations / current TenantContext
+     * location).
      *
      * @return Collection<int, self>
      */
@@ -235,12 +250,12 @@ class Member extends Model
             ->where(function (Builder $query) use ($term, $normalizedPhone): void {
                 $query->where('name', 'like', "%{$term}%")
                     ->orWhere('code', 'like', "%{$term}%")
-                    ->orWhere('government_id', 'like', "%{$term}%")
                     ->orWhere('contact', 'like', "%{$term}%")
                     ->when(
                         filled($normalizedPhone) && $normalizedPhone !== $term,
                         fn (Builder $phoneQuery): Builder => $phoneQuery->orWhere('contact', $normalizedPhone),
-                    );
+                    )
+                    ->orWhere('government_id_hash', BlindIndex::compute($term));
             })
             ->orderBy('name')
             ->limit($limit)
@@ -265,6 +280,10 @@ class Member extends Model
         static::saving(function (self $member): void {
             if (! $member->code) {
                 $member->code = Helpers::generateLastNumber('member', Member::class, null, 'code');
+            }
+
+            if ($member->isDirty('government_id')) {
+                $member->government_id_hash = BlindIndex::compute($member->government_id);
             }
         });
     }

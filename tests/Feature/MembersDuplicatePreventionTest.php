@@ -45,7 +45,7 @@ it('allows API member creation when only the government ID matches another membe
         'status' => 'active',
     ])->assertStatus(201);
 
-    expect(Member::query()->withoutGlobalScope('location')->where('government_id', 'ID-API-1')->count())->toBe(2);
+    expect(Member::query()->withoutGlobalScope('location')->whereGovernmentId('ID-API-1')->count())->toBe(2);
 });
 
 it('allows an API member update to a government ID owned by a member elsewhere', function (): void {
@@ -68,7 +68,7 @@ it('allows an API member update to a government ID owned by a member elsewhere',
     ])->assertStatus(200);
 
     expect($member->refresh()->government_id)->toBe('ID-API-2')
-        ->and(Member::query()->withoutGlobalScope('location')->where('government_id', 'ID-API-2')->count())->toBe(2);
+        ->and(Member::query()->withoutGlobalScope('location')->whereGovernmentId('ID-API-2')->count())->toBe(2);
 });
 
 it('does not block signup approval when only the government ID matches but name differs', function (): void {
@@ -142,7 +142,12 @@ it('allows multiple members with the same government ID at the database level', 
     Member::factory()->create(['government_id' => 'ID-SHARED', 'name' => 'First Person']);
     Member::factory()->create(['government_id' => 'ID-SHARED', 'name' => 'Second Person']);
 
-    expect(DB::table('members')->where('government_id', 'ID-SHARED')->count())->toBe(2);
+    $rawValues = DB::table('members')->whereNotNull('government_id')->pluck('government_id');
+
+    expect($rawValues)->toHaveCount(2)
+        ->and($rawValues->map(fn ($value) => str_starts_with((string) $value, 'eyJ')))->each->toBeTrue()
+        ->and($rawValues->unique()->count())->toBe(2)
+        ->and(Member::query()->withoutGlobalScope('location')->whereGovernmentId('ID-SHARED')->count())->toBe(2);
 });
 
 it('still allows multiple members without a government ID', function (): void {

@@ -21,7 +21,7 @@ final class MemberSchema
 
     /**
      * @return array{
-     *   searchable: list<string>,
+     *   searchable: array<int|string, string>,
      *   sortable: list<string>,
      *   default_sort: string,
      *   status_column: string|null,
@@ -32,7 +32,9 @@ final class MemberSchema
     public static function queryRules(): array
     {
         return [
-            'searchable' => ['code', 'name', 'email', 'government_id', 'contact'],
+            // `government_id` is encrypted at rest and matched through its
+            // blind index, so it searches as exact `hmac`, not `like`.
+            'searchable' => ['code', 'name', 'email', 'government_id' => 'hmac', 'contact'],
             'sortable' => ['id', 'created_at', 'name'],
             'default_sort' => '-id',
             'status_column' => 'status',
