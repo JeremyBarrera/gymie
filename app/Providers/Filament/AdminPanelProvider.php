@@ -195,6 +195,12 @@ class AdminPanelProvider extends PanelProvider
                         Blade::render('@livewire(\\App\\Filament\\Livewire\\LiveSignupPopup::class, [], key(\'live-signup-popup\'))')
                     );
                 },
+            )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): HtmlString => new HtmlString(
+                    Blade::render('@include(\'filament.pages.partials.photo-zoom-modal\')')
+                ),
             );
     }
 

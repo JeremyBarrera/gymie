@@ -313,6 +313,8 @@ return [
         'member_details' => 'Detalles del miembro',
         'member_info' => 'Información del miembro',
         'first_sale_required' => 'Cada miembro se crea con un plan de membresía y una factura.',
+        'zoom_photo' => 'Ampliar foto',
+        'press_escape_to_close' => 'Presiona Escape para cerrar',
     ],
     'options' => [
         'all_locations' => 'Todas las ubicaciones',

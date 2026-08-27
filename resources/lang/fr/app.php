@@ -313,6 +313,8 @@ return [
         'member_details' => 'Détails du membre',
         'member_info' => 'Informations du membre',
         'first_sale_required' => 'Chaque membre est créé avec un plan d’adhésion et une facture.',
+        'zoom_photo' => 'Agrandir la photo',
+        'press_escape_to_close' => 'Appuyez sur Échap pour fermer',
     ],
     'options' => [
         'all_locations' => 'Tous les emplacements',

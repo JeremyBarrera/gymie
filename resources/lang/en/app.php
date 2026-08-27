@@ -313,6 +313,8 @@ return [
         'member_details' => 'Member details',
         'member_info' => 'Member information',
         'first_sale_required' => 'Every member is created with a membership plan and invoice.',
+        'zoom_photo' => 'Zoom photo',
+        'press_escape_to_close' => 'Press Escape to close',
     ],
     'options' => [
         'all_locations' => 'All Locations',

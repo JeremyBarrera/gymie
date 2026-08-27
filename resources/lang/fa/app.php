@@ -313,6 +313,8 @@ return [
         'member_details' => 'جزئیات عضو',
         'member_info' => 'اطلاعات عضو',
         'first_sale_required' => 'هر عضو با یک طرح عضویت و فاکتور ایجاد می‌شود.',
+        'zoom_photo' => 'بزرگ‌نمایی عکس',
+        'press_escape_to_close' => 'برای بستن Escape را بفشارید',
     ],
     'options' => [
         'all_locations' => 'همه مکان‌ها',

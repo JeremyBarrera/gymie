@@ -313,6 +313,8 @@ return [
         'member_details' => 'تفاصيل العضو',
         'member_info' => 'معلومات العضو',
         'first_sale_required' => 'يتم إنشاء كل عضو مع خطة عضوية وفاتورة.',
+        'zoom_photo' => 'تكبير الصورة',
+        'press_escape_to_close' => 'اضغط Escape للإغلاق',
     ],
     'options' => [
         'all_locations' => 'جميع المواقع',

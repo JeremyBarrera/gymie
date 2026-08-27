@@ -6,8 +6,9 @@
 @if($member?->photo)
     <img
         src="{{ asset('storage/'.$member->photo) }}"
-        class="{{ $avatarSizeClass }} shrink-0 rounded-lg object-cover"
+        class="{{ $avatarSizeClass }} shrink-0 rounded-lg object-contain cursor-pointer"
         alt="{{ $alt ?? $member->name }}"
+        x-on:click="$dispatch('open-photo-zoom', { src: '{{ asset('storage/'.$member->photo) }}', alt: '{{ $alt ?? $member->name }}' })"
     >
 @else
     <span class="fi-color fi-color-primary flex {{ $avatarSizeClass }} shrink-0 items-center justify-center rounded-lg">
