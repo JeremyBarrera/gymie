@@ -54,6 +54,7 @@ class MemberApplicationService
     {
         return [
             'plan_id' => ['required', 'integer', Rule::exists('plans', 'id')],
+            'quantity' => ['nullable', 'integer', 'min:1'],
             'start_date' => ['required', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'invoices' => ['required', 'array', 'min:1'],

@@ -7,6 +7,10 @@
 FROM php:8.5-fpm-alpine AS build
 
 # Extension build dependencies + Node for the asset pipeline.
+ARG VITE_REVERB_APP_KEY
+ARG VITE_REVERB_HOST
+ARG VITE_REVERB_PORT
+ARG VITE_REVERB_SCHEME
 RUN apk add --no-cache \
         icu-dev \
         libzip-dev \

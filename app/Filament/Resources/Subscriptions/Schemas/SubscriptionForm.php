@@ -225,7 +225,6 @@ class SubscriptionForm
                                                 ->default(0)
                                                 ->prefix(Helpers::getCurrencySymbol())
                                                 ->extraAttributes(['class' => 'verify-money-input'])
-                                                ->visible(fn (Get $get): bool => ! PaymentMethod::isOnline(self::stringState($get, 'payment_method')))
                                                 ->afterStateUpdated(function (Get $get, Set $set, $livewire, TextInput $component) {
                                                     $livewire->validateOnly($component->getStatePath());
                                                     self::recalculateInvoiceSummary($get, $set);
@@ -238,10 +237,6 @@ class SubscriptionForm
                                                 ->inlineLabel(false)
                                                 ->live()
                                                 ->afterStateUpdated(function (Get $get, Set $set, ?string $state): void {
-                                                    if (PaymentMethod::isOnline($state)) {
-                                                        $set('paid_amount', 0);
-                                                    }
-
                                                     self::recalculateInvoiceSummary($get, $set);
                                                 })
                                                 ->required(),
@@ -446,7 +441,6 @@ class SubscriptionForm
                                 ->default(0)
                                 ->prefix(Helpers::getCurrencySymbol())
                                 ->extraAttributes(['class' => 'verify-money-input'])
-                                ->visible(fn (Get $get): bool => ! PaymentMethod::isOnline(self::stringState($get, 'payment_method')))
                                 ->afterStateUpdated(function (Get $get, Set $set): void {
                                     self::recalculateRenewInvoiceSummary($get, $set);
                                 }),
@@ -458,10 +452,6 @@ class SubscriptionForm
                                 ->inlineLabel(false)
                                 ->live()
                                 ->afterStateUpdated(function (Get $get, Set $set, ?string $state): void {
-                                    if (PaymentMethod::isOnline($state)) {
-                                        $set('paid_amount', 0);
-                                    }
-
                                     self::recalculateRenewInvoiceSummary($get, $set);
                                 })
                                 ->required(),
@@ -563,9 +553,6 @@ class SubscriptionForm
 
             $paymentMethod = Data::nullableString($data['payment_method'] ?? null);
             $paidAmount = max(Data::float($data['paid_amount'] ?? 0), 0);
-            if (PaymentMethod::isOnline($paymentMethod)) {
-                $paidAmount = 0;
-            }
 
             $invoiceDate = Carbon::parse(Data::string($data['invoice_date'] ?? null))->toDateString();
             $invoiceDueDate = Carbon::parse(Data::string($data['invoice_due_date'] ?? $invoiceDate))->toDateString();
@@ -615,11 +602,6 @@ class SubscriptionForm
 
         $discountAmount = self::floatState($get, 'discount_amount');
         $paid = self::floatState($get, 'paid_amount');
-
-        $paymentMethod = self::stringState($get, 'payment_method');
-        if (PaymentMethod::isOnline($paymentMethod)) {
-            $paid = 0;
-        }
 
         $summary = InvoiceCalculator::summary(
             $fee,

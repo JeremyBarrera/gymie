@@ -8,7 +8,7 @@ set -e
 
 # Storage symlinks + writable runtime dirs (named volumes may start empty).
 php artisan storage:link || true
-mkdir -p storage/framework/{cache/data,sessions,views} storage/logs bootstrap/cache
+mkdir -p storage/app/public storage/framework/{cache/data,sessions,views} storage/logs bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 
 # Production caches (config:cache bakes env — the container reads env from

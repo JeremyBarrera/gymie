@@ -966,10 +966,11 @@ class Helpers
     }
 
     /**
-     * Given a subscription start date and a plan ID, return the Y-m-d end date
-     * (or empty string if no valid plan/days).
+     * Given a subscription start date, a plan ID and a quantity (number of
+     * plan periods), return the Y-m-d end date (or empty string if no valid
+     * plan/days). Quantity > 1 extends the end date by that many periods.
      */
-    public static function calculateSubscriptionEndDate(?string $startDate, ?int $planId): string
+    public static function calculateSubscriptionEndDate(?string $startDate, ?int $planId, int $quantity = 1): string
     {
         if (! $startDate || ! $planId) {
             return '';
@@ -980,8 +981,10 @@ class Helpers
             return '';
         }
 
+        $quantity = max(1, $quantity);
+
         return Carbon::parse($startDate)
-            ->addDays((int) $plan->days)
+            ->addDays((int) $plan->days * $quantity)
             ->toDateString();
     }
 }

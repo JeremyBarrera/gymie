@@ -7,7 +7,6 @@ use App\Models\Invoice;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Support\AppConfig;
-use App\Support\Billing\PaymentMethod;
 use App\Support\Data;
 use Carbon\Carbon;
 
@@ -90,10 +89,6 @@ class SubscriptionRenewalService
 
             $paymentMethod = Data::nullableString($invoiceData['payment_method'] ?? null);
             $paidAmount = max(Data::float($invoiceData['paid_amount'] ?? 0), 0);
-
-            if (PaymentMethod::isOnline($paymentMethod)) {
-                $paidAmount = 0;
-            }
 
             $invoiceDate = Carbon::parse(Data::string($invoiceData['date'] ?? $startDate))->toDateString();
             $invoiceDueDate = Carbon::parse(Data::string($invoiceData['due_date'] ?? $invoiceDate))->toDateString();

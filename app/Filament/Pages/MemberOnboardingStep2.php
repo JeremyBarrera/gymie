@@ -11,7 +11,6 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Support\AppConfig;
 use App\Support\Billing\InvoiceCalculator;
-use App\Support\Billing\PaymentMethod;
 use App\Support\Data;
 use Carbon\Carbon;
 use Filament\Actions\Action;
@@ -283,7 +282,6 @@ class MemberOnboardingStep2 extends Page implements HasForms
                                         ->default(0)
                                         ->prefix(Helpers::getCurrencySymbol())
                                         ->extraAttributes(['class' => 'verify-money-input'])
-                                        ->visible(fn (Get $get): bool => ! PaymentMethod::isOnline(self::stringState($get, 'payment_method')))
                                         ->afterStateUpdated(function (Get $get, Set $set, $livewire, TextInput $component) {
                                             $livewire->validateOnly($component->getStatePath());
                                             self::recalculateInvoiceSummary($get, $set);
@@ -296,10 +294,6 @@ class MemberOnboardingStep2 extends Page implements HasForms
                                         ->inlineLabel(false)
                                         ->live()
                                         ->afterStateUpdated(function (Get $get, Set $set, ?string $state): void {
-                                            if (PaymentMethod::isOnline($state)) {
-                                                $set('paid_amount', 0);
-                                            }
-
                                             self::recalculateInvoiceSummary($get, $set);
                                         })
                                         ->required(),
@@ -393,10 +387,12 @@ class MemberOnboardingStep2 extends Page implements HasForms
                 : [];
 
             $plan = Plan::findOrFail(Data::int($validated['plan_id'] ?? null));
+            $quantity = max(1, Data::int($validated['quantity'] ?? 1));
             $startDate = Carbon::parse(Data::string($validated['start_date'] ?? null))->toDateString();
-            // Evergreen plans (no day count) have no end date at all.
+            // Evergreen plans (no day count) have no end date at all; quantity
+            // extends the end date by that many plan periods.
             $endDate = Data::string($validated['end_date'] ?? null)
-                ?: ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id)));
+                ?: ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id), $quantity));
 
             $status = Carbon::parse($startDate)->gt(Carbon::today(AppConfig::timezone()))
                 ? 'upcoming'
@@ -412,7 +408,7 @@ class MemberOnboardingStep2 extends Page implements HasForms
             ]);
 
             // Create invoice
-            $fee = round(Data::float($plan->amount));
+            $fee = round(Data::float($plan->amount) * $quantity);
             $discountPct = max(Data::int($invoiceData['discount'] ?? 0), 0);
             $discountAmount = Data::float($invoiceData['discount_amount'] ?? 0);
             $discountAmount = min(max($discountAmount, 0), $fee);
@@ -422,9 +418,6 @@ class MemberOnboardingStep2 extends Page implements HasForms
 
             $paymentMethod = Data::nullableString($invoiceData['payment_method'] ?? null);
             $paidAmount = max(Data::float($invoiceData['paid_amount'] ?? 0), 0);
-            if (PaymentMethod::isOnline($paymentMethod)) {
-                $paidAmount = 0;
-            }
 
             $invoiceDate = Carbon::parse(Data::string($invoiceData['date'] ?? null))->toDateString();
             $invoiceDueDate = Carbon::parse(Data::string($invoiceData['due_date'] ?? $invoiceDate))->toDateString();
@@ -469,11 +462,6 @@ class MemberOnboardingStep2 extends Page implements HasForms
 
         $discountAmount = self::floatState($get, 'discount_amount');
         $paid = self::floatState($get, 'paid_amount');
-
-        $paymentMethod = self::stringState($get, 'payment_method');
-        if (PaymentMethod::isOnline($paymentMethod)) {
-            $paid = 0;
-        }
 
         $summary = InvoiceCalculator::summary(
             $fee,

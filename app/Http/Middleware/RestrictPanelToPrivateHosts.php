@@ -30,6 +30,10 @@ class RestrictPanelToPrivateHosts
         $isAdminDoor = $request->getPort() === self::ADMIN_PORT;
 
         if (! $isAdminDoor && $funnelHost !== '' && strcasecmp($request->getHost(), $funnelHost) === 0) {
+            if ($request->is('broadcasting/auth')) {
+                return $next($request);
+            }
+
             abort(404);
         }
 

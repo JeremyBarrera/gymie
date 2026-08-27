@@ -17,6 +17,7 @@ use App\Services\Membership\PlanCheckInService;
 use App\Support\Billing\InvoiceCalculator;
 use App\Support\Billing\PaymentMethod;
 use App\Support\Locations\LocationAccess;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -284,7 +285,8 @@ trait HandlesSignupVerification
     {
         return [
             'plan_id' => null,
-            'start_date' => null,
+            'quantity' => 1,
+            'start_date' => now()->toDateString(),
             'end_date' => null,
             'payment_method' => 'cash',
             'discount_amount' => 0,
@@ -302,19 +304,16 @@ trait HandlesSignupVerification
 
         $planId = is_numeric($sale['plan_id'] ?? null) ? (int) $sale['plan_id'] : null;
         $startDate = (string) ($sale['start_date'] ?? '');
+        $quantity = max(1, (int) ($sale['quantity'] ?? 1));
         $plan = $planId !== null ? Plan::find($planId) : null;
 
-        $fee = $plan ? (float) $plan->amount : 0.0;
+        $fee = $plan ? (float) $plan->amount * $quantity : 0.0;
         $endDate = ($plan && $startDate)
-            ? Helpers::calculateSubscriptionEndDate($startDate, $planId)
+            ? Helpers::calculateSubscriptionEndDate($startDate, $planId, $quantity)
             : null;
 
         $discount = min(max((float) ($sale['discount_amount'] ?? 0), 0), $fee);
         $paid = (float) ($sale['paid_amount'] ?? 0);
-
-        if (PaymentMethod::isOnline((string) ($sale['payment_method'] ?? ''))) {
-            $paid = 0;
-        }
 
         $summary = InvoiceCalculator::summary($fee, Helpers::getTaxRate() ?: 0, $discount, $paid);
 
@@ -410,14 +409,9 @@ trait HandlesSignupVerification
         );
 
         if ($this->verifyCheckIn) {
-            $this->verifyCreatedMember = $member;
-            $this->verifyStep = 4;
-
-            // Auto-select the service if there's exactly one option.
-            $services = $this->verifyCheckInServices;
-            if (count($services) === 1) {
-                $this->verifyCheckInServiceId = (int) $services[0]['id'];
-            }
+            $memberCreated = $member;
+            $this->resetVerifyOverlay();
+            $this->beginManualCheckIn(new Collection([$memberCreated]));
 
             return;
         }
@@ -522,6 +516,7 @@ trait HandlesSignupVerification
 
         return [
             'plan_id' => (int) $sale['plan_id'],
+            'quantity' => max(1, (int) ($sale['quantity'] ?? 1)),
             'start_date' => (string) ($sale['start_date'] ?? $today),
             'end_date' => $sale['end_date'] ?: null,
             'invoices' => [[

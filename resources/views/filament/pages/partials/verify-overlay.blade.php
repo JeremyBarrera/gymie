@@ -217,6 +217,15 @@
                         </div>
 
                         <div class="grid gap-y-1.5">
+                            <label for="verify-quantity" class="fi-text text-sm font-medium">
+                                {{ __('app.fields.quantity') }}
+                            </label>
+                            <x-filament::input.wrapper>
+                                <x-filament::input type="number" id="verify-quantity" class="verify-money-input" min="1" step="1" wire:model.live.debounce.500ms="verifyForm.sale.quantity" />
+                            </x-filament::input.wrapper>
+                        </div>
+
+                        <div class="grid gap-y-1.5">
                             <label for="verify-start-date" class="fi-text text-sm font-medium">
                                 {{ __('app.fields.start_date') }}
                             </label>
@@ -225,7 +234,7 @@
                             </x-filament::input.wrapper>
                         </div>
 
-                        <div class="grid gap-y-1.5">
+                        <div class="grid gap-y-1.5 sm:col-span-2">
                             <label for="verify-end-date" class="fi-text text-sm font-medium">
                                 {{ __('app.fields.end_date') }}
                             </label>

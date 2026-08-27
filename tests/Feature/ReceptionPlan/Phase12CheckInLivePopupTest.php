@@ -14,6 +14,7 @@ use App\Models\QueueEntry;
 use App\Models\Service;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\LocationTenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Laravel\Pennant\Feature;
@@ -754,26 +755,33 @@ it('creates a PlanCheckIn when the check-in toggle is opted in during signup', f
     $entry = liveCheckInSignupEntry($location);
     $photo = liveCheckInPhoto();
 
-    Livewire::actingAs(liveCheckInStaff())
-        ->test(Reception::class)
-        ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->assertSet('showVerifyOverlay', true)
-        ->set('verifyPhoto', $photo)
-        ->call('verifyContinue')
-        ->assertSet('verifyStep', 2)
-        ->call('verifyContinue')
-        ->assertSet('verifyStep', 3)
-        ->set('verifyForm.sale', liveCheckInSale($plan))
-        ->set('verifyCheckIn', true)
-        ->call('confirmSignup')
-        ->assertDispatched('notify')
-        ->assertSet('verifyStep', 4)
-        ->assertSet('showVerifyOverlay', true)
-        ->call('confirmVerifyCheckIn')
-        ->assertDispatched('notify')
-        ->assertSet('showVerifyOverlay', false);
+    LocationTenantContext::setLocationId((int) $location->id);
 
-    $member = Member::where('contact', '5559876543')->first();
+    try {
+        Livewire::actingAs(liveCheckInStaff())
+            ->test(Reception::class)
+            ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
+            ->assertSet('showVerifyOverlay', true)
+            ->set('verifyPhoto', $photo)
+            ->call('verifyContinue')
+            ->assertSet('verifyStep', 2)
+            ->call('verifyContinue')
+            ->assertSet('verifyStep', 3)
+            ->set('verifyForm.sale', liveCheckInSale($plan, ['paid_amount' => $plan->amount]))
+            ->set('verifyCheckIn', true)
+            ->call('confirmSignup')
+            ->assertDispatched('notify')
+            ->assertSet('showVerifyOverlay', false)
+            ->assertSet('showCheckInOverlay', true)
+            ->assertNotSet('checkInServiceId', null)
+            ->call('approveCheckIn')
+            ->assertDispatched('notify')
+            ->assertSet('showCheckInOverlay', false);
+    } finally {
+        LocationTenantContext::setLocationId(null);
+    }
+
+    $member = Member::whereGovernmentId('GOV999888')->first();
     expect($member)->not->toBeNull();
 
     $subscription = Subscription::where('member_id', $member->id)->first();
@@ -811,39 +819,38 @@ it('skips the check-in and closes the overlay when the toggle is off', function 
     expect($member)->not->toBeNull();
 });
 
-it('shows a warning toast when the post-signup check-in fails and still closes the overlay', function (): void {
+it('shows a warning and keeps the overlay when the post-signup check-in cannot proceed', function (): void {
     $location = Location::factory()->create();
     $plan = liveCheckInPlan();
     $entry = liveCheckInSignupEntry($location);
     $photo = liveCheckInPhoto();
 
-    Livewire::actingAs(liveCheckInStaff())
-        ->test(Reception::class)
-        ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('verifyPhoto', $photo)
-        ->call('verifyContinue')
-        ->call('verifyContinue')
-        ->set('verifyForm.sale', liveCheckInSale($plan))
-        ->set('verifyCheckIn', true)
-        ->call('confirmSignup')
-        ->assertSet('verifyStep', 4);
+    LocationTenantContext::setLocationId((int) $location->id);
 
-    // Simulate failure: delete the subscription so the check-in can't find it.
-    $member = Member::where('contact', '5559876543')->first();
-    expect($member)->not->toBeNull();
-    Subscription::where('member_id', $member->id)->delete();
+    try {
+        Livewire::actingAs(liveCheckInStaff())
+            ->test(Reception::class)
+            ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
+            ->set('verifyPhoto', $photo)
+            ->call('verifyContinue')
+            ->call('verifyContinue')
+            ->set('verifyForm.sale', liveCheckInSale($plan, ['paid_amount' => $plan->amount]))
+            ->set('verifyCheckIn', true)
+            ->call('confirmSignup')
+            ->assertSet('showCheckInOverlay', true)
+            ->tap(function ($component): void {
+                $member = Member::whereGovernmentId('GOV999888')->first();
+                Subscription::where('member_id', $member->id)->delete();
+            })
+            ->call('approveCheckIn')
+            ->assertDispatched('notify')
+            ->assertSet('showCheckInOverlay', true);
 
-    Livewire::actingAs(liveCheckInStaff())
-        ->test(Reception::class)
-        ->set('verifyCreatedMember', $member)
-        ->set('verifyCheckInServiceId', $plan->primaryService()->id)
-        ->set('selectedQueueEntryId', $entry->id)
-        ->call('confirmVerifyCheckIn')
-        ->assertDispatched('notify')
-        ->assertSet('showVerifyOverlay', false);
-
-    expect(PlanCheckIn::count())->toBe(0)
-        ->and(Member::where('contact', '5559876543')->exists())->toBeTrue();
+        expect(PlanCheckIn::count())->toBe(0)
+            ->and(Member::whereGovernmentId('GOV999888')->exists())->toBeTrue();
+    } finally {
+        LocationTenantContext::setLocationId(null);
+    }
 });
 
 it('resets the verifyCheckIn toggle when the overlay is closed', function (): void {
@@ -858,7 +865,7 @@ it('resets the verifyCheckIn toggle when the overlay is closed', function (): vo
         ->assertSet('verifyCreatedMember', null);
 });
 
-it('closes the overlay from step 4 without check-in and keeps the created member', function (): void {
+it('closes the check-in overlay without approving and keeps the created member', function (): void {
     $location = Location::factory()->create();
     $plan = liveCheckInPlan();
     $entry = liveCheckInSignupEntry($location);
@@ -873,36 +880,43 @@ it('closes the overlay from step 4 without check-in and keeps the created member
         ->set('verifyForm.sale', liveCheckInSale($plan))
         ->set('verifyCheckIn', true)
         ->call('confirmSignup')
-        ->assertSet('verifyStep', 4)
-        ->call('closeVerifyOverlay')
-        ->assertSet('showVerifyOverlay', false);
+        ->assertSet('showCheckInOverlay', true)
+        ->call('closeCheckInOverlay')
+        ->assertSet('showCheckInOverlay', false);
 
     expect(PlanCheckIn::count())->toBe(0)
         ->and(Member::where('contact', '5559876543')->exists())->toBeTrue();
 });
 
-it('computes verifyCheckInServices from the selected plan after signup is saved', function (): void {
+it('opens the check-in overlay with the created member access services', function (): void {
     $location = Location::factory()->create();
     $plan = liveCheckInPlan();
     $entry = liveCheckInSignupEntry($location);
     $photo = liveCheckInPhoto();
 
-    Livewire::actingAs(liveCheckInStaff())
-        ->test(Reception::class)
-        ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
-        ->set('verifyPhoto', $photo)
-        ->call('verifyContinue')
-        ->call('verifyContinue')
-        ->set('verifyForm.sale', liveCheckInSale($plan))
-        ->set('verifyCheckIn', true)
-        ->call('confirmSignup')
-        ->assertSet('verifyStep', 4)
-        ->assertSet('verifyCheckInServices', function ($services) use ($plan) {
-            return count($services) === 1
-                && (int) $services[0]['id'] === (int) $plan->primaryService()->id
-                && $services[0]['state'] === 'access'
-                && $services[0]['name'] === $plan->primaryService()->name;
-        });
+    LocationTenantContext::setLocationId((int) $location->id);
+
+    try {
+        Livewire::actingAs(liveCheckInStaff())
+            ->test(Reception::class)
+            ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
+            ->set('verifyPhoto', $photo)
+            ->call('verifyContinue')
+            ->call('verifyContinue')
+            ->set('verifyForm.sale', liveCheckInSale($plan, ['paid_amount' => $plan->amount]))
+            ->set('verifyCheckIn', true)
+            ->call('confirmSignup')
+            ->assertSet('showCheckInOverlay', true)
+            ->assertSet('selectedCheckInMemberId', fn ($id) => (int) $id === (int) Member::whereGovernmentId('GOV999888')->first()?->id)
+            ->assertSet('checkInServices', function ($services) use ($plan) {
+                return count($services) === 1
+                    && (int) $services[0]['id'] === (int) $plan->primaryService()->id
+                    && $services[0]['state'] === 'access'
+                    && $services[0]['name'] === $plan->primaryService()->name;
+            });
+    } finally {
+        LocationTenantContext::setLocationId(null);
+    }
 });
 
 it('paints the photo border from applicable statuses only, not every picker row', function (): void {

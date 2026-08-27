@@ -7,7 +7,6 @@ use App\Filament\Resources\Subscriptions\Schemas\SubscriptionForm;
 use App\Helpers\Helpers;
 use App\Models\Member;
 use App\Models\Plan;
-use App\Support\Billing\PaymentMethod;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
@@ -144,9 +143,6 @@ class MemberForm
                                     ->default('cash')
                                     ->inline()
                                     ->live()
-                                    ->afterStateUpdated(fn (Get $get, Set $set) => PaymentMethod::isOnline((string) $get('payment_method'))
-                                        ? $set('paid_amount', 0)
-                                        : null)
                                     ->required()
                                     ->columnSpan(2),
                                 TextInput::make('discount_amount')
@@ -161,8 +157,7 @@ class MemberForm
                                     ->numeric()
                                     ->default(0)
                                     ->prefix(Helpers::getCurrencySymbol())
-                                    ->extraAttributes(['class' => 'verify-money-input'])
-                                    ->visible(fn (Get $get): bool => ! PaymentMethod::isOnline((string) $get('payment_method'))),
+                                    ->extraAttributes(['class' => 'verify-money-input']),
                             ])->columns(3)->columnSpan(3),
                     ])->columns(4),
             ]);

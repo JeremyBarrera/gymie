@@ -124,7 +124,7 @@ trait HandlesCheckInVerification
      *
      * @param  Collection<int, Member>  $candidates
      */
-    private function beginManualCheckIn(Collection $candidates): void
+    protected function beginManualCheckIn(Collection $candidates): void
     {
         $this->resetCheckInOverlay();
 

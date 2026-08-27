@@ -5,6 +5,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_REVERB_APP_KEY: ${VITE_REVERB_APP_KEY}
+        VITE_REVERB_HOST: ${VITE_REVERB_HOST}
+        VITE_REVERB_PORT: ${VITE_REVERB_PORT}
+        VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME}
     restart: unless-stopped
     env_file: .env
     environment:
@@ -13,6 +18,11 @@ services:
       DB_HOST: db
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
+      # PHP broadcaster must reach Reverb over the internal Docker network,
+      # not the public hostname (which the .env sets for client-side Echo).
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
     volumes:
       - app-storage:/var/www/storage/app
     depends_on:
@@ -56,6 +66,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_REVERB_APP_KEY: ${VITE_REVERB_APP_KEY}
+        VITE_REVERB_HOST: ${VITE_REVERB_HOST}
+        VITE_REVERB_PORT: ${VITE_REVERB_PORT}
+        VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME}
     restart: unless-stopped
     env_file: .env
     environment:
@@ -78,6 +93,11 @@ services:
       DB_HOST: db
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
+      # PHP broadcaster must reach Reverb over the internal Docker network,
+      # not the public hostname (which the .env sets for client-side Echo).
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
     command: ["php", "artisan", "queue:work", "--sleep=1", "--tries=3", "--max-time=3600"]
     volumes:
       - app-storage:/var/www/storage/app
@@ -94,6 +114,11 @@ services:
       DB_HOST: db
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
+      # PHP broadcaster must reach Reverb over the internal Docker network,
+      # not the public hostname (which the .env sets for client-side Echo).
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
     command: ["php", "artisan", "schedule:work"]
     volumes:
       - app-storage:/var/www/storage/app

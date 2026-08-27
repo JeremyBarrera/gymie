@@ -51,19 +51,22 @@
     color: white;
 }
 
-/* Reception: waiting-line queue badge in the panel top navbar */
+/* Reception: waiting-line queue badge — global fixed FAB at bottom-right */
 [x-cloak] {
     display: none !important;
 }
 
-.pending-fab-topbar {
-    display: inline-flex;
+.pending-fab-wrap {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 50;
 }
 
 .pending-fab-button {
     position: relative;
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     border-radius: 9999px;
     background: var(--primary-600);
     color: white;
@@ -73,6 +76,7 @@
     border: none;
     cursor: pointer;
     transition: background 0.15s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .pending-fab-button:hover {
@@ -80,21 +84,35 @@
 }
 
 .pending-fab-button svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
+}
+
+.pending-fab-flash {
+    animation: pending-fab-pulse 2s ease-in-out infinite;
+}
+
+@keyframes pending-fab-pulse {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    50% {
+        box-shadow: 0 4px 20px color-mix(in srgb, var(--primary-500) 60%, transparent),
+                    0 0 0 4px color-mix(in srgb, var(--primary-500) 25%, transparent);
+    }
 }
 
 .pending-fab-count {
     position: absolute;
     top: -4px;
     inset-inline-end: -4px;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
     border-radius: 9999px;
     background: var(--danger-600);
     color: white;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 700;
     line-height: 1;
     display: flex;
