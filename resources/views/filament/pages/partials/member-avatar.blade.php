@@ -8,7 +8,7 @@
         src="{{ asset('storage/'.$member->photo) }}"
         class="{{ $avatarSizeClass }} shrink-0 rounded-lg object-cover cursor-pointer"
         alt="{{ $alt ?? $member->name }}"
-        onclick='window.dispatchEvent(new CustomEvent("open-photo-zoom", { detail: { src: @js(asset('storage/'.$member->photo)), alt: @js($alt ?? $member->name) } }))'
+        onclick='event.stopPropagation(); window.dispatchEvent(new CustomEvent("open-photo-zoom", { detail: { src: @js(asset('storage/'.$member->photo)), alt: @js($alt ?? $member->name) } }))'
     >
 @else
     <span class="fi-color fi-color-primary flex {{ $avatarSizeClass }} shrink-0 items-center justify-center rounded-lg">

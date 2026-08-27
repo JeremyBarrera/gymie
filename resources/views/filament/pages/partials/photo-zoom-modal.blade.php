@@ -21,7 +21,7 @@
     }"
     x-on:open-photo-zoom.window="open($event.detail.src, $event.detail.alt)"
     x-on:keydown.escape.window="isOpen && close()"
-    class="fixed inset-0 z-50"
+    class="fixed inset-0 z-[80]"
     x-show="isOpen"
     x-cloak
     x-transition:enter="transition ease-out duration-200"
