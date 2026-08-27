@@ -437,8 +437,7 @@
 
                                 <x-filament::button
                                     wire:key="checkin-override"
-                                    color="info"
-                                    icon="heroicon-m-wrench"
+                                    :color="$selectedStateColor"
                                     size="md"
                                     class="min-w-28"
                                     wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
@@ -448,8 +447,7 @@
                             @elseif(($checkInSelectedRow['state'] ?? null) === 'no_access')
                                 <x-filament::button
                                     wire:key="checkin-override"
-                                    color="info"
-                                    icon="heroicon-m-wrench"
+                                    :color="$selectedStateColor"
                                     size="md"
                                     class="min-w-28"
                                     wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
