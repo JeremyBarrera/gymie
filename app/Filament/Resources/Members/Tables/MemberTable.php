@@ -131,7 +131,11 @@ class MemberTable
                     ->toggleable(isToggledHiddenByDefault: true),
                 ImageColumn::make('photo')
                     ->circular()
-                    ->defaultImageUrl(fn (Member $record): string => 'https://ui-avatars.com/api/?background=000&color=fff&name='.$record->name),
+                    ->defaultImageUrl(fn (Member $record): string => 'https://ui-avatars.com/api/?background=000&color=fff&name='.$record->name)
+                    ->extraImgAttributes(fn (Member $record): array => $record->photo ? [
+                        'class' => 'cursor-pointer',
+                        'x-on:click' => "\$dispatch('open-photo-zoom', { src: ".json_encode(asset('storage/'.$record->photo)).", alt: ".json_encode($record->name)." })",
+                    ] : []),
                 TextColumn::make('code')
                     ->searchable(),
                 TextColumn::make('name')

@@ -44,7 +44,11 @@ class UserInfolist
                             ->defaultImageUrl(fn (User $record): string => 'https://ui-avatars.com/api/?background=000&color=fff&name='.$record->name)
                             ->size(180)
                             ->circular()
-                            ->columnSpan(1),
+                            ->columnSpan(1)
+                            ->extraAttributes(fn (User $record): array => $record->photo ? [
+                                'class' => '[&_img]:cursor-pointer',
+                                'x-on:click' => "\$dispatch('open-photo-zoom', { src: ".json_encode(asset('storage/'.$record->photo)).", alt: ".json_encode($record->name)." })",
+                            ] : []),
                         Group::make()
                             ->schema([
                                 TextEntry::make('name')->label(__('app.fields.name')),

@@ -39,7 +39,11 @@ class UserTable
                 ImageColumn::make('photo')
                     ->label(__('app.fields.photo'))
                     ->circular()
-                    ->defaultImageUrl(fn (User $record): string => 'https://ui-avatars.com/api/?background=000&color=fff&name='.$record->name),
+                    ->defaultImageUrl(fn (User $record): string => 'https://ui-avatars.com/api/?background=000&color=fff&name='.$record->name)
+                    ->extraImgAttributes(fn (User $record): array => $record->photo ? [
+                        'class' => 'cursor-pointer',
+                        'x-on:click' => "\$dispatch('open-photo-zoom', { src: ".json_encode(asset('storage/'.$record->photo)).", alt: ".json_encode($record->name)." })",
+                    ] : []),
                 TextColumn::make('name')
                     ->label(__('app.fields.name'))
                     ->sortable()
