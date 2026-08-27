@@ -24,6 +24,27 @@ class SoundAlertToggle extends Component
         $this->soundAlerts = (bool) Auth::user()?->sound_alerts;
     }
 
+    /**
+     * Listen for the same user's toggle broadcast on the private
+     * `user.{id}` channel so every other open tab re-renders its icon to
+     * match, exactly like the theme switcher live-syncs across tabs.
+     * Permission is guaranteed: the broadcast channel only authorizes the
+     * owning user, and each tab's component is mounted for the same user.
+     */
+    protected function getListeners(): array
+    {
+        $userId = Auth::id();
+
+        return ["echo-private:user.{$userId},SoundAlertsToggled" => 'syncSoundAlertsFromBroadcast'];
+    }
+
+    public function syncSoundAlertsFromBroadcast(array $payload): void
+    {
+        $this->soundAlerts = isset($payload['enabled'])
+            ? (bool) $payload['enabled']
+            : (bool) Auth::user()?->sound_alerts;
+    }
+
     public function toggleSoundAlerts(): void
     {
         $user = Auth::user();

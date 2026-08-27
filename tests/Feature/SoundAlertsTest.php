@@ -69,3 +69,33 @@ it('broadcasts SoundAlertsToggled on the toggling user private channel only', fu
         ->and($event->userId)->toBe(42)
         ->and($event->enabled)->toBeTrue();
 });
+
+it('subscribes to the owning user private channel for cross-tab icon sync', function (): void {
+    $staff = soundStaff(false);
+
+    Auth::login($staff);
+
+    $toggle = new SoundAlertToggle();
+    $reflector = new ReflectionMethod(SoundAlertToggle::class, 'getListeners');
+    $reflector->setAccessible(true);
+    $listeners = $reflector->invoke($toggle);
+
+    expect($listeners)->toBe([
+        "echo-private:user.{$staff->id},SoundAlertsToggled" => 'syncSoundAlertsFromBroadcast',
+    ]);
+});
+
+it('live-updates the sound icon state when another tab broadcasts a toggle', function (): void {
+    $staff = soundStaff(false);
+
+    Livewire::actingAs($staff)
+        ->test(SoundAlertToggle::class)
+        ->assertSet('soundAlerts', false)
+        ->dispatch("echo-private:user.{$staff->id},SoundAlertsToggled", ['enabled' => true])
+        ->assertSet('soundAlerts', true);
+
+    Livewire::actingAs($staff)
+        ->test(SoundAlertToggle::class)
+        ->dispatch("echo-private:user.{$staff->id},SoundAlertsToggled", ['enabled' => false])
+        ->assertSet('soundAlerts', false);
+});
