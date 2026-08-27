@@ -35,6 +35,8 @@ it('opens the shared check-in overlay when a search result is selected', functio
             fn (array $row): bool => (int) $row['id'] === $member->id,
         ))
         ->call('openManualCheckInForMember', $member->id)
+        ->assertDispatched('open-modal', id: 'checkin-overlay')
+        ->assertNotDispatched('close-modal', id: 'checkin-overlay')
         ->assertSet('showCheckInOverlay', true)
         ->assertSet('selectedCheckInMemberId', $member->id)
         ->assertSet('checkInManualMode', true);
