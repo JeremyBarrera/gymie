@@ -97,14 +97,14 @@ function ding(context) {
         osc.frequency.value = frequency;
 
         gain.gain.setValueAtTime(0.0001, t + start);
-        gain.gain.exponentialRampToValueAtTime(0.50, t + start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.7, t + start + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, t + end);
 
         osc.connect(gain);
         gain.connect(context.destination);
 
         osc.start(t + start);
-        osc.stop(t + end + 0.02);
+        osc.stop(t + end + 0.05);
     });
 }
 
@@ -112,18 +112,95 @@ function dingWhenReady(context) {
     if (context.state === 'running') {
         try {
             ding(context);
-        } catch {}
-
-        return;
+            return true;
+        } catch {
+            return false;
+        }
     }
 
-    Promise.resolve(context.resume())
-        .then(() => {
+    try {
+        const p = context.resume();
+        if (p && typeof p.then === 'function') {
+            p.then(() => {
+                try {
+                    ding(context);
+                } catch {}
+            }).catch(() => {
+                tryFallbackBeep();
+            });
+        } else if (context.state === 'running') {
             try {
                 ding(context);
             } catch {}
-        })
-        .catch(() => {});
+        } else {
+            tryFallbackBeep();
+        }
+        return true;
+    } catch {
+        tryFallbackBeep();
+        return false;
+    }
+}
+
+function tryFallbackBeep() {
+    try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        const tmp = new AC();
+        const doDing = () => {
+            try {
+                ding(tmp);
+                setTimeout(() => {
+                    try {
+                        tmp.close();
+                    } catch {}
+                }, 600);
+            } catch {}
+        };
+        if (tmp.state === 'suspended') {
+            try {
+                const p = tmp.resume();
+                if (p && typeof p.then === 'function') {
+                    p.then(doDing).catch(() => {
+                        try {
+                            doDing();
+                        } catch {}
+                    });
+                } else {
+                    doDing();
+                }
+            } catch {
+                doDing();
+            }
+        } else {
+            doDing();
+        }
+    } catch {}
+}
+
+function playConfirmationChime() {
+    try {
+        const context = ensureContext();
+        if (!context) {
+            tryFallbackBeep();
+            return;
+        }
+        if (context.state === 'running') {
+            try {
+                ding(context);
+                return;
+            } catch {
+                tryFallbackBeep();
+                return;
+            }
+        }
+        const resumed = dingWhenReady(context);
+        if (!resumed) {
+            tryFallbackBeep();
+        }
+    } catch {
+        tryFallbackBeep();
+    }
 }
 
 export function setEnabled(on) {
@@ -176,14 +253,18 @@ export function enableFromGesture() {
         const context = ensureContext();
 
         if (!context) {
+            enabled = true;
+            markUnlocked();
+            tryFallbackBeep();
             return;
         }
 
         enabled = true;
         markUnlocked();
-        lastBeepAt = Date.now();
-        dingWhenReady(context);
-    } catch {}
+        playConfirmationChime();
+    } catch {
+        tryFallbackBeep();
+    }
 }
 
 /**
@@ -226,14 +307,10 @@ function boot() {
     }
 
     document.addEventListener('livewire:init', () => {
-        window.Livewire.on('sound-alerts-updated', (payload) => {
-            const on = Boolean(payload?.[0]?.enabled);
-
-            setEnabled(on);
-
-            if (on) {
-                setTimeout(beep, 60);
-            }
+        window.Livewire.on('sound-alerts-updated', (raw) => {
+            const payload = Array.isArray(raw) ? raw[0] : raw;
+            const enabled = payload?.enabled ?? raw?.enabled ?? raw?.[0]?.enabled;
+            setEnabled(Boolean(enabled));
         });
     });
 }

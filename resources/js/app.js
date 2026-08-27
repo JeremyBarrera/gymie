@@ -1,5 +1,4 @@
 import './bootstrap';
-import './echo';
 import './camera-capture';
 import './theme-live';
 import './device-locale';
@@ -7,20 +6,23 @@ import './locale-live';
 import './sound-alerts';
 
 document.addEventListener('livewire:init', () => {
-    Livewire.on('notify', (params) => {
+    Livewire.on('notify', (raw) => {
         if (typeof window.FilamentNotification === 'undefined') {
             return;
         }
 
-        const message = params?.message;
+        const params = Array.isArray(raw) ? raw[0] : raw;
+        const message = params?.message ?? raw?.message;
 
         if (typeof message !== 'string' || message.trim() === '') {
             return;
         }
 
+        const type = params?.type ?? raw?.type ?? 'info';
+
         new window.FilamentNotification()
             .title(message)
-            .status(params?.type ?? 'info')
+            .status(type)
             .send();
     });
 });
