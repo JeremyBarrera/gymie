@@ -5,7 +5,7 @@
 
 <div
     x-data="{ zoomSrc: '', zoomAlt: '' }"
-    x-on:open-photo-zoom.window="zoomSrc = $event.detail.src; zoomAlt = $event.detail.alt; $dispatch('open-modal', { id: 'photo-zoom' })"
+    x-on:open-photo-zoom.window="zoomSrc = $event.detail.src; zoomAlt = $event.detail.alt; window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'photo-zoom' } }))"
 >
     <x-filament::modal
         id="photo-zoom"
@@ -21,13 +21,5 @@
                 class="max-w-full max-h-[75vh] object-contain rounded-xl"
             >
         </div>
-
-        <x-slot name="footer">
-            <div class="flex w-full justify-end">
-                <x-filament::button color="gray" x-on:click="$dispatch('close-modal', { id: 'photo-zoom' })">
-                    {{ __('app.actions.close') }}
-                </x-filament::button>
-            </div>
-        </x-slot>
     </x-filament::modal>
 </div>
