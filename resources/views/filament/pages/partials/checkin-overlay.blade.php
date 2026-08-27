@@ -240,12 +240,12 @@
                             @if($checkInMember->photo)
                                 <img
                                     src="{{ asset('storage/'.$checkInMember->photo) }}"
-                                    class="h-48 w-40 rounded-xl object-cover"
+                                    class="h-64 w-52 rounded-xl object-cover"
                                     style="box-shadow: 0 0 0 3px {{ $cardRingVar }};"
                                     alt="{{ $checkInMember->name }}"
                                 >
                             @else
-                                <div class="flex h-48 w-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-(--gray-300)"
+                                <div class="flex h-64 w-52 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-(--gray-300)"
                                     style="box-shadow: 0 0 0 3px {{ $cardRingVar }};"
                                 >
                                     <x-filament::icon icon="heroicon-o-user" class="h-8 w-8" />
