@@ -25,17 +25,17 @@ class SoundAlertToggle extends Component
     }
 
     /**
-     * Listen for the same user's toggle broadcast on the private
+     * Listen for the same user's toggle broadcast on the public
      * `user.{id}` channel so every other open tab re-renders its icon to
-     * match, exactly like the theme switcher live-syncs across tabs.
-     * Permission is guaranteed: the broadcast channel only authorizes the
-     * owning user, and each tab's component is mounted for the same user.
+     * match, exactly like the theme switcher live-syncs across tabs via
+     * `admin.theme`. Public channel (like the theme) avoids private-auth
+     * handshake failures while staying scoped by the known GYMIE_USER_ID.
      */
     protected function getListeners(): array
     {
         $userId = Auth::id();
 
-        return ["echo-private:user.{$userId},SoundAlertsToggled" => 'syncSoundAlertsFromBroadcast'];
+        return ["echo:user.{$userId},SoundAlertsToggled" => 'syncSoundAlertsFromBroadcast'];
     }
 
     public function syncSoundAlertsFromBroadcast(array $payload): void

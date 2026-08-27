@@ -292,10 +292,12 @@ function boot() {
     setEnabled(window.GYMIE_SOUND_ALERTS === true || window.GYMIE_SOUND_ALERTS === '1');
 
     // The preference is a server-side setting: when this user toggles it in
-    // any tab (or device), the private user channel tells every other open
-    // panel tab live. Receiving side only syncs state — it never dings.
+    // any tab (or device), the public user channel tells every other open
+    // panel tab live (mirrors theme's `admin.theme` public-channel pattern
+    // for reliability — no private-auth handshake to fail). Receiving side
+    // only syncs state — it never dings.
     if (window.Echo && window.GYMIE_USER_ID) {
-        window.Echo.private(`user.${window.GYMIE_USER_ID}`).listen('SoundAlertsToggled', (e) => {
+        window.Echo.channel(`user.${window.GYMIE_USER_ID}`).listen('SoundAlertsToggled', (e) => {
             const on = Boolean(e?.enabled);
 
             setEnabled(on);

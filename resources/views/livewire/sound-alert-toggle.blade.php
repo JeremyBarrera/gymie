@@ -1,5 +1,6 @@
 <div
     class="fi-inline-flex relative items-center ms-1"
+    x-on:gymie-sound-synced.window="$wire.set('soundAlerts', $event.detail.enabled)"
     x-data="{
         open: false,
         promptSeen: localStorage.getItem('gymie-sound-prompt-seen') === '1',

@@ -3,7 +3,7 @@
 use App\Events\SoundAlertsToggled;
 use App\Filament\Livewire\SoundAlertToggle;
 use App\Models\User;
-use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -56,7 +56,7 @@ it('toggles the sound preference, persists it, and notifies the acting tab', fun
     expect($staff->refresh()->sound_alerts)->toBeFalse();
 });
 
-it('broadcasts SoundAlertsToggled on the toggling user private channel only', function (): void {
+it('broadcasts SoundAlertsToggled on the toggling user public channel only', function (): void {
     $event = new SoundAlertsToggled(42, true);
 
     expect($event)->toBeInstanceOf(ShouldBroadcast::class);
@@ -64,13 +64,13 @@ it('broadcasts SoundAlertsToggled on the toggling user private channel only', fu
     $channels = $event->broadcastOn();
 
     expect($channels)->toHaveCount(1)
-        ->and($channels[0])->toBeInstanceOf(PrivateChannel::class)
-        ->and($channels[0]->name)->toBe('private-user.42')
+        ->and($channels[0])->toBeInstanceOf(Channel::class)
+        ->and($channels[0]->name)->toBe('user.42')
         ->and($event->userId)->toBe(42)
         ->and($event->enabled)->toBeTrue();
 });
 
-it('subscribes to the owning user private channel for cross-tab icon sync', function (): void {
+it('subscribes to the owning user public channel for cross-tab icon sync', function (): void {
     $staff = soundStaff(false);
 
     Auth::login($staff);
@@ -81,7 +81,7 @@ it('subscribes to the owning user private channel for cross-tab icon sync', func
     $listeners = $reflector->invoke($toggle);
 
     expect($listeners)->toBe([
-        "echo-private:user.{$staff->id},SoundAlertsToggled" => 'syncSoundAlertsFromBroadcast',
+        "echo:user.{$staff->id},SoundAlertsToggled" => 'syncSoundAlertsFromBroadcast',
     ]);
 });
 
@@ -91,11 +91,11 @@ it('live-updates the sound icon state when another tab broadcasts a toggle', fun
     Livewire::actingAs($staff)
         ->test(SoundAlertToggle::class)
         ->assertSet('soundAlerts', false)
-        ->dispatch("echo-private:user.{$staff->id},SoundAlertsToggled", ['enabled' => true])
+        ->dispatch("echo:user.{$staff->id},SoundAlertsToggled", ['enabled' => true])
         ->assertSet('soundAlerts', true);
 
     Livewire::actingAs($staff)
         ->test(SoundAlertToggle::class)
-        ->dispatch("echo-private:user.{$staff->id},SoundAlertsToggled", ['enabled' => false])
+        ->dispatch("echo:user.{$staff->id},SoundAlertsToggled", ['enabled' => false])
         ->assertSet('soundAlerts', false);
 });
