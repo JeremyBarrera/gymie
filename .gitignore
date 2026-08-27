@@ -33,3 +33,20 @@ docker/nginx-tls.rendered.conf
 
 # Working planning documents stay local-only
 /*_PLAN.md
+
+# Local databases: this repo is a single source for CODE; every machine
+# creates and transfers its own database (Docker MySQL in production, or a
+# local SQLite file for ad-hoc runs), so no local DB artifact is committed.
+/torogym
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+/database/*.sqlite
+/database/*.sqlite3
+
+# Database transfer packages (scripts/push-server-data.ps1 -> restore-server-data.ps1)
+/toro-db.sql.gz
+/toro-storage.tar.gz
+/scripts/toro-source.env
