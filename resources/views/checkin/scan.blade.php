@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="{{ \App\Support\ColorContrast::derivePalette($background, $accent)['bgB'] }}">
     <title>{{ $location->name }} - {{ $kind === 'checkin' ? __('app.scan.title_checkin') : __('app.scan.title_signup') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/echo.js'])
     @include('checkin.partials.theme-colors')
     <style>
         * { box-sizing: border-box; }
@@ -607,8 +607,17 @@
     </script>
 
     <script>
+        function whenEchoReady(cb) {
+            if (window.Echo) { cb(window.Echo); return; }
+            window.addEventListener('EchoLoaded', () => cb(window.Echo), { once: true });
+            let tries = 0;
+            const iv = setInterval(() => {
+                if (window.Echo) { clearInterval(iv); cb(window.Echo); }
+                else if (++tries > 100) clearInterval(iv);
+            }, 50);
+        }
         document.addEventListener('DOMContentLoaded', () => {
-            window.ThemeLive && window.ThemeLive.start(@js([$token]));
+            whenEchoReady(() => window.ThemeLive && window.ThemeLive.start(@js([$token])));
         });
     </script>
     <script>

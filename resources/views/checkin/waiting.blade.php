@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="{{ \App\Support\ColorContrast::derivePalette($background, $accent)['bgB'] }}">
     <title>{{ $location->name }} - {{ __('app.scan.waiting_title') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/echo.js'])
     @include('checkin.partials.theme-colors')
     <style>
         * { box-sizing: border-box; }
@@ -217,9 +217,24 @@
             }
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const echo = window.Echo;
+        function whenEchoReady(cb) {
+            if (window.Echo) {
+                cb(window.Echo);
+                return;
+            }
+            window.addEventListener('EchoLoaded', () => cb(window.Echo), { once: true });
+            let tries = 0;
+            const iv = setInterval(() => {
+                if (window.Echo) {
+                    clearInterval(iv);
+                    cb(window.Echo);
+                } else if (++tries > 100) {
+                    clearInterval(iv);
+                }
+            }, 50);
+        }
 
+        document.addEventListener('DOMContentLoaded', () => {
             const uuid = "{{ $uuid }}";
             const kind = "{{ $kind }}";
             @php
@@ -244,13 +259,19 @@
             const resultTitle = document.getElementById('result-title');
             const resultMessage = document.getElementById('result-message');
 
-            echo.channel(`queue.${uuid}`)
-                .listen('QueueEntryResolved', (e) => {
-                    showResult(e.approved, e.deniedReason, e.checkedIn);
-                })
-                .listen('QueueEntryExpired', () => {
-                    showResult(false, messages.expired, false);
-                });
+            whenEchoReady((echo) => {
+                echo.channel(`queue.${uuid}`)
+                    .listen('QueueEntryResolved', (e) => {
+                        showResult(e.approved, e.deniedReason, e.checkedIn);
+                    })
+                    .listen('QueueEntryExpired', () => {
+                        showResult(false, messages.expired, false);
+                    });
+            });
+
+            whenEchoReady(() => {
+                window.ThemeLive && window.ThemeLive.start(@js([$locationToken]));
+            });
 
             function showResult(approved, reason, checkedIn) {
                 const pendingKey = kind === 'signup' ? 'pendingSignupUuid' : 'pendingCheckinUuid';
@@ -278,12 +299,6 @@
 
                 resultOverlay.classList.add('visible');
             }
-        });
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            window.ThemeLive && window.ThemeLive.start(@js([$locationToken]));
         });
     </script>
 </body>
