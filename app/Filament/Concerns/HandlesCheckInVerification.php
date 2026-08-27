@@ -12,6 +12,7 @@ use App\Models\QueueEntry;
 use App\Models\Subscription;
 use App\Services\Membership\PlanCheckInService;
 use App\Support\DevOps\FeatureFlags;
+use App\Support\Locations\LocationAccess;
 use App\Support\Notifications\FollowUpAlert;
 use App\Support\Notifications\NotificationRecipients;
 use Illuminate\Database\Eloquent\Collection;
@@ -278,9 +279,27 @@ trait HandlesCheckInVerification
     }
 
     /**
+     * The location the current check-in physically happens at: the queue
+     * entry's own location when an entry backs the overlay, otherwise the
+     * operating account's current location — the same resolution the
+     * Reception queue uses. It must never resolve to the unscoped
+     * owner-tenancy null, which would read as "cross-location services
+     * only" and render the manual walk-up service list empty on
+     * location-scoped data.
+     */
+    private function checkInLocation(?QueueEntry $entry): ?int
+    {
+        if ($entry !== null) {
+            return (int) $entry->location_id;
+        }
+
+        return LocationAccess::firstAccessibleLocationId(Auth::user());
+    }
+
+    /**
      * Per-service check-in states for the selected member: at the queue
-     * entry's location, or at the current TenantContext location for the
-     * manual walk-up flow (see `PlanCheckInService::serviceStatesForMember()`).
+     * entry's location, or at the operating account's current location for
+     * the manual walk-up flow (see `PlanCheckInService::serviceStatesForMember()`).
      *
      * @return array<int, array<string, mixed>>
      */
@@ -304,7 +323,7 @@ trait HandlesCheckInVerification
 
         return app(PlanCheckInService::class)->serviceStatesForMember(
             $member,
-            $entry !== null ? (int) $entry->location_id : null,
+            $this->checkInLocation($entry),
         );
     }
 
@@ -404,7 +423,13 @@ trait HandlesCheckInVerification
         }
 
         try {
-            app(PlanCheckInService::class)->checkIn($member, $subscription, Auth::user(), false);
+            app(PlanCheckInService::class)->checkIn(
+                $member,
+                $subscription,
+                Auth::user(),
+                false,
+                $this->checkInLocation($entry),
+            );
         } catch (\Throwable $exception) {
             $this->dispatch('notify',
                 type: 'danger',
@@ -514,6 +539,7 @@ trait HandlesCheckInVerification
                 $reason,
                 false,
                 $this->checkInServiceId,
+                $this->checkInLocation($entry),
             );
         } catch (\Throwable $exception) {
             $this->dispatch('notify',
@@ -650,7 +676,13 @@ trait HandlesCheckInVerification
         }
 
         try {
-            app(PlanCheckInService::class)->checkIn($member, $subscription, Auth::user());
+            app(PlanCheckInService::class)->checkIn(
+                $member,
+                $subscription,
+                Auth::user(),
+                false,
+                $this->checkInLocation($entry),
+            );
         } catch (\Throwable $exception) {
             $this->dispatch('notify',
                 type: 'danger',
@@ -721,6 +753,7 @@ trait HandlesCheckInVerification
                 $reason,
                 true,
                 $serviceId,
+                $this->checkInLocation($entry),
             );
         } catch (\Throwable $exception) {
             $this->dispatch('notify',

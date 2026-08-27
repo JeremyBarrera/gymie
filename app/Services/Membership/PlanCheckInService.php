@@ -283,6 +283,10 @@ class PlanCheckInService
     /**
      * Record a check-in for the member against an eligible subscription.
      *
+     * `$locationId` defaults to the TenantContext location, which callers
+     * that resolve the physical desk explicitly (the Reception overlay)
+     * override so the recorded row matches where the check-in happened.
+     *
      * @throws MemberInactiveException
      * @throws OverdueInvoiceException
      * @throws SubscriptionNotEligibleException
@@ -294,6 +298,7 @@ class PlanCheckInService
         Subscription $subscription,
         ?User $staff = null,
         bool $confirmDuplicate = false,
+        ?int $locationId = null,
     ): PlanCheckIn {
         if ($member->checkInBlocker() === 'banned') {
             throw new MemberInactiveException(__('app.reception.check_in_member_banned'));
@@ -333,13 +338,13 @@ class PlanCheckInService
             );
         }
 
-        return DB::transaction(function () use ($member, $subscription, $plan, $staff): PlanCheckIn {
+        return DB::transaction(function () use ($member, $subscription, $plan, $staff, $locationId): PlanCheckIn {
             return PlanCheckIn::query()->create([
                 'member_id' => $member->id,
                 'subscription_id' => $subscription->id,
                 'plan_id' => $plan->id,
                 'service_id' => $plan->primaryService()?->id,
-                'location_id' => app(TenantContext::class)->locationId(),
+                'location_id' => $locationId ?? app(TenantContext::class)->locationId(),
                 'checked_in_by' => $staff?->id,
                 'checked_in_at' => now(AppConfig::timezone()),
             ]);
@@ -349,6 +354,10 @@ class PlanCheckInService
     /**
      * Record a staff override check-in for the member against a subscription,
      * bypassing the eligibility, quota, and duplicate checks.
+     *
+     * `$locationId` defaults to the TenantContext location, which callers
+     * that resolve the physical desk explicitly (the Reception overlay)
+     * override so the recorded row matches where the check-in happened.
      *
      * @throws MemberInactiveException
      * @throws OverdueInvoiceException
@@ -360,6 +369,7 @@ class PlanCheckInService
         ?string $reason = null,
         bool $skipOverdueCheck = false,
         ?int $serviceId = null,
+        ?int $locationId = null,
     ): PlanCheckIn {
         $blocker = $member->checkInBlocker();
 
@@ -382,7 +392,7 @@ class PlanCheckInService
             }
         }
 
-        return DB::transaction(function () use ($member, $subscription, $plan, $staff, $reason, $serviceId): PlanCheckIn {
+        return DB::transaction(function () use ($member, $subscription, $plan, $staff, $reason, $serviceId, $locationId): PlanCheckIn {
             return PlanCheckIn::query()->create([
                 'member_id' => $member->id,
                 'subscription_id' => $subscription?->id,
@@ -391,7 +401,7 @@ class PlanCheckInService
                 'override' => true,
                 'override_by_user_id' => $staff?->id,
                 'override_reason' => $reason,
-                'location_id' => app(TenantContext::class)->locationId(),
+                'location_id' => $locationId ?? app(TenantContext::class)->locationId(),
                 'checked_in_by' => $staff?->id,
                 'checked_in_at' => now(AppConfig::timezone()),
             ]);
