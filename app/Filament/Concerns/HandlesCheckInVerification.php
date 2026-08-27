@@ -188,8 +188,14 @@ trait HandlesCheckInVerification
 
     public function closeCheckInOverlay(): void
     {
+        $wasManualPostSignup = $this->pendingSignupCheckInQueueId !== null && $this->checkInManualMode;
+
         $this->resetCheckInOverlay();
         $this->openNextCheckInFromQueue();
+
+        if ($wasManualPostSignup) {
+            $this->finalizePendingSignupCheckIn(false);
+        }
     }
 
     private function resetCheckInOverlay(bool $dispatchClose = true): void
@@ -450,7 +456,13 @@ trait HandlesCheckInVerification
             message: __('app.reception.checkin_approved', ['name' => $member->name]),
         );
 
+        $wasManualPostSignup = $this->pendingSignupCheckInQueueId !== null && $entry === null;
+
         $this->resetCheckInOverlay();
+
+        if ($wasManualPostSignup) {
+            $this->finalizePendingSignupCheckIn(true);
+        }
 
         if ($entry !== null) {
             $this->removeCheckInFromView($entry->id);
@@ -574,7 +586,13 @@ trait HandlesCheckInVerification
             message: __('app.reception.override_approved'),
         );
 
+        $wasManualPostSignup = $this->pendingSignupCheckInQueueId !== null && $entry === null;
+
         $this->resetCheckInOverlay();
+
+        if ($wasManualPostSignup) {
+            $this->finalizePendingSignupCheckIn(true);
+        }
 
         if ($entry !== null) {
             $this->removeCheckInFromView($entry->id);
@@ -703,7 +721,13 @@ trait HandlesCheckInVerification
             message: __('app.reception.checkin_approved', ['name' => $member->name]),
         );
 
+        $wasManualPostSignup = $this->pendingSignupCheckInQueueId !== null && $entry === null;
+
         $this->resetCheckInOverlay();
+
+        if ($wasManualPostSignup) {
+            $this->finalizePendingSignupCheckIn(true);
+        }
 
         if ($entry !== null) {
             $this->removeCheckInFromView($entry->id);
@@ -780,7 +804,13 @@ trait HandlesCheckInVerification
             message: __('app.reception.override_approved'),
         );
 
+        $wasManualPostSignup = $this->pendingSignupCheckInQueueId !== null && $entry === null;
+
         $this->resetCheckInOverlay();
+
+        if ($wasManualPostSignup) {
+            $this->finalizePendingSignupCheckIn(true);
+        }
 
         if ($entry !== null) {
             $this->removeCheckInFromView($entry->id);

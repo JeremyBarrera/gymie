@@ -49,6 +49,9 @@ trait HandlesSignupVerification
     /** Temporary hold for the member created during confirmSignup — used by step 4. */
     public ?Member $verifyCreatedMember = null;
 
+    /** When signup is verified with check-in, hold the signup queue id until the manual check-in resolves so waiting can show the correct success copy. */
+    public ?int $pendingSignupCheckInQueueId = null;
+
     public function getVerifyPlansProperty(): array
     {
         return Plan::query()
@@ -246,6 +249,41 @@ trait HandlesSignupVerification
      */
     protected function verifyOverlayClosed(int $queueEntryId): void {}
 
+    protected function finalizePendingSignupCheckIn(bool $checkedIn): void
+    {
+        if ($this->pendingSignupCheckInQueueId === null) {
+            return;
+        }
+
+        $entryId = $this->pendingSignupCheckInQueueId;
+        $this->pendingSignupCheckInQueueId = null;
+
+        $entry = QueueEntry::find($entryId);
+        if (! $entry) {
+            return;
+        }
+
+        $locationToken = LocationToken::where('tokenable_type', Location::class)
+            ->where('tokenable_id', $entry->location_id)
+            ->where('kind', 'signup')
+            ->value('token');
+
+        if ($locationToken) {
+            broadcast(new QueueEntryResolved(
+                $entry->id,
+                $entry->uuid,
+                $locationToken,
+                'signup',
+                $entry->payload,
+                true,
+                null,
+                $checkedIn,
+            ))->toOthers();
+        }
+
+        $this->removeApprovedSignupFromView($entryId);
+    }
+
     public function verifyContinue(): void
     {
         if ($this->verifyStep === 1) {
@@ -386,6 +424,20 @@ trait HandlesSignupVerification
             return;
         }
 
+        $this->dispatch('notify',
+            type: 'success',
+            message: __('app.reception.verify_saved', ['name' => $member->name]),
+        );
+
+        if ($this->verifyCheckIn) {
+            $this->pendingSignupCheckInQueueId = $entry->id;
+            $memberCreated = $member;
+            $this->resetVerifyOverlay();
+            $this->beginManualCheckIn(new Collection([$memberCreated]));
+
+            return;
+        }
+
         $locationToken = LocationToken::where('tokenable_type', Location::class)
             ->where('tokenable_id', $entry->location_id)
             ->where('kind', 'signup')
@@ -401,19 +453,6 @@ trait HandlesSignupVerification
                 true,
                 null
             ))->toOthers();
-        }
-
-        $this->dispatch('notify',
-            type: 'success',
-            message: __('app.reception.verify_saved', ['name' => $member->name]),
-        );
-
-        if ($this->verifyCheckIn) {
-            $memberCreated = $member;
-            $this->resetVerifyOverlay();
-            $this->beginManualCheckIn(new Collection([$memberCreated]));
-
-            return;
         }
 
         $this->resetVerifyOverlay();
