@@ -122,8 +122,12 @@
             'action' => 'confirmDenyCheckIn',
         ],
         'override' => [
-            'color' => 'info',
-            'icon' => 'heroicon-m-wrench',
+            'color' => match (true) {
+                $cardRank >= 2 => 'danger',
+                $cardRank === 1 => 'warning',
+                $planIsNone => 'gray',
+                default => 'success',
+            },
             'label' => __('app.reception.override_confirm'),
             'action' => 'confirmCheckInOverride',
         ],
@@ -367,7 +371,7 @@
                         <x-filament::button
                             wire:key="checkin-{{ $footerStep }}-confirm"
                             :color="$footerConfirmMeta[$footerStep]['color']"
-                            :icon="$footerConfirmMeta[$footerStep]['icon']"
+                            :icon="($footerConfirmMeta[$footerStep]['icon'] ?? null)"
                             size="md"
                             class="min-w-28"
                             wire:click="{{ $footerConfirmMeta[$footerStep]['action'] }}"
