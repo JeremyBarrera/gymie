@@ -75,14 +75,20 @@ it('broadcasts QueueEntryCreated only on the staff location channel', function (
     expect($channels[0]->name)->toBe('private-location.loc-token-1');
 });
 
-it('broadcasts QueueEntryClaimed only on the staff location channel so staff names stay private', function (): void {
-    $event = new QueueEntryClaimed(1, Str::uuid()->toString(), 'loc-token-1', 'checkin', [], 'Toro');
+it('broadcasts QueueEntryClaimed on both staff and public channels with sanitized payload', function (): void {
+    $event = new QueueEntryClaimed(1, Str::uuid()->toString(), 'loc-token-1', 'checkin', []);
 
     $channels = $event->broadcastOn();
 
-    expect($channels)->toHaveCount(1);
+    expect($channels)->toHaveCount(2);
     expect($channels[0])->toBeInstanceOf(PrivateChannel::class);
     expect($channels[0]->name)->toBe('private-location.loc-token-1');
+    expect($channels[1])->toBeInstanceOf(Channel::class);
+    expect($channels[1]->name)->toContain('queue.');
+
+    $payload = $event->broadcastWith();
+    expect($payload)->not->toHaveKey('claimedByUserName');
+    expect($payload)->not->toHaveKey('payload');
 });
 
 it('broadcasts QueueEntryResolved on both staff and member channels', function (): void {

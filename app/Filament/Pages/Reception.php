@@ -203,7 +203,7 @@ class Reception extends Page
         return LocationAccess::firstAccessibleLocationId(Auth::user());
     }
 
-    public function onQueueEntryCreated(array $payload): void
+    public function onQueueEntryCreated(array $payload, bool $active = true): void
     {
         $entry = QueueEntry::find($payload['queueEntryId'] ?? 0);
         if (! $entry) {
@@ -214,7 +214,10 @@ class Reception extends Page
 
         if ($entry->kind === 'checkin') {
             $this->prependEntryIfMissing($this->checkinEntries, $entryArray);
-            $this->queueOrOpenCheckIn($entry);
+
+            if ($active) {
+                $this->queueOrOpenCheckIn($entry);
+            }
         } elseif ($entry->kind === 'signup') {
             $this->prependEntryIfMissing($this->signupEntries, $entryArray);
 
@@ -225,7 +228,9 @@ class Reception extends Page
                 );
             }
 
-            $this->queueOrOpenSignup($entry);
+            if ($active) {
+                $this->queueOrOpenSignup($entry);
+            }
         }
     }
 
@@ -434,8 +439,7 @@ class Reception extends Page
                     $entry->uuid,
                     $locationToken,
                     $entry->kind,
-                    $entry->payload,
-                    Auth::user()->name
+                    $entry->payload
                 ))->toOthers();
             }
         }

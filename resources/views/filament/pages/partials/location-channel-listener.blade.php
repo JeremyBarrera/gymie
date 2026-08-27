@@ -15,16 +15,28 @@
         });
         const staffIsActive = () => Date.now() - lastActivity < 60000;
 
+        // Elect a single notifying tab per staff session via the Web Locks
+        // API (BroadcastChannel + localStorage heartbeat fallback). Every
+        // tab keeps its lists in sync, but only the active-tab leader plays
+        // the sound and opens the review overlay for new arrivals.
+        const activeTab = window.GymieActiveTab;
+        activeTab && activeTab.start(window.GYMIE_USER_ID ?? 0);
+        const isNotifyingTab = () => Boolean(activeTab && activeTab.isActive) && staffIsActive();
+
         const tokens = @js($this->getLocationTokens());
         if (tokens.length && window.Echo) {
             tokens.forEach((token) => {
                 window.Echo.private(`location.${token}`)
                     .listen('QueueEntryCreated', (e) => {
+                        const notifying = isNotifyingTab();
+
                         // Attention cue for NEW arrivals only — claims,
                         // resolutions and expiries stay silent.
-                        window.SoundAlerts && window.SoundAlerts.beep();
+                        if (notifying) {
+                            window.SoundAlerts && window.SoundAlerts.beep();
+                        }
 
-                        @this.call('onQueueEntryCreated', e, { active: staffIsActive() });
+                        @this.call('onQueueEntryCreated', e, notifying);
                     })
                     .listen('QueueEntryClaimed', (e) => {
                         @this.call('onQueueEntryClaimed', e);

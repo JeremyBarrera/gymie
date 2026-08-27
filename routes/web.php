@@ -19,6 +19,9 @@ Route::middleware('throttle:scan-page')->group(function (): void {
     Route::get('/waiting/{uuid}', [CheckInScanController::class, 'waiting'])
         ->name('checkin.waiting');
 
+    Route::get('/waiting/{uuid}/status', [CheckInScanController::class, 'status'])
+        ->name('checkin.waiting.status');
+
     Route::get('/contact-front-desk', [CheckInScanController::class, 'contactFrontDesk'])
         ->name('checkin.contact-front-desk');
 });

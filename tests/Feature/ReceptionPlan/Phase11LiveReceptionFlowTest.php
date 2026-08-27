@@ -634,7 +634,46 @@ it('keeps rotating popups and parks closed ones in pending', function (): void {
         ->call('closeVerifyOverlay')
         ->assertSet('showVerifyOverlay', true)
         ->assertSet('selectedQueueEntryId', $second->id)
-        ->assertSet('pendingQueue', fn (array $queue): bool => collect($queue)->pluck('id')->contains($first->id));
+        ->assertSet('popupQueue', []);
+});
+
+it('does not auto-open the verify overlay for an inactive (background) tab but still lists the entry', function (): void {
+    $location = Location::factory()->create();
+    $entry = liveReceptionSignupEntry($location);
+
+    $component = Livewire::actingAs(liveReceptionStaff())
+        ->test(Reception::class)
+        ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id], false)
+        ->assertSet('showVerifyOverlay', false)
+        ->assertSet('selectedQueueEntryId', null);
+
+    expect(collect($component->get('signupEntries'))->contains('id', $entry->id))->toBeTrue();
+});
+
+it('does not auto-open the check-in overlay for an inactive tab but still lists the entry', function (): void {
+    $location = Location::factory()->create();
+    $entry = QueueEntry::create([
+        'uuid' => (string) Str::uuid(),
+        'location_id' => $location->id,
+        'kind' => 'checkin',
+        'payload' => [
+            'member_id' => 1,
+            'subscription_id' => 1,
+            'identifier_type' => 'contact',
+            'identifier_value' => '5551234567',
+        ],
+        'identifier_type' => 'contact',
+        'status' => 'waiting',
+        'expires_at' => now()->addMinutes(10),
+    ]);
+
+    $component = Livewire::actingAs(liveReceptionStaff())
+        ->test(Reception::class)
+        ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id], false)
+        ->assertSet('showCheckInOverlay', false)
+        ->assertSet('selectedCheckInEntryId', null);
+
+    expect(collect($component->get('checkinEntries'))->contains('id', $entry->id))->toBeTrue();
 });
 
 it('verifies an entry from the pending queue and creates the member', function (): void {

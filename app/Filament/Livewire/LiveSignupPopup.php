@@ -66,7 +66,7 @@ class LiveSignupPopup extends Component
         [$this->pendingQueue, $this->claimedQueue] = $this->loadQueues();
     }
 
-    public function onQueueEntryCreated(array $payload): void
+    public function onQueueEntryCreated(array $payload, bool $active = true): void
     {
         $entry = QueueEntry::find($payload['queueEntryId'] ?? 0);
         if (! $entry || ! in_array($entry->status, ['waiting', 'attending'], true)) {
@@ -74,7 +74,7 @@ class LiveSignupPopup extends Component
         }
 
         if ($entry->kind === 'checkin') {
-            if ($this->popupEnabled) {
+            if ($active && $this->popupEnabled) {
                 $this->queueOrOpenCheckIn($entry);
             } else {
                 $this->addToPending($entry);
@@ -87,7 +87,7 @@ class LiveSignupPopup extends Component
             return;
         }
 
-        if ($this->popupEnabled) {
+        if ($active && $this->popupEnabled) {
             if (isset($entry->payload['name'])) {
                 $this->dispatch('notify',
                     type: 'success',

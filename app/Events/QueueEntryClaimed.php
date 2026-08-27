@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -17,18 +18,30 @@ class QueueEntryClaimed implements ShouldBroadcast
         public string $locationToken,
         public string $kind,
         public array $payload = [],
-        public ?string $claimedByUserName = null
     ) {}
 
-    /**
-     * Staff only. The payload carries the claiming staff member's name, so
-     * this event must never reach the public `queue.{uuid}` channel —
-     * visitors subscribe to that channel.
-     */
     public function broadcastOn(): array
     {
         return [
             new PrivateChannel('location.'.$this->locationToken),
+            new Channel('queue.'.$this->uuid),
+        ];
+    }
+
+    /**
+     * Both channels get the same payload, and `queue.{uuid}` is public —
+     * any visitor who knows the uuid can subscribe. The staff member's name
+     * must never leave, so it is intentionally excluded; staff listeners
+     * re-fetch the record (and its claimant) from the database.
+     *
+     * @return array<string, mixed>
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'queueEntryId' => $this->queueEntryId,
+            'uuid' => $this->uuid,
+            'kind' => $this->kind,
         ];
     }
 }

@@ -464,4 +464,72 @@ class CheckInScanController extends Controller
             'memberName', 'signupToken',
         ));
     }
+
+    /**
+     * Public status check for the waiting page's reconnect resync: returns
+     * the current terminal/queued state for a queue uuid, exposing only the
+     * fields the visitor's page renders (never the PII in the payload, the
+     * claimant, or staff names). A row that no longer exists means it was
+     * expired, since approved/denied rows are kept.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function status(string $uuid)
+    {
+        $entry = QueueEntry::where('uuid', $uuid)->first();
+
+        if (! $entry) {
+            return response()->json(['state' => 'expired'], 404);
+        }
+
+        if (in_array($entry->status, ['waiting', 'attending'], true)) {
+            return response()->json([
+                'state' => 'waiting',
+                'reviewing' => $entry->claimed_by_user_id !== null,
+                'kind' => $entry->kind,
+            ]);
+        }
+
+        if ($entry->status === 'approved') {
+            return response()->json([
+                'state' => 'approved',
+                'kind' => $entry->kind,
+                'checkedIn' => $entry->kind === 'signup' ? $this->signupDidCheckIn($entry) : false,
+            ]);
+        }
+
+        return response()->json([
+            'state' => 'denied',
+            'kind' => $entry->kind,
+            'deniedReason' => $entry->denied_reason,
+        ]);
+    }
+
+    /**
+     * Best-effort: a signup that went through the optional auto check-in
+     * leaves a PlanCheckIn on its member shortly after approval. Used only
+     * for the fallback resync so the visitor sees the checked-in copy.
+     */
+    private function signupDidCheckIn(QueueEntry $entry): bool
+    {
+        $contact = $entry->payload['contact'] ?? null;
+
+        if (! $contact) {
+            return false;
+        }
+
+        $member = Member::where('contact', $contact)
+            ->whereHas('subscriptions', fn ($q) => $q->where('location_id', $entry->location_id))
+            ->first();
+
+        if (! $member) {
+            return false;
+        }
+
+        return $member->checkIns()
+            ->where('location_id', $entry->location_id)
+            ->where('checked_in_at', '>=', $entry->created_at)
+            ->where('checked_in_at', '<=', $entry->created_at->copy()->addMinutes(15))
+            ->exists();
+    }
 }

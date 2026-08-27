@@ -249,6 +249,7 @@
                     'denied_signup' => __('app.scan.denied_signup'),
                     'denied_generic' => __('app.scan.denied_generic'),
                     'expired' => __('app.scan.expired'),
+                    'status_claiming' => __('app.scan.status_claiming'),
                 ];
             @endphp
             const messages = @json($scanMessages);
@@ -261,17 +262,51 @@
 
             whenEchoReady((echo) => {
                 echo.channel(`queue.${uuid}`)
+                    .listen('QueueEntryClaimed', () => {
+                        if (!resultOverlay.classList.contains('visible')) {
+                            statusText.textContent = messages.status_claiming;
+                        }
+                    })
                     .listen('QueueEntryResolved', (e) => {
                         showResult(e.approved, e.deniedReason, e.checkedIn);
                     })
                     .listen('QueueEntryExpired', () => {
                         showResult(false, messages.expired, false);
                     });
+
+                echo.connector.pusher.connection.bind('connected', () => {
+                    syncStatus();
+                });
             });
+
+            function syncStatus() {
+                if (resultOverlay.classList.contains('visible')) {
+                    return;
+                }
+                fetch(`/waiting/${uuid}/status`)
+                    .then((r) => r.json())
+                    .then((data) => {
+                        if (resultOverlay.classList.contains('visible')) {
+                            return;
+                        }
+                        if (data.state === 'approved') {
+                            showResult(true, null, Boolean(data.checkedIn));
+                        } else if (data.state === 'denied') {
+                            showResult(false, data.deniedReason || messages.denied_generic, false);
+                        } else if (data.state === 'expired') {
+                            showResult(false, messages.expired, false);
+                        } else if (data.reviewing) {
+                            statusText.textContent = messages.status_claiming;
+                        }
+                    })
+                    .catch(() => {});
+            }
 
             whenEchoReady(() => {
                 window.ThemeLive && window.ThemeLive.start(@js([$locationToken]));
             });
+
+            syncStatus();
 
             function showResult(approved, reason, checkedIn) {
                 const pendingKey = kind === 'signup' ? 'pendingSignupUuid' : 'pendingCheckinUuid';

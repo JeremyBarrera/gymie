@@ -144,8 +144,7 @@ trait ClaimsQueueEntries
                 $entry->uuid,
                 $locationToken,
                 $entry->kind,
-                $entry->payload,
-                Auth::user()->name
+                $entry->payload
             ))->toOthers();
         }
     }

@@ -4,6 +4,7 @@ import './theme-live';
 import './device-locale';
 import './locale-live';
 import './sound-alerts';
+import './active-tab';
 
 document.addEventListener('livewire:init', () => {
     Livewire.on('notify', (raw) => {
