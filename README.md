@@ -78,6 +78,33 @@ A location token powers public pages (`/checkin/{token}`, `/signup/{token}`) whe
 
 Details on feature flags, QR codes, and the public API are in [DEVELOPERS.md](DEVELOPERS.md).
 
+## URLs & Network Access (Tailscale Funnel)
+
+This repo’s Docker stack uses a 3-door nginx setup (`docker/nginx-tls.rendered.conf`):
+
+| URL | Door | Who can access | What it serves |
+|-----|------|----------------|----------------|
+| `https://YOUR_FUNNEL_HOST/` (e.g. `https://torogym.taild62334.ts.net`) | **Funnel** (`X-Block: funnel`, `tailscale funnel` → `127.0.0.1:80`) | **Anyone on the internet** — no Tailscale needed | Member QR pages only: `/checkin/{token}`, `/signup/{token}`, `/waiting/{uuid}`. The admin panel at `/` is blocked → `404` by `RestrictPanelToPrivateHosts` (funnel host + port `443` ≠ `8443`). |
+| `https://YOUR_FUNNEL_HOST:8443/` (e.g. `https://torogym.taild62334.ts.net:8443`) | **Private admin** (`X-Block: private`, `tailscale serve` → `127.0.0.1:81`, `SERVER_PORT 8443`) | **Tailnet only** — device must have Tailscale installed and be joined to your tailnet | Full Filament admin panel (`/`, `/login`, Dashboard, Plans, Reception). Also reachable on LAN via `http://192.168.x.x`. |
+| `http://localhost` / `http://192.168.x.x` | LAN | Local network only | Same as private admin door. |
+
+**Public QR URLs are token-specific** — `https://torogym.taild62334.ts.net/` alone has no page. Share the full token URL from admin **Reception → QR Codes** (or `location_tokens` table). Example:
+
+```
+https://torogym.taild62334.ts.net/checkin/15bxfej6YYoCIMPJJW6zf99yN6BZCriuKjcSuARM
+```
+
+Test from any phone **not** on Tailscale — it should show “Member Check-In”. If you get “QR code invalid”, the token was rotated; re-print from Reception.
+
+Funnel requires: `tailscale funnel` on (check `tailscale serve status` shows `Funnel on`), and Docker `webserver` running with the TLS config:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.https.yml --profile https up -d
+# not just `docker compose up -d` (that loads the simple nginx.conf and breaks :8443)
+```
+
+`FUNNEL_HOST` in `.env` must match the public hostname (e.g. `torogym.taild62334.ts.net`), and `APP_URL` should be `https://torogym.taild62334.ts.net`.
+
 ## Development
 ```bash
 php artisan test
