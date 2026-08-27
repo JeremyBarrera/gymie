@@ -55,7 +55,7 @@
             @include('filament.pages.partials.verify-overlay')
         @endif
 
-        @if($showCheckInOverlay && $selectedCheckInEntryId)
+        @if($showCheckInOverlay)
             @include('filament.pages.partials.checkin-overlay')
         @endif
 
