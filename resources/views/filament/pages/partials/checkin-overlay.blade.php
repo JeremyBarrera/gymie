@@ -243,7 +243,7 @@
                                     class="h-64 w-52 rounded-xl object-cover cursor-pointer"
                                     style="box-shadow: 0 0 0 3px {{ $cardRingVar }};"
                                     alt="{{ $checkInMember->name }}"
-                                    x-on:click="$dispatch('open-photo-zoom', { src: @js(asset('storage/'.$checkInMember->photo)), alt: @js($checkInMember->name) })"
+                                    onclick='window.dispatchEvent(new CustomEvent("open-photo-zoom", { detail: { src: @js(asset('storage/'.$checkInMember->photo)), alt: @js($checkInMember->name) } }))'
                                 >
                             @else
                                 <div class="flex h-64 w-52 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-(--gray-300)"

@@ -47,7 +47,7 @@ class UserInfolist
                             ->columnSpan(1)
                             ->extraAttributes(fn (User $record): array => $record->photo ? [
                                 'class' => '[&_img]:cursor-pointer',
-                                'x-on:click' => "\$dispatch('open-photo-zoom', { src: ".json_encode(asset('storage/'.$record->photo)).", alt: ".json_encode($record->name)." })",
+                                'onclick' => "window.dispatchEvent(new CustomEvent('open-photo-zoom', { detail: { src: '".addslashes(asset('storage/'.$record->photo))."', alt: '".addslashes($record->name)."' } }))",
                             ] : []),
                         Group::make()
                             ->schema([
