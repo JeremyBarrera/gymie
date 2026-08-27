@@ -268,6 +268,23 @@ class PlanCheckInService
                 continue;
             }
 
+            // Same-day duplicate on a limited plan: already checked in today
+            // in the gym's local timezone (PlanCheckIn rows only, not pending
+            // QueueEntry). Must be staff-confirmed with explicit no-count.
+            if ($this->hasCheckedInToday($best) && $this->remainingUses($best) !== null) {
+                $states[] = [
+                    'id' => (int) $service->id,
+                    'name' => (string) $service->name,
+                    'state' => 'same_day_duplicate',
+                    'subscription_id' => $best->id,
+                    'warning' => __('app.reception.service_same_day_duplicate', [
+                        'plan' => (string) $best->plan?->name,
+                    ]),
+                ];
+
+                continue;
+            }
+
             $states[] = [
                 'id' => (int) $service->id,
                 'name' => (string) $service->name,

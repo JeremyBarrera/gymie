@@ -64,6 +64,9 @@ trait HandlesCheckInVerification
     /** @var array<string> Recipient names shown on the override confirm step. */
     public array $checkInOverrideRecipients = [];
 
+    /** Same-day duplicate alert step for limited plans (gym timezone, approved-only). */
+    public bool $checkInSameDayDuplicateStep = false;
+
     /** @var array<int> Check-in entries that arrived while the overlay was already open. */
     public array $checkInPopupQueue = [];
 
@@ -218,6 +221,7 @@ trait HandlesCheckInVerification
         $this->checkInOverrideStep = false;
         $this->checkInOverrideReason = '';
         $this->checkInOverrideRecipients = [];
+        $this->checkInSameDayDuplicateStep = false;
         $this->checkInManualMode = false;
         $this->manualCheckInCandidates = [];
         $this->manualCheckInSearch = '';
@@ -338,6 +342,7 @@ trait HandlesCheckInVerification
         if (blank($value)) {
             $this->checkInServiceId = null;
             $this->checkInOverrideStep = false;
+            $this->checkInSameDayDuplicateStep = false;
 
             return;
         }
@@ -351,6 +356,7 @@ trait HandlesCheckInVerification
         }
 
         $this->checkInOverrideStep = false;
+        $this->checkInSameDayDuplicateStep = false;
     }
 
     public function selectCheckInService(int $serviceId): void
@@ -358,6 +364,8 @@ trait HandlesCheckInVerification
         if (! $this->selectedCheckInMemberId) {
             return;
         }
+
+        $this->checkInSameDayDuplicateStep = false;
 
         $valid = collect($this->checkInServices)
             ->contains(fn (array $row): bool => (int) $row['id'] === $serviceId);
@@ -592,6 +600,156 @@ trait HandlesCheckInVerification
 
         if ($wasManualPostSignup) {
             $this->finalizePendingSignupCheckIn(true);
+        }
+
+        if ($entry !== null) {
+            $this->removeCheckInFromView($entry->id);
+        }
+    }
+
+    public function confirmSameDayDuplicateCheckIn(): void
+    {
+        if (! $this->selectedCheckInMemberId || ! $this->checkInServiceId) {
+            return;
+        }
+
+        $entry = $this->resolveCurrentCheckInEntry();
+
+        if ($entry !== null && ! in_array($entry->status, ['waiting', 'attending'], true)) {
+            $this->closeCheckInOverlay();
+
+            return;
+        }
+
+        $row = collect($this->checkInServices)->firstWhere('id', $this->checkInServiceId);
+        $member = Member::find($this->selectedCheckInMemberId);
+        $subscription = $row ? Subscription::find($row['subscription_id']) : null;
+
+        if (! $member || ($row['state'] ?? null) !== 'same_day_duplicate' || ! $subscription) {
+            $this->dispatch('notify',
+                type: 'danger',
+                message: __('app.notifications.check_in_failed'),
+            );
+
+            return;
+        }
+
+        try {
+            app(PlanCheckInService::class)->checkInOverride(
+                $member,
+                $subscription,
+                Auth::user(),
+                'same_day_duplicate',
+                false,
+                $this->checkInServiceId,
+                $this->checkInLocation($entry),
+            );
+        } catch (\Throwable $exception) {
+            $this->dispatch('notify',
+                type: 'danger',
+                message: $exception->getMessage(),
+            );
+
+            return;
+        }
+
+        if ($entry !== null) {
+            $entry->update([
+                'status' => 'approved',
+                'override' => true,
+                'override_by_user_id' => Auth::id(),
+                'override_reason' => 'same_day_duplicate',
+            ]);
+
+            $this->broadcastCheckInResolution($entry, true, null);
+        }
+
+        $wasManualPostSignup = $this->pendingSignupCheckInQueueId !== null && $entry === null;
+
+        $this->dispatch('notify',
+            type: 'success',
+            message: __('app.reception.same_day_duplicate_approved'),
+        );
+
+        $this->resetCheckInOverlay();
+
+        if ($wasManualPostSignup) {
+            $this->finalizePendingSignupCheckIn(true);
+        }
+
+        if ($entry !== null) {
+            $this->removeCheckInFromView($entry->id);
+        }
+    }
+
+    public function denySameDayDuplicateCheckIn(): void
+    {
+        $entry = $this->resolveCurrentCheckInEntry();
+
+        if ($entry === null && $this->selectedCheckInEntryId !== null) {
+            $this->closeCheckInOverlay();
+
+            return;
+        }
+
+        if ($entry !== null && ! in_array($entry->status, ['waiting', 'attending'], true)) {
+            $this->closeCheckInOverlay();
+
+            return;
+        }
+
+        $row = collect($this->checkInServices)->firstWhere('id', $this->checkInServiceId);
+        $member = Member::find($this->selectedCheckInMemberId);
+
+        if (! $member || ($row['state'] ?? null) !== 'same_day_duplicate') {
+            $this->dispatch('notify',
+                type: 'danger',
+                message: __('app.notifications.check_in_failed'),
+            );
+
+            return;
+        }
+
+        // Audit the denial as an override-type record with distinct reason, then deny the queue entry.
+        try {
+            $subscription = $row ? Subscription::find($row['subscription_id']) : null;
+
+            app(PlanCheckInService::class)->checkInOverride(
+                $member,
+                $subscription,
+                Auth::user(),
+                'same_day_duplicate_denied',
+                false,
+                $this->checkInServiceId,
+                $this->checkInLocation($entry),
+            );
+        } catch (\Throwable) {
+            // Audit failure should not block the deny itself.
+        }
+
+        $wasManualPostSignup = $this->pendingSignupCheckInQueueId !== null && $entry === null;
+
+        if ($entry !== null) {
+            $entry->update([
+                'status' => 'denied',
+                'denied_reason' => __('app.reception.same_day_duplicate_denied_reason'),
+                'override' => true,
+                'override_by_user_id' => Auth::id(),
+                'override_reason' => 'same_day_duplicate_denied',
+            ]);
+
+            $this->broadcastCheckInResolution($entry, false, __('app.reception.same_day_duplicate_denied_reason'));
+        }
+
+        $this->dispatch('notify',
+            type: 'success',
+            message: __('app.reception.denied'),
+        );
+
+        $this->resetCheckInOverlay();
+
+        if ($wasManualPostSignup) {
+            $this->finalizePendingSignupCheckIn(false);
         }
 
         if ($entry !== null) {

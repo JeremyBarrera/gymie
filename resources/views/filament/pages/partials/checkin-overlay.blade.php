@@ -22,7 +22,7 @@
     $cardSeverityRank = function (string $stateOrColor): int {
         return match (true) {
             in_array($stateOrColor, ['overdue', 'expired', 'no_access', 'uses_exhausted', 'danger'], true) => 2,
-            in_array($stateOrColor, ['unpaid', 'warning'], true) => 1,
+            in_array($stateOrColor, ['unpaid', 'warning', 'same_day_duplicate'], true) => 1,
             default => 0,
         };
     };
@@ -67,6 +67,7 @@
             'expired' => __('app.reception.service_expired_short'),
             'no_access' => __('app.reception.service_no_access_short'),
             'uses_exhausted' => __('app.reception.service_uses_exhausted_short'),
+            'same_day_duplicate' => __('app.reception.service_same_day_duplicate_short'),
             'unpaid' => __('app.reception.service_unpaid_short'),
             default => (string) ($checkInStatus['label'] ?? ''),
         }
@@ -80,13 +81,14 @@
         'overdue' => __('app.reception.service_overdue_short'),
         'expired' => __('app.reception.service_expired_short'),
         'uses_exhausted' => __('app.reception.service_uses_exhausted_short'),
+        'same_day_duplicate' => __('app.reception.service_same_day_duplicate_short'),
         default => __('app.reception.service_no_access_short'),
     };
 
     // Same severity scale as the photo border: blocked states are red,
     // attention is amber.
     $selectedStateColor = match ($checkInSelectedRow['state'] ?? 'access') {
-        'unpaid' => 'warning',
+        'unpaid', 'same_day_duplicate' => 'warning',
         'overdue', 'expired', 'no_access', 'uses_exhausted' => 'danger',
         default => 'success',
     };
@@ -449,6 +451,30 @@
                                     wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
                                 >
                                     {{ __('app.reception.override') }}
+                                </x-filament::button>
+                            @elseif(($checkInSelectedRow['state'] ?? null) === 'same_day_duplicate')
+                                <x-filament::button
+                                    wire:key="checkin-deny-same-day"
+                                    color="gray"
+                                    icon="heroicon-m-x-mark"
+                                    size="md"
+                                    class="min-w-28"
+                                    wire:click="denySameDayDuplicateCheckIn"
+                                    wire:loading.attr="disabled"
+                                >
+                                    {{ __('app.reception.deny') }}
+                                </x-filament::button>
+
+                                <x-filament::button
+                                    wire:key="checkin-same-day-approve"
+                                    color="warning"
+                                    icon="heroicon-m-check"
+                                    size="md"
+                                    class="min-w-28"
+                                    wire:click="confirmSameDayDuplicateCheckIn"
+                                    wire:loading.attr="disabled"
+                                >
+                                    {{ __('app.reception.same_day_duplicate_check_in') }}
                                 </x-filament::button>
                             @else
                                 <x-filament::button
