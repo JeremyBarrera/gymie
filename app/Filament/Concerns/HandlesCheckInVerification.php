@@ -15,7 +15,8 @@ use App\Support\DevOps\FeatureFlags;
 use App\Support\Locations\LocationAccess;
 use App\Support\Notifications\FollowUpAlert;
 use App\Support\Notifications\NotificationRecipients;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
 
