@@ -230,6 +230,7 @@ return [
         'view' => 'عرض :resource',
         'send' => 'ارسال',
         'back' => 'رجوع',
+        'close' => 'إغلاق',
         'add_expense' => 'اضافة مصروف',
         'new_follow_up' => 'متابعة جديدة',
         'record_actions' => 'اجراءات السجل',

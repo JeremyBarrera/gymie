@@ -228,6 +228,7 @@ return [
         'view' => 'View :resource',
         'send' => 'Send',
         'back' => 'Back',
+        'close' => 'Close',
         'add_expense' => 'Add expense',
         'new_follow_up' => 'New follow up',
         'record_actions' => 'Record actions',
