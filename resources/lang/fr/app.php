@@ -230,6 +230,7 @@ return [
         'view' => 'Voir :resource',
         'send' => 'Envoyer',
         'back' => 'Retour',
+        'close' => 'Fermer',
         'add_expense' => 'Ajouter une dépense',
         'new_follow_up' => 'Nouvelle relance',
         'record_actions' => 'Actions',

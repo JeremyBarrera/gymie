@@ -230,6 +230,7 @@ return [
         'view' => 'مشاهده :resource',
         'send' => 'ارسال',
         'back' => 'بازگشت',
+        'close' => 'بستن',
         'add_expense' => 'ثبت هزینه جدید',
         'new_follow_up' => 'پیگیری جدید',
         'record_actions' => 'ثبت اقدامات',
