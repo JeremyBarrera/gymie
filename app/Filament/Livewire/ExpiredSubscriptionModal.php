@@ -138,6 +138,16 @@ class ExpiredSubscriptionModal extends Component
 
     public function submit(): void
     {
+        $this->handleSubmit(false);
+    }
+
+    public function submitAndAddAnother(): void
+    {
+        $this->handleSubmit(true);
+    }
+
+    private function handleSubmit(bool $addAnother): void
+    {
         $actor = Auth::user();
 
         if (! $actor || ! $actor->can('create', Subscription::class)) {
@@ -158,10 +168,6 @@ class ExpiredSubscriptionModal extends Component
         }
 
         try {
-            
-            
-            
-            
             $result = DB::transaction(function () use ($previous, $member): array {
                 $freshPrevious = Subscription::query()
                     ->whereKey($previous->id)
@@ -212,6 +218,21 @@ class ExpiredSubscriptionModal extends Component
                 subscription: $subscription,
                 invoice: $invoice,
             );
+        }
+
+        if ($addAnother) {
+            $this->dispatch('notify', type: 'success', message: __('app.notifications.subscription_created'));
+
+            $this->previousSubscriptionId = (int) $subscription->id;
+            $this->planId = (int) $subscription->plan_id;
+            $this->startDate = now(AppConfig::timezone())->toDateString();
+            $defaultPlan = Plan::find($this->planId);
+            $this->endDate = $defaultPlan ? Helpers::calculateSubscriptionEndDate($this->startDate, (int) $defaultPlan->id) : null;
+            $this->discountAmount = null;
+            $this->paidAmount = null;
+            $this->resetErrorBag();
+
+            return;
         }
 
         $subscriptionId = (int) $subscription->id;

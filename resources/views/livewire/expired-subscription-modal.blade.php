@@ -111,17 +111,30 @@
         </div>
 
         <x-slot name="footer">
-            <x-filament::button
-                wire:key="expired-submit"
-                color="success"
-                size="md"
-                class="w-full"
-                wire:click="submit"
-                wire:loading.attr="disabled"
-                wire:target="submit"
-            >
-                {{ __('app.check_in.add_subscription') }}
-            </x-filament::button>
+            <div class="flex w-full gap-3">
+                <x-filament::button
+                    wire:key="expired-submit"
+                    color="success"
+                    size="md"
+                    class="flex-1"
+                    wire:click="submit"
+                    wire:loading.attr="disabled"
+                    wire:target="submit"
+                >
+                    {{ __('app.check_in.add_subscription') }}
+                </x-filament::button>
+                <x-filament::button
+                    wire:key="expired-submit-add-another"
+                    color="gray"
+                    size="md"
+                    class="flex-1"
+                    wire:click="submitAndAddAnother"
+                    wire:loading.attr="disabled"
+                    wire:target="submitAndAddAnother"
+                >
+                    {{ __('app.actions.save_add_another') }}
+                </x-filament::button>
+            </div>
         </x-slot>
     </x-filament::modal>
 </div>

@@ -491,8 +491,8 @@ trait HandlesCheckInVerification
         $subscription = $row ? Subscription::find($row['subscription_id']) : null;
         $state = $row['state'] ?? null;
         $overrideReason = match ($state) {
-            'no_access' => 'no_subscription',
-            'uses_exhausted' => 'uses_exhausted',
+            'no_access' => __('app.reception.service_no_access'),
+            'uses_exhausted' => __('app.reception.service_uses_exhausted', ['plan' => $subscription?->plan?->name ?? '']),
             default => null,
         };
 
@@ -595,7 +595,7 @@ trait HandlesCheckInVerification
                 $member,
                 $subscription,
                 Auth::user(),
-                'same_day_duplicate',
+                __('app.reception.service_same_day_duplicate', ['plan' => $subscription->plan?->name ?? '']),
                 false,
                 $this->checkInServiceId,
                 $this->checkInLocation($entry),
@@ -614,7 +614,7 @@ trait HandlesCheckInVerification
                 'status' => 'approved',
                 'override' => true,
                 'override_by_user_id' => Auth::id(),
-                'override_reason' => 'same_day_duplicate',
+                'override_reason' => __('app.reception.service_same_day_duplicate', ['plan' => $subscription->plan?->name ?? '']),
             ]);
 
             $this->broadcastCheckInResolution($entry, true, null);
@@ -745,7 +745,7 @@ trait HandlesCheckInVerification
                 $member,
                 $subscription,
                 Auth::user(),
-                'same_day_duplicate_denied',
+                __('app.reception.same_day_duplicate_denied_reason'),
                 false,
                 $this->checkInServiceId,
                 $this->checkInLocation($entry),
@@ -762,7 +762,7 @@ trait HandlesCheckInVerification
                 'denied_reason' => __('app.reception.same_day_duplicate_denied_reason'),
                 'override' => true,
                 'override_by_user_id' => Auth::id(),
-                'override_reason' => 'same_day_duplicate_denied',
+                'override_reason' => __('app.reception.same_day_duplicate_denied_reason'),
             ]);
 
             $this->broadcastCheckInResolution($entry, false, __('app.reception.same_day_duplicate_denied_reason'));

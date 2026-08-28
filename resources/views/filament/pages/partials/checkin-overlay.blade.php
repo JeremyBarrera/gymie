@@ -199,10 +199,12 @@
                         </x-filament::input.wrapper>
                     </div>
                 @elseif($isBanned)
-                    <div class="rounded-xl border-2 border-danger-500 bg-danger-50 p-6 text-center dark:bg-danger-500/10">
-                        <p class="text-2xl font-bold tracking-tight text-danger-600 dark:text-danger-400">{{ __('app.members.banned') }}</p>
-                        <p class="fi-text-muted mt-2 text-sm">{{ $checkInMember->ban_reason ?: __('app.reception.check_in_member_banned') }}</p>
-                    </div>
+                    <x-filament::section>
+                        <div class="text-center" style="background: var(--danger-50); border: 2px solid var(--danger-500); border-radius: 0.75rem; padding: 1.5rem;">
+                            <p class="text-2xl font-bold tracking-tight" style="color: var(--danger-600)">{{ __('app.members.banned') }}</p>
+                            <p class="fi-text-muted mt-2 text-sm">{{ $checkInMember->ban_reason ?: __('app.reception.check_in_member_banned') }}</p>
+                        </div>
+                    </x-filament::section>
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
                         <div class="relative shrink-0">
                             @if($checkInMember->photo)
@@ -486,38 +488,36 @@
                                     {{ __('app.check_in.add_subscription') }}
                                 </x-filament::button>
                             @elseif(($checkInSelectedRow['state'] ?? null) === 'uses_exhausted')
-                                @if($hasRenewableForSelected)
-                                    <x-filament::button
-                                        wire:key="checkin-override"
-                                        color="warning"
-                                        size="md"
-                                        class="min-w-28"
-                                        wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
-                                    >
-                                        {{ __('app.reception.override') }}
-                                    </x-filament::button>
-                                @else
-                                    <x-filament::button
-                                        wire:key="checkin-renew"
-                                        color="success"
-                                        size="md"
-                                        class="min-w-28"
-                                        wire:click="openExpiredSubscriptionModal({{ $checkInSelectedRow['id'] }})"
-                                        wire:loading.attr="disabled"
-                                    >
-                                        {{ __('app.check_in.add_subscription') }}
-                                    </x-filament::button>
-                                    <x-filament::button
-                                        wire:key="checkin-override"
-                                        color="warning"
-                                        size="md"
-                                        class="min-w-28"
-                                        wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
-                                    >
-                                        {{ __('app.reception.override') }}
-                                    </x-filament::button>
-                                @endif
+                                <x-filament::button
+                                    wire:key="checkin-renew"
+                                    color="success"
+                                    size="md"
+                                    class="min-w-28"
+                                    wire:click="openExpiredSubscriptionModal({{ $checkInSelectedRow['id'] }})"
+                                    wire:loading.attr="disabled"
+                                >
+                                    {{ __('app.check_in.add_subscription') }}
+                                </x-filament::button>
+                                <x-filament::button
+                                    wire:key="checkin-override"
+                                    color="warning"
+                                    size="md"
+                                    class="min-w-28"
+                                    wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
+                                >
+                                    {{ __('app.reception.override') }}
+                                </x-filament::button>
                             @elseif(($checkInSelectedRow['state'] ?? null) === 'no_access')
+                                <x-filament::button
+                                    wire:key="checkin-renew-noaccess"
+                                    color="success"
+                                    size="md"
+                                    class="min-w-28"
+                                    wire:click="openExpiredSubscriptionModal({{ $checkInSelectedRow['id'] }})"
+                                    wire:loading.attr="disabled"
+                                >
+                                    {{ __('app.check_in.add_subscription') }}
+                                </x-filament::button>
                                 <x-filament::button
                                     wire:key="checkin-override"
                                     color="warning"

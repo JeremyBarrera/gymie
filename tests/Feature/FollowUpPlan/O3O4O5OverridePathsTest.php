@@ -141,10 +141,11 @@ it('opens the renewal popup preselecting the expired plan with cash and blank da
         ->call('open', $member->id, (int) $plan->primaryService()->id, $previous->id)
         ->assertSet('planId', (int) $previous->plan_id)
         ->assertSet('paymentMethod', 'cash')
-        ->assertSet('startDate', null)
-        ->assertSet('endDate', null)
+        ->assertSet('startDate', now()->toDateString())
+        ->assertSet('endDate', \App\Helpers\Helpers::calculateSubscriptionEndDate(now()->toDateString(), (int) $previous->plan_id))
         ->assertSet('discountAmount', null)
         ->assertSet('paidAmount', null)
+        ->set('startDate', null)
         ->call('submit')
         ->assertHasErrors(['startDate']);
 });
@@ -302,9 +303,9 @@ it('sends an override_checkin alert with the system default reason when the mess
     $payload = $pinned->unreadNotifications()->first()->data;
 
     expect($checkIn->override)->toBeTrue()
-        ->and($checkIn->override_reason)->toBe('no_subscription')
+        ->and($checkIn->override_reason)->toBe(__('app.reception.service_no_access'))
         ->and($payload['action'])->toBe('override_checkin')
-        ->and($payload['reason'])->toBe('no_subscription')
+        ->and($payload['reason'])->toBe(__('app.reception.service_no_access'))
         ->and($payload['actor']['id'])->toBe((int) $staff->id);
 });
 

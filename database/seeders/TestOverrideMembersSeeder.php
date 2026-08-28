@@ -158,7 +158,7 @@ class TestOverrideMembersSeeder extends Seeder
 
         // 8. BANNED
         $m8 = $createMember('OVERRIDE-BANNED', 'Override Banned', 'ID-BANNED-001', '+10000000008', null, 'banned');
-        $m8->update(['ban_reason' => 'Test ban for override workflow']);
+        $m8->update(['ban_reason' => 'Violation of gym policy']);
         $sub8 = \App\Models\Subscription::create([
             'member_id' => $m8->id, 'plan_id' => $planToro->id, 'location_id' => $location->id,
             'start_date' => now()->subDays(5)->toDateString(), 'end_date' => now()->addDays(25)->toDateString(), 'status' => Status::Ongoing->value,
