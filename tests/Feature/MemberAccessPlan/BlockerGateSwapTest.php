@@ -207,7 +207,7 @@ it('matches an inactive member with a subscription on the api and refuses a bann
     expect($refused->json())->toBe($unknown->json());
 });
 
-it('opens the walk-up overlay for an inactive member and toasts for a banned one', function (): void {
+it('opens the walk-up overlay for an inactive member and for a banned one with a banned warning', function (): void {
     $plan = g2Plan();
     g2Subscription(g2Member(['name' => 'Inactive Ivy', 'status' => Status::Inactive]), $plan);
 
@@ -217,12 +217,13 @@ it('opens the walk-up overlay for an inactive member and toasts for a banned one
         ->call('openManualCheckInOverlay')
         ->assertSet('showCheckInOverlay', true);
 
-    g2Member(['name' => 'Banned Bob', 'status' => Status::Banned]);
+    $banned = g2Member(['name' => 'Banned Bob', 'status' => Status::Banned, 'ban_reason' => 'Test ban']);
 
     Livewire::actingAs(g2Staff())
         ->test(Reception::class)
         ->set('manualCheckInSearch', 'Bob')
         ->call('openManualCheckInOverlay')
-        ->assertDispatched('notify', type: 'danger', message: __('app.reception.check_in_member_banned'))
-        ->assertSet('showCheckInOverlay', false);
+        ->assertSet('showCheckInOverlay', true)
+        ->assertSet('selectedCheckInMemberId', $banned->id)
+        ->assertSee(__('app.members.banned'));
 });

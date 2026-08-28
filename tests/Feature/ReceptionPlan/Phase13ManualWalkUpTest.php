@@ -150,15 +150,18 @@ it('walks up an inactive member like anyone else — lifecycle no longer gates c
         ->assertSet('checkInManualMode', true);
 });
 
-it('refuses a banned walk-up with the banned toast', function (): void {
-    manualMember(['name' => 'Banned Bob', 'status' => Status::Banned]);
+it('opens the overlay for a banned walk-up with only a close button and a banned warning', function (): void {
+    $member = manualMember(['name' => 'Banned Bob', 'status' => Status::Banned, 'ban_reason' => 'Test ban']);
 
     Livewire::actingAs(manualStaff())
         ->test(Reception::class)
         ->set('manualCheckInSearch', 'Banned')
         ->call('openManualCheckInOverlay')
-        ->assertDispatched('notify', type: 'danger', message: __('app.reception.check_in_member_banned'))
-        ->assertSet('showCheckInOverlay', false);
+        ->assertSet('showCheckInOverlay', true)
+        ->assertSet('selectedCheckInMemberId', $member->id)
+        ->assertSee(__('app.members.banned'))
+        ->assertDontSee(__('app.reception.approve'))
+        ->assertDontSee(__('app.reception.override'));
 });
 
 it('denies a walk-up check-in without touching any queue entry', function (): void {
