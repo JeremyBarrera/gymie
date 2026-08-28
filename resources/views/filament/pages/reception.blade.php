@@ -24,8 +24,8 @@
 
         @if($activeTab === 'checkin')
             <x-filament::section
-                :heading="__('app.reception.manual_search_label')"
-                icon="heroicon-o-magnifying-glass"
+                :heading="__('app.reception.check_in')"
+                icon="heroicon-m-clipboard-document-check"
                 compact
             >
                 <div class="flex flex-col gap-3">

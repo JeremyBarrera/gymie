@@ -15,9 +15,7 @@
                             class="pending-fab-button pending-fab-flash"
                             aria-label="{{ __('app.reception.waiting_title') }}"
                         >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M7 6.75h12.25M7 12h12.25M7 17.25h12.25M3.5 6.75h.007v.008H3.5V6.75Zm.5 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0ZM3.5 12h.007v.008H3.5V12Zm.5 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0Zm-.5 5.25h.007v.008H3.5v-.008Zm.5 0a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0Z" />
-                            </svg>
+                            <x-filament::icon icon="heroicon-m-clipboard-document-check" class="pending-fab-icon" />
                             <span class="pending-fab-count">{{ count($pendingQueue) }}</span>
                         </button>
                     </x-slot>

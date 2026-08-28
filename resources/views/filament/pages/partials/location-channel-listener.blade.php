@@ -15,13 +15,31 @@
         });
         const staffIsActive = () => Date.now() - lastActivity < 60000;
 
-        // Elect a single notifying tab per staff session via the Web Locks
-        // API (BroadcastChannel + localStorage heartbeat fallback). Every
-        // tab keeps its lists in sync, but only the active-tab leader plays
-        // the sound and opens the review overlay for new arrivals.
+        const pageLoadAt = Date.now();
         const activeTab = window.GymieActiveTab;
         activeTab && activeTab.start(window.GYMIE_USER_ID ?? 0);
-        const isNotifyingTab = () => Boolean(activeTab && activeTab.isActive) && staffIsActive();
+        const isNotifyingTab = () => {
+            if (!staffIsActive()) return false;
+            const g = window.GymieActiveTab;
+            if (!g) return true;
+            if (g.isActive) return true;
+            if (Date.now() - pageLoadAt < 5000) return true;
+            if (!navigator.locks) {
+                try {
+                    const uid = window.GYMIE_USER_ID ?? 0;
+                    const prefix = 'gymieActiveTab_' + uid + '_tab_';
+                    let live = 0;
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const k = localStorage.key(i);
+                        if (!k || !k.startsWith(prefix)) continue;
+                        const d = JSON.parse(localStorage.getItem(k) || 'null');
+                        if (d && Date.now() - d.updatedAt < 10000) live++;
+                    }
+                    if (live <= 1) return true;
+                } catch {}
+            }
+            return false;
+        };
 
         const tokens = @js($this->getLocationTokens());
         if (tokens.length && window.Echo) {

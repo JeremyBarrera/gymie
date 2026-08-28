@@ -57,8 +57,6 @@
             <x-filament::section compact wire:key="entry-{{ $entry['id'] }}">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
                     <div class="flex flex-1 items-start gap-3 min-w-0">
-                        @include('filament.pages.partials.member-avatar', ['member' => $member])
-
                         <div class="min-w-0 space-y-2">
                             <h4 class="fi-text text-base font-semibold">{{ $name }}</h4>
 

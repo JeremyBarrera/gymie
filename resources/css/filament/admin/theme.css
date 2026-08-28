@@ -65,40 +65,43 @@
 
 .pending-fab-button {
     position: relative;
-    width: 48px;
-    height: 48px;
+    width: 60px;
+    height: 60px;
     border-radius: 9999px;
-    background: var(--primary-600);
+    background: var(--danger-600);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     border: none;
     cursor: pointer;
-    transition: background 0.15s;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: background 0.15s, transform 0.15s;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .pending-fab-button:hover {
-    background: var(--primary-700);
+    background: var(--danger-700);
 }
 
-.pending-fab-button svg {
-    width: 24px;
-    height: 24px;
+.pending-fab-button svg,
+.pending-fab-icon {
+    width: 28px;
+    height: 28px;
 }
 
 .pending-fab-flash {
-    animation: pending-fab-pulse 2s ease-in-out infinite;
+    animation: pending-fab-pulse 1.15s ease-in-out infinite;
 }
 
 @keyframes pending-fab-pulse {
     0%, 100% {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: scale(1);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
     }
     50% {
-        box-shadow: 0 4px 20px color-mix(in srgb, var(--primary-500) 60%, transparent),
-                    0 0 0 4px color-mix(in srgb, var(--primary-500) 25%, transparent);
+        transform: scale(1.04);
+        box-shadow: 0 8px 24px color-mix(in srgb, var(--danger-500) 55%, transparent),
+                    0 0 0 6px color-mix(in srgb, var(--danger-500) 28%, transparent);
     }
 }
 
