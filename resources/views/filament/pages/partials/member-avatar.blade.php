@@ -6,9 +6,11 @@
 @if($member?->photo)
     <img
         src="{{ asset('storage/'.$member->photo) }}"
+        data-zoom-src="{{ asset('storage/'.$member->photo) }}"
+        data-zoom-alt="{{ $alt ?? $member->name }}"
         class="{{ $avatarSizeClass }} shrink-0 rounded-lg object-cover cursor-pointer"
         alt="{{ $alt ?? $member->name }}"
-        onclick='event.preventDefault(); event.stopPropagation(); window.dispatchEvent(new CustomEvent("open-photo-zoom", { detail: { src: @js(asset('storage/'.$member->photo)), alt: @js($alt ?? $member->name) } })); console.log("[photo-zoom] trigger", @js(asset('storage/'.$member->photo)))'
+        x-on:click.prevent.stop="window.dispatchEvent(new CustomEvent('open-photo-zoom', { detail: { src: $el.dataset.zoomSrc, alt: $el.dataset.zoomAlt } }))"
     >
 @else
     <span class="fi-color fi-color-primary flex {{ $avatarSizeClass }} shrink-0 items-center justify-center rounded-lg">

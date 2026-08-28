@@ -134,7 +134,9 @@ class MemberTable
                     ->defaultImageUrl(fn (Member $record): string => 'https://ui-avatars.com/api/?background=000&color=fff&name='.$record->name)
                     ->extraImgAttributes(fn (Member $record): array => $record->photo ? [
                         'class' => 'cursor-pointer',
-                        'onclick' => "event.preventDefault(); event.stopPropagation(); window.dispatchEvent(new CustomEvent('open-photo-zoom', { detail: { src: '".addslashes(asset('storage/'.$record->photo))."', alt: '".addslashes($record->name)."' } })); console.log('[photo-zoom] trigger table', '".addslashes($record->name)."')",
+                        'data-zoom-src' => asset('storage/'.$record->photo),
+                        'data-zoom-alt' => $record->name,
+                        'x-on:click.prevent.stop' => "window.dispatchEvent(new CustomEvent('open-photo-zoom', { detail: { src: \$el.dataset.zoomSrc, alt: \$el.dataset.zoomAlt } }))",
                     ] : []),
                 TextColumn::make('code')
                     ->searchable(),
