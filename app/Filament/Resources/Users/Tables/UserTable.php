@@ -42,7 +42,7 @@ class UserTable
                     ->defaultImageUrl(fn (User $record): string => 'https://ui-avatars.com/api/?background=000&color=fff&name='.$record->name)
                     ->extraImgAttributes(fn (User $record): array => $record->photo ? [
                         'class' => 'cursor-pointer',
-                        'onclick' => "event.preventDefault(); event.stopPropagation(); const z=document.getElementById('photo-zoom-img'); if(z){z.src='".addslashes(asset('storage/'.$record->photo))."'; z.alt='".addslashes($record->name)."';} window.dispatchEvent(new CustomEvent('open-modal', {detail:{id:'photo-zoom'}}))",
+                        'onclick' => "event.preventDefault(); event.stopPropagation(); window.dispatchEvent(new CustomEvent('open-photo-zoom', { detail: { src: '".addslashes(asset('storage/'.$record->photo))."', alt: '".addslashes($record->name)."' } })); console.log('[photo-zoom] trigger user table')",
                     ] : []),
                 TextColumn::make('name')
                     ->label(__('app.fields.name'))

@@ -249,7 +249,7 @@
                                     class="h-64 w-52 rounded-xl object-cover cursor-pointer"
                                     style="box-shadow: 0 0 0 3px {{ $cardRingVar }};"
                                     alt="{{ $checkInMember->name }}"
-                                    onclick='event.preventDefault(); event.stopPropagation(); const z=document.getElementById("photo-zoom-img"); if(z){z.src=@js(asset('storage/'.$checkInMember->photo)); z.alt=@js($checkInMember->name);} window.dispatchEvent(new CustomEvent("open-modal", {detail:{id:"photo-zoom"}}))'
+                                    onclick='event.preventDefault(); event.stopPropagation(); window.dispatchEvent(new CustomEvent("open-photo-zoom", { detail: { src: @js(asset('storage/'.$checkInMember->photo)), alt: @js($checkInMember->name) } })); console.log("[photo-zoom] trigger checkin", @js(asset('storage/'.$checkInMember->photo)))'
                                 >
                             @else
                                 <div class="flex h-64 w-52 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-(--gray-300)"
