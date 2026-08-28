@@ -30,7 +30,7 @@
                                 :wire:key="'pending-item-' . $entry['id']"
                                 tag="button"
                                 color="primary"
-                                :icon="$entry['kind'] === 'checkin' ? 'heroicon-m-arrow-right-circle' : 'heroicon-m-user-plus'"
+                                :icon="$entry['kind'] === 'checkin' ? 'heroicon-m-clipboard-document-check' : 'heroicon-m-user-plus'"
                                 :wire:click="$entry['kind'] === 'checkin'
                                     ? 'checkInFromPending(' . $entry['id'] . ')'
                                     : 'verifyFromPending(' . $entry['id'] . ')'"
