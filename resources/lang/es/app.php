@@ -281,6 +281,9 @@ return [
         'refundable_amount' => 'Reembolsable: :amount',
         'phone_format' => 'Incluí el código de país. Solo se permiten números, espacios, +, -, y ().',
         'paid_at_device_time' => 'Seleccione la hora del pago en la hora local de su dispositivo. Se guardará en UTC y se mostrará a otros en su hora local.',
+        'end_date_derived' => 'Automatically calculated from the start date and plan duration.',
+        'due_date_after_today' => 'Date must be after today (e.g. :tomorrow or later). Today and earlier dates are not allowed.',
+        'next_due_date_required' => 'A next payment date is required while a balance remains. Must be after today.',
     ],
     'tooltips' => [
         'member_email_missing' => 'Falta el correo electrónico del socio',
@@ -807,6 +810,7 @@ return [
         'override_due_date_confirm' => 'Cambiar fecha y forzar',
         'invoice_not_found' => 'Factura no encontrada',
         'checkin_approved' => ':name registró su entrada',
+        'approve_disabled_helper' => 'Select a service with "Access" status to enable Check In. Other states require Add Subscription, Override, or Payment.',
         'review' => 'Revisar',
         'back' => 'Atrás',
         'verify_plan_hint' => 'Cada miembro nuevo se crea con un plan de membresía y una factura.',

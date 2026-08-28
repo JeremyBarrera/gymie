@@ -12,6 +12,8 @@
     $checkInStatus = $checkInMember
         ? \App\Support\Membership\MembershipStatus::forMember($checkInMember)
         : null;
+    $isBanned = $checkInMember && $checkInMember->checkInBlocker() === 'banned';
+    $hasRenewableForSelected = $checkInMember && $checkInSelectedRow ? $this->hasRenewableSubscriptionForService($checkInMember, (int) $checkInSelectedRow['id']) : false;
 
     
     
@@ -115,8 +117,7 @@
 
     $footerConfirmMeta = [
         'deny' => [
-            'color' => 'gray',
-            'icon' => 'heroicon-m-x-mark',
+            'color' => 'danger',
             'label' => __('app.reception.checkin_deny_confirm'),
             'action' => 'confirmDenyCheckIn',
         ],
@@ -196,6 +197,11 @@
                                 ></textarea>
                             </div>
                         </x-filament::input.wrapper>
+                    </div>
+                @elseif($isBanned)
+                    <div class="rounded-xl border-2 border-danger-500 bg-danger-50 p-6 text-center dark:bg-danger-500/10">
+                        <p class="text-2xl font-bold tracking-tight text-danger-600 dark:text-danger-400">{{ __('app.members.banned') }}</p>
+                        <p class="fi-text-muted mt-2 text-sm">{{ $checkInMember->ban_reason ?: __('app.reception.check_in_member_banned') }}</p>
                     </div>
                 @elseif(! $checkInMember && $checkInCandidates->isNotEmpty())
                     <div class="flex items-center gap-2">
@@ -373,7 +379,6 @@
                         <x-filament::button
                             wire:key="checkin-{{ $footerStep }}-confirm"
                             :color="$footerConfirmMeta[$footerStep]['color']"
-                            :icon="($footerConfirmMeta[$footerStep]['icon'] ?? null)"
                             size="md"
                             class="min-w-28"
                             wire:click="{{ $footerConfirmMeta[$footerStep]['action'] }}"
@@ -382,12 +387,17 @@
                             {{ $footerConfirmMeta[$footerStep]['label'] }}
                         </x-filament::button>
                     @else
-                        @if($checkInMember)
-                            
+                        @if($isBanned)
+                            <div class="flex w-full justify-end">
+                                <x-filament::button color="gray" wire:click="closeCheckInOverlay">{{ __('app.actions.close') }}</x-filament::button>
+                            </div>
+                        @elseif($checkInMember)
+                            @if(($checkInSelectedRow['state'] ?? null) === 'same_day_duplicate')
+                                <p class="fi-text-muted text-sm">{{ __('app.reception.same_day_duplicate_helper') }}</p>
+                            @endif
                             <x-filament::button
                                 wire:key="checkin-deny"
-                                color="gray"
-                                icon="heroicon-m-x-mark"
+                                color="danger"
                                 size="md"
                                 class="min-w-28"
                                 wire:click="denyCheckIn"
@@ -396,6 +406,9 @@
                             </x-filament::button>
 
                             @if(! $checkInSelectedRow || ($checkInSelectedRow['state'] ?? null) === 'access')
+                                @if(! $checkInSelectedRow || ($checkInSelectedRow['state'] ?? null) !== 'access')
+                                    <p class="fi-text-muted mb-2 text-xs">{{ __('app.reception.approve_disabled_helper') }}</p>
+                                @endif
                                 <x-filament::button
                                     wire:key="checkin-approve"
                                     color="success"
@@ -411,7 +424,6 @@
                                 <x-filament::button
                                     wire:key="checkin-renew"
                                     color="success"
-                                    icon="heroicon-m-plus-circle"
                                     size="md"
                                     class="min-w-28"
                                     wire:click="openExpiredSubscriptionModal({{ $checkInSelectedRow['id'] }})"
@@ -420,31 +432,41 @@
                                     {{ __('app.check_in.add_subscription') }}
                                 </x-filament::button>
                             @elseif(($checkInSelectedRow['state'] ?? null) === 'uses_exhausted')
-                                <x-filament::button
-                                    wire:key="checkin-renew"
-                                    color="success"
-                                    icon="heroicon-m-plus-circle"
-                                    size="md"
-                                    class="min-w-28"
-                                    wire:click="openExpiredSubscriptionModal({{ $checkInSelectedRow['id'] }})"
-                                    wire:loading.attr="disabled"
-                                >
-                                    {{ __('app.check_in.add_subscription') }}
-                                </x-filament::button>
-
-                                <x-filament::button
-                                    wire:key="checkin-override"
-                                    :color="$selectedStateColor"
-                                    size="md"
-                                    class="min-w-28"
-                                    wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
-                                >
-                                    {{ __('app.reception.override') }}
-                                </x-filament::button>
+                                @if($hasRenewableForSelected)
+                                    <x-filament::button
+                                        wire:key="checkin-override"
+                                        color="warning"
+                                        size="md"
+                                        class="min-w-28"
+                                        wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
+                                    >
+                                        {{ __('app.reception.override') }}
+                                    </x-filament::button>
+                                @else
+                                    <x-filament::button
+                                        wire:key="checkin-renew"
+                                        color="success"
+                                        size="md"
+                                        class="min-w-28"
+                                        wire:click="openExpiredSubscriptionModal({{ $checkInSelectedRow['id'] }})"
+                                        wire:loading.attr="disabled"
+                                    >
+                                        {{ __('app.check_in.add_subscription') }}
+                                    </x-filament::button>
+                                    <x-filament::button
+                                        wire:key="checkin-override"
+                                        color="warning"
+                                        size="md"
+                                        class="min-w-28"
+                                        wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
+                                    >
+                                        {{ __('app.reception.override') }}
+                                    </x-filament::button>
+                                @endif
                             @elseif(($checkInSelectedRow['state'] ?? null) === 'no_access')
                                 <x-filament::button
                                     wire:key="checkin-override"
-                                    :color="$selectedStateColor"
+                                    color="warning"
                                     size="md"
                                     class="min-w-28"
                                     wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
@@ -454,8 +476,7 @@
                             @elseif(($checkInSelectedRow['state'] ?? null) === 'same_day_duplicate')
                                 <x-filament::button
                                     wire:key="checkin-deny-same-day"
-                                    color="gray"
-                                    icon="heroicon-m-x-mark"
+                                    color="danger"
                                     size="md"
                                     class="min-w-28"
                                     wire:click="denySameDayDuplicateCheckIn"
@@ -463,23 +484,30 @@
                                 >
                                     {{ __('app.reception.deny') }}
                                 </x-filament::button>
-
                                 <x-filament::button
-                                    wire:key="checkin-same-day-approve"
-                                    color="warning"
-                                    icon="heroicon-m-check"
+                                    wire:key="checkin-same-day-nocount"
+                                    color="success"
                                     size="md"
                                     class="min-w-28"
                                     wire:click="confirmSameDayDuplicateCheckIn"
                                     wire:loading.attr="disabled"
                                 >
-                                    {{ __('app.reception.same_day_duplicate_check_in') }}
+                                    {{ __('app.reception.same_day_duplicate_nocount') }}
+                                </x-filament::button>
+                                <x-filament::button
+                                    wire:key="checkin-same-day-count"
+                                    color="warning"
+                                    size="md"
+                                    class="min-w-28"
+                                    wire:click="confirmSameDayDuplicateCheckInAndCount"
+                                    wire:loading.attr="disabled"
+                                >
+                                    {{ __('app.reception.same_day_duplicate_count') }}
                                 </x-filament::button>
                             @else
                                 <x-filament::button
                                     wire:key="checkin-add-payment"
-                                    color="info"
-                                    icon="heroicon-m-banknotes"
+                                    color="success"
                                     size="md"
                                     class="min-w-28"
                                     wire:click="openAddPaymentModal({{ $checkInSelectedRow['id'] }})"
@@ -487,11 +515,9 @@
                                 >
                                     {{ __('app.check_in.add_payment') }}
                                 </x-filament::button>
-
                                 <x-filament::button
                                     wire:key="checkin-change-due-date"
                                     color="gray"
-                                    icon="heroicon-m-calendar-days"
                                     size="md"
                                     class="min-w-28"
                                     wire:click="openChangeDueDateModal({{ $checkInSelectedRow['id'] }})"

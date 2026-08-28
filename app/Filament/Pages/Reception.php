@@ -115,6 +115,12 @@ class Reception extends Page
             return;
         }
 
+        if ($member->checkInBlocker() === 'banned') {
+            $this->beginManualCheckIn(collect([$member]));
+
+            return;
+        }
+
         $this->manualCheckInSearch = (string) $member->code;
         $this->openManualCheckInOverlay();
     }
