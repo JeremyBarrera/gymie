@@ -155,7 +155,7 @@
                 : ($checkInOverrideStep
                     ? __('app.reception.override_hint')
                     : __('app.reception.checkin_overlay_hint'))"
-        >            <div class="space-y-6">
+        >            <div class="space-y-4 max-h-[calc(100vh-14rem)] overflow-y-auto overscroll-contain px-1 -mx-1">
                 @if($checkInDenyStep)
                     <div>
                         <label for="checkin-deny-reason" class="fi-text text-base font-semibold">
@@ -241,7 +241,7 @@
                         @endforeach
                     </div>
                 @elseif($checkInMember)
-                    <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
                         <div class="relative shrink-0">
                             @if($checkInMember->photo)
                                 <img
@@ -274,8 +274,8 @@
                             </span>
                         </div>
 
-                        <div class="flex-1 min-w-0 space-y-5">
-                            <h3 class="fi-text text-4xl font-bold leading-tight tracking-tight">{{ $checkInMember->name }}</h3>
+                        <div class="flex-1 min-w-0 space-y-3">
+                            <h3 class="fi-text text-2xl font-bold leading-tight tracking-tight">{{ $checkInMember->name }}</h3>
 
                             <div class="grid gap-x-8 sm:grid-cols-2">
                                 @foreach([$memberDetailsLeft, $memberDetailsRight] as $memberDetailsColumn)
