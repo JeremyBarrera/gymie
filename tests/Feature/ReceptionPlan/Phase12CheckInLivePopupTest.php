@@ -692,7 +692,7 @@ it('allows overriding a service the member has no subscription for and records t
         ->and($checkIn->plan_id)->toBeNull()
         ->and($checkIn->service_id)->toBe($plan->primaryService()->id)
         ->and($checkIn->override)->toBeTrue()
-        ->and($checkIn->override_reason)->toBe('no_subscription')
+        ->and($checkIn->override_reason)->toBe(__('app.reception.service_no_access'))
         ->and($entry->refresh()->status)->toBe('approved');
 });
 

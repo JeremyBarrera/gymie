@@ -82,7 +82,7 @@ it('Check In via same_day_duplicate creates override with same_day_duplicate and
         $usedAfter = app(\App\Services\Membership\PlanCheckInService::class)->usedCount($sub);
         expect($usedAfter)->toBe($usedBefore); 
         $last = PlanCheckIn::latest('id')->first();
-        expect($last->override)->toBeTrue()->and($last->override_reason)->toBe('same_day_duplicate');
+        expect($last->override)->toBeTrue()->and($last->override_reason)->toBe(__('app.reception.service_same_day_duplicate', ['plan' => $plan->name]));
         expect($entry->fresh()->status)->toBe('approved');
     } finally { LocationTenantContext::setLocationId(null); }
 });
@@ -102,6 +102,6 @@ it('Deny via same_day_duplicate logs same_day_duplicate_denied', function () {
             ->assertDispatched('notify');
         expect($entry->fresh()->status)->toBe('denied');
         $last = PlanCheckIn::latest('id')->first();
-        expect($last->override_reason)->toBe('same_day_duplicate_denied');
+        expect($last->override_reason)->toBe(__('app.reception.same_day_duplicate_denied_reason'));
     } finally { LocationTenantContext::setLocationId(null); }
 });

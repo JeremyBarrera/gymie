@@ -228,9 +228,9 @@ it('overrides a uses-exhausted service with a system reason and fires the dedica
     $payload = $pinned->unreadNotifications()->first()->data;
 
     expect($checkIn)->not->toBeNull()
-        ->and($checkIn->override_reason)->toBe('uses_exhausted')
+        ->and($checkIn->override_reason)->toBe(__('app.reception.service_uses_exhausted', ['plan' => $plan->name]))
         ->and($payload['action'])->toBe('uses_exhausted_override')
-        ->and($payload['reason'])->toBe('uses_exhausted')
+        ->and($payload['reason'])->toBe(__('app.reception.service_uses_exhausted', ['plan' => $plan->name]))
         ->and($payload['actor']['id'])->toBe((int) $staff->id)
         ->and($entry->refresh()->status)->toBe('approved');
 });
