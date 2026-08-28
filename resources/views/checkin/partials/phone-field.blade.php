@@ -9,6 +9,11 @@
     'dialCode' => null,
 ])
 
+@php
+    $phoneDialOptions = \App\Helpers\Helpers::getCountryDialOptions();
+    $phoneSelectedDialCode = $dialCode ?? \App\Helpers\Helpers::getPhoneCountryCodePlaceholder();
+@endphp
+
 @if($filament)
     <div class="fi-input-wrp">
         <div class="fi-input-wrp-prefix fi-input-wrp-prefix-has-content">
@@ -18,8 +23,8 @@
                 wire:model.live="{{ $wireModel }}_dial_code"
                 aria-label="{{ $ariaLabel ?? __('app.scan.country_code') }}"
             >
-                @foreach (\App\Helpers\Helpers::getCountryDialOptions() as $dialOption)
-                    <option value="{{ $dialOption['code'] }}" @selected($dialOption['code'] === ($dialCode ?? \App\Helpers\Helpers::getPhoneCountryCodePlaceholder()))>{{ $dialOption['code'] }}</option>
+                @foreach ($phoneDialOptions as $dialOption)
+                    <option value="{{ $dialOption['code'] }}" @selected($dialOption['code'] === $phoneSelectedDialCode)>{{ $dialOption['code'] }}</option>
                 @endforeach
             </x-filament::input.select>
         </div>
@@ -49,8 +54,8 @@
     <div class="phone-field">
         <select id="dial-{{ $id }}" class="dial-code"
                 aria-label="{{ $ariaLabel ?? __('app.scan.country_code') }}">
-            @foreach (\App\Helpers\Helpers::getCountryDialOptions() as $dialOption)
-                <option value="{{ $dialOption['code'] }}" @selected($dialOption['code'] === ($dialCode ?? \App\Helpers\Helpers::getPhoneCountryCodePlaceholder()))>{{ $dialOption['code'] }}</option>
+            @foreach ($phoneDialOptions as $dialOption)
+                <option value="{{ $dialOption['code'] }}" @selected($dialOption['code'] === $phoneSelectedDialCode)>{{ $dialOption['code'] }}</option>
             @endforeach
         </select>
         @if($wireModel)
