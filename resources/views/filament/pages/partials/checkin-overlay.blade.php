@@ -155,7 +155,7 @@
                 : ($checkInOverrideStep
                     ? __('app.reception.override_hint')
                     : __('app.reception.checkin_overlay_hint'))"
-        >            <div class="space-y-4 max-h-[calc(100vh-14rem)] overflow-y-auto overscroll-contain px-1 -mx-1">
+        >            <div class="space-y-3">
                 @if($checkInDenyStep)
                     <div>
                         <label for="checkin-deny-reason" class="fi-text text-base font-semibold">
@@ -279,7 +279,7 @@
 
                             <div class="grid gap-x-8 sm:grid-cols-2">
                                 @foreach([$memberDetailsLeft, $memberDetailsRight] as $memberDetailsColumn)
-                                    <div class="space-y-4">
+                                    <div class="space-y-2">
                                         @foreach($memberDetailsColumn as $detail)
                                             @if(filled($detail['value']))
                                                 <div class="space-y-1">
@@ -314,7 +314,7 @@
                         </div>
                     @endif
 
-                    <div class="space-y-4">
+                    <div class="space-y-2">
                         <label for="checkin-service-select" class="fi-text text-base font-semibold">
                             {{ __('app.fields.service') }}
                         </label>
