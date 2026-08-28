@@ -4,8 +4,12 @@
 @endphp
 
 <div
-    x-data="{ zoomSrc: '', zoomAlt: '' }"
-    x-on:open-photo-zoom.window="zoomSrc = $event.detail.src; zoomAlt = $event.detail.alt; window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'photo-zoom' } }))"
+    x-data
+    x-on:open-photo-zoom.window="
+        const img = document.getElementById('photo-zoom-img');
+        if (img) { img.src = $event.detail.src; img.alt = $event.detail.alt; }
+        window.dispatchEvent(new CustomEvent('open-modal', { detail: { id: 'photo-zoom' } }))
+    "
 >
     <x-filament::modal
         id="photo-zoom"
@@ -16,8 +20,9 @@
     >
         <div class="flex justify-center">
             <img
-                :src="zoomSrc"
-                :alt="zoomAlt"
+                id="photo-zoom-img"
+                src=""
+                alt=""
                 class="max-w-full max-h-[75vh] object-contain rounded-xl"
             >
         </div>
