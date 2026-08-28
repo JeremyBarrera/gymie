@@ -7,11 +7,8 @@ use Throwable;
 
 trait WithSynchronizedLocation
 {
-    /**
-     * Get dependent location data (country, state, city, pincode, address) via Faker and World data.
-     *
-     * @return array<string, string>
-     */
+    
+
     protected function synchronizedLocation(?string $country = null): array
     {
         if (blank($country)) {
@@ -70,9 +67,8 @@ trait WithSynchronizedLocation
         ];
     }
 
-    /**
-     * Set a location state for a specific country.
-     */
+    
+
     public function fromCountry(string $country): static
     {
         return $this->state(fn (array $attributes): array => $this->synchronizedLocation($country));

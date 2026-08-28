@@ -19,9 +19,8 @@ use Filament\Schemas\Schema;
 
 class MemberForm
 {
-    /**
-     * Configure the member form schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

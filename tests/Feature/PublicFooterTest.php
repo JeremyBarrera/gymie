@@ -56,7 +56,7 @@ it('public-footer partial is location-aware and uses i18n with dynamic name not 
     expect($content)->not->toContain('Toro GYM');
     expect($content)->not->toContain('Toro');
 
-    // Styling compliance: uses var(--c-*) and not raw Tailwind color utilities
+    
     expect($content)->toContain('var(--c-text-muted)');
     expect($content)->toContain('var(--c-base)');
     expect($content)->toContain('var(--c-surface)');
@@ -65,7 +65,7 @@ it('public-footer partial is location-aware and uses i18n with dynamic name not 
     expect($content)->not->toContain('#fff');
     expect($content)->not->toContain('#f9fafb');
 
-    // RTL aware: flex-wrap handles it, html dir already set on pages
+    
     expect($content)->toContain('flex-wrap: wrap');
 });
 
@@ -119,7 +119,7 @@ it('invalid-token blade wraps card in public-main and includes footer with colum
     expect($contactPos)->toBeGreaterThan($mainPos);
     expect($footerPos)->toBeGreaterThan($contactPos);
 
-    // body should use column layout, not centered justify (footer styles may still contain justify)
+    
     expect($content)->toContain('display: flex');
     expect(substr_count($content, 'flex-direction: column'))->toBeGreaterThan(0);
 });

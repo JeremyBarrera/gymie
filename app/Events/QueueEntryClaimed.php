@@ -28,14 +28,8 @@ class QueueEntryClaimed implements ShouldBroadcast
         ];
     }
 
-    /**
-     * Both channels get the same payload, and `queue.{uuid}` is public —
-     * any visitor who knows the uuid can subscribe. The staff member's name
-     * must never leave, so it is intentionally excluded; staff listeners
-     * re-fetch the record (and its claimant) from the database.
-     *
-     * @return array<string, mixed>
-     */
+    
+
     public function broadcastWith(): array
     {
         return [

@@ -8,9 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Rejects requests for a route while the given Pennant feature is disabled.
- */
 class EnsureFeatureIsActive
 {
     public function handle(Request $request, Closure $next, string $feature): Response

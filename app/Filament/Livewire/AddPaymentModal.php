@@ -17,13 +17,6 @@ use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-/**
- * Past-due "Add payment" popup: records a payment against the blocking
- * invoice inside a transaction, then hands back to the host — paid in full
- * triggers a normal check-in, a partial balance requires the next payment
- * due date and completes an override-semantics check-in plus a
- * `payment_added` follow-up alert.
- */
 class AddPaymentModal extends Component
 {
     public ?int $memberId = null;
@@ -34,12 +27,12 @@ class AddPaymentModal extends Component
 
     public ?int $subscriptionId = null;
 
-    /** Defaults to the full balance; staff may lower it for a partial payment. */
+    
     public ?float $amount = null;
 
     public string $paymentMethod = 'cash';
 
-    /** Required while a balance remains after this payment. */
+    
     public ?string $nextDueDate = null;
 
     public string $reason = '';
@@ -65,10 +58,10 @@ class AddPaymentModal extends Component
         $this->serviceId = (int) $serviceId;
         $this->subscriptionId = $subscriptionId !== null ? (int) $subscriptionId : null;
 
-        // UI-9 default: settling in full is the most likely choice.
+        
         $this->amount = (float) $invoice->due_amount;
         $this->paymentMethod = 'cash';
-        // Never defaults to today — staff must consciously pick it.
+        
         $this->nextDueDate = null;
         $this->reason = '';
 
@@ -80,9 +73,8 @@ class AddPaymentModal extends Component
         return $this->invoiceId !== null ? Invoice::find($this->invoiceId) : null;
     }
 
-    /**
-     * Live balance line: what remains on the invoice after the entered amount.
-     */
+    
+
     public function getProjectedRemainingProperty(): float
     {
         $due = (float) ($this->invoice?->due_amount ?? 0);
@@ -186,7 +178,7 @@ class AddPaymentModal extends Component
         $subscriptionId = $this->subscriptionId !== null ? (int) $this->subscriptionId : 0;
         $typedReason = filled($this->reason) ? $this->reason : null;
 
-        // Any subscription left not fully paid alerts the follow-up owners.
+        
         if ($remaining > 0) {
             FollowUpAlert::send(
                 action: 'payment_added',

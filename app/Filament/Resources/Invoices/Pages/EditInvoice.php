@@ -11,9 +11,6 @@ use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * @property-read Invoice $record
- */
 class EditInvoice extends EditRecord
 {
     protected static string $resource = InvoiceResource::class;

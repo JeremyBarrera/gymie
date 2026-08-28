@@ -23,9 +23,8 @@ use Illuminate\Support\HtmlString;
 
 class PlanForm
 {
-    /**
-     * Configure the plan form schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

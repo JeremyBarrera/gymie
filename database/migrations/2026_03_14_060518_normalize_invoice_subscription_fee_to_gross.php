@@ -7,9 +7,8 @@ return new class extends Migration
 {
     private const EPSILON = 0.01;
 
-    /**
-     * Run the migrations.
-     */
+    
+
     public function up(): void
     {
         DB::table('invoices')
@@ -23,9 +22,8 @@ return new class extends Migration
             ]);
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
+
     public function down(): void
     {
         DB::table('invoices')

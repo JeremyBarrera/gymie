@@ -43,7 +43,7 @@ class ServiceResource extends Resource
 
     public static function getGlobalSearchResultDetails(Model $record): array
     {
-        /** @var Service $record */
+        
         if (blank($record->description)) {
             return [];
         }
@@ -63,9 +63,8 @@ class ServiceResource extends Resource
         return ServiceTable::configure($table);
     }
 
-    /**
-     * Add infolist to the resource.
-     */
+    
+
     public static function infolist(Schema $schema): Schema
     {
         return ServiceInfolist::configure($schema);

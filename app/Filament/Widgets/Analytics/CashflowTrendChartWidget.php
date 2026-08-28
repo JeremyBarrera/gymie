@@ -15,12 +15,6 @@ use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Contracts\Support\Htmlable;
 
-/**
- * Cashflow trend chart (net collected vs expenses) for the selected date range.
- *
- * - Net collected is derived from `invoice_transactions` (payments - refunds).
- * - Expenses are derived from `expenses.amount`.
- */
 class CashflowTrendChartWidget extends ChartWidget
 {
     use InteractsWithPageFilters;
@@ -31,9 +25,8 @@ class CashflowTrendChartWidget extends ChartWidget
 
     public ?string $filter = '7days';
 
-    /**
-     * @var int | string | array<string, int | null>
-     */
+    
+
     protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 4,
@@ -49,13 +42,8 @@ class CashflowTrendChartWidget extends ChartWidget
         return __('app.widgets.cashflow');
     }
 
-    /**
-     * Quick range filters for this chart.
-     *
-     * This is intentionally separate from the dashboard header range selector
-     * so you can keep KPIs on a short window (like last 7 days) while looking
-     * at cashflow on a longer window (like last 6 months).
-     */
+    
+
     protected function getFilters(): ?array
     {
         return [
@@ -67,9 +55,8 @@ class CashflowTrendChartWidget extends ChartWidget
         ];
     }
 
-    /**
-     * Resolve the date range used for this chart.
-     */
+    
+
     private function resolveRange(): AnalyticsDateRange
     {
         $rangeKey = $this->filter ?? '7days';
@@ -90,14 +77,8 @@ class CashflowTrendChartWidget extends ChartWidget
         );
     }
 
-    /**
-     * Chart.js options.
-     *
-     * - Formats y-axis and tooltips with the configured currency symbol.
-     * - Ensures tooltip dataset markers match the dataset color.
-     * - Adds spacing between tooltip items for readability.
-     * - Adds a bit more vertical breathing room via padding and axis styling.
-     */
+    
+
     protected function getOptions(): array|RawJs|null
     {
         $currencySymbol = Helpers::getCurrencySymbol();
@@ -163,9 +144,8 @@ class CashflowTrendChartWidget extends ChartWidget
 JS);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     protected function getData(): array
     {
         $range = $this->resolveRange();

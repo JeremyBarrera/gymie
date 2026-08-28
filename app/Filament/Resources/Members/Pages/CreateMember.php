@@ -52,9 +52,9 @@ class CreateMember extends CreateRecord
                 ]);
             }
 
-            // The member's jurisdiction is defined by the plan, not assigned
-            // manually: the first sale below carries the plan's location
-            // (null = all locations).
+            
+            
+            
             $member = parent::handleRecordCreation($data);
 
             $today = now()->toDateString();
@@ -95,7 +95,7 @@ class CreateMember extends CreateRecord
             return;
         }
 
-        // reload & update status
+        
         Enquiry::where('id', $this->enquiryId)
             ->update(['status' => 'member']);
 

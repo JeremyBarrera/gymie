@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('locations', function (Blueprint $table) {
-            $table->string('theme_color', 7)->nullable()->after('managed_by'); // hex #RRGGBB
+            $table->string('theme_color', 7)->nullable()->after('managed_by'); 
         });
     }
 

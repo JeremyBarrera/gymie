@@ -11,9 +11,8 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class InvoiceDocumentController extends Controller
 {
-    /**
-     * Render an invoice preview as an inline PDF.
-     */
+    
+
     public function preview(Invoice $invoice, InvoicePdfRenderer $renderer): Response
     {
         $invoice = InvoiceDocument::loadForRendering($invoice);
@@ -34,9 +33,8 @@ class InvoiceDocumentController extends Controller
         ]);
     }
 
-    /**
-     * Download the invoice as a PDF document.
-     */
+    
+
     public function download(Invoice $invoice, InvoicePdfRenderer $renderer): Response|BinaryFileResponse
     {
         $invoice = InvoiceDocument::loadForRendering($invoice);

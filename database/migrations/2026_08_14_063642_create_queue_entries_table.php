@@ -12,10 +12,10 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('location_id')->constrained()->cascadeOnDelete();
-            $table->string('kind'); // checkin | signup
+            $table->string('kind'); 
             $table->json('payload');
-            $table->string('identifier_type')->nullable(); // contact | government_id | code
-            $table->string('status')->default('waiting'); // waiting | attending | approved | denied | expired
+            $table->string('identifier_type')->nullable(); 
+            $table->string('status')->default('waiting'); 
             $table->foreignId('claimed_by_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('claimed_at')->nullable();
             $table->boolean('override')->default(false);

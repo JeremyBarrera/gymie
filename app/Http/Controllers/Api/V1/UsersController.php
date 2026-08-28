@@ -12,16 +12,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Spatie\Permission\Models\Role;
 
-/**
- * Users CRUD endpoints.
- */
 class UsersController extends ApiController
 {
     private const RESOURCE_KEY = 'users';
 
-    /**
-     * Display a listing of users.
-     */
+    
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->requirePermission($request, 'ViewAny:User');
@@ -35,9 +31,8 @@ class UsersController extends ApiController
         return UserResource::collection($query->paginate($perPage));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
+
     public function store(UserStoreRequest $request): UserResource
     {
         $this->requirePermission($request, 'Create:User');
@@ -62,9 +57,8 @@ class UsersController extends ApiController
         return new UserResource($user);
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
+
     public function show(Request $request, User $user): UserResource
     {
         $this->requirePermission($request, 'View:User');
@@ -74,9 +68,8 @@ class UsersController extends ApiController
         return new UserResource($user);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    
+
     public function update(UserUpdateRequest $request, User $user): UserResource
     {
         $this->requirePermission($request, 'Update:User');
@@ -105,17 +98,15 @@ class UsersController extends ApiController
         return new UserResource($user);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
+
     public function destroy(Request $request, User $user): JsonResponse
     {
         return $this->deleteModel($request, 'Delete:User', $user);
     }
 
-    /**
-     * Restore a soft deleted user.
-     */
+    
+
     public function restore(Request $request, int $user): UserResource
     {
         $record = $this->restoreSoftDeleted($request, 'RestoreAny:User', User::class, $user);
@@ -124,9 +115,8 @@ class UsersController extends ApiController
         return new UserResource($record->refresh());
     }
 
-    /**
-     * Permanently delete a user.
-     */
+    
+
     public function forceDelete(Request $request, int $user): JsonResponse
     {
         $this->forceDeleteSoftDeleted($request, 'ForceDeleteAny:User', User::class, $user);

@@ -9,23 +9,12 @@ use App\Rules\ModelExists;
 use App\Rules\ModelUnique;
 use Illuminate\Contracts\Validation\ValidationRule;
 
-/**
- * Single source of truth for Invoice API validation and serialization.
- */
 final class InvoiceSchema
 {
     private function __construct() {}
 
-    /**
-     * @return array{
-     *   searchable: list<string>,
-     *   sortable: list<string>,
-     *   default_sort: string,
-     *   status_column: string|null,
-     *   includes: list<string>,
-     *   filters: array<string, array{type: string, column: string}>
-     * }
-     */
+    
+
     public static function queryRules(): array
     {
         return [
@@ -45,9 +34,8 @@ final class InvoiceSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function storeRules(): array
     {
         return [
@@ -65,9 +53,8 @@ final class InvoiceSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function updateRules(int|string $invoiceId): array
     {
         return [
@@ -84,9 +71,8 @@ final class InvoiceSchema
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     public static function resource(Invoice $invoice): array
     {
         $payload = [

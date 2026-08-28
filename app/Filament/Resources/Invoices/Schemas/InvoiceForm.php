@@ -26,9 +26,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class InvoiceForm
 {
-    /**
-     * Configure the follow-up form schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -227,12 +226,8 @@ class InvoiceForm
             ]);
     }
 
-    /**
-     * Format the subscription option label for display in the select input.
-     *
-     * @param  Subscription  $subscription  The subscription record to format.
-     * @return string The formatted label for the subscription option.
-     */
+    
+
     private static function formatSubscriptionOptionLabel(Subscription $subscription): string
     {
         $memberName = $subscription->member?->name ?? '—';
@@ -243,10 +238,8 @@ class InvoiceForm
         return "{$memberName} — {$planName} ({$start} → {$end})";
     }
 
-    /**
-     * Whether the invoice's subscription is fixed: editing an invoice that
-     * already has one shows the read-only details instead of the select.
-     */
+    
+
     private static function hasFixedSubscription(?Invoice $record, string $operation): bool
     {
         return $operation === 'edit' && filled($record?->subscription_id);

@@ -6,16 +6,12 @@ use App\Models\InvoiceTransaction;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 
-/**
- * Single source of truth for InvoiceTransaction API validation and serialization.
- */
 final class InvoiceTransactionSchema
 {
     private function __construct() {}
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function storeRules(): array
     {
         return [
@@ -28,9 +24,8 @@ final class InvoiceTransactionSchema
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     public static function resource(InvoiceTransaction $transaction): array
     {
         return [

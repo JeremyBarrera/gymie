@@ -18,12 +18,6 @@ use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
 
-/**
- * Dashboard widget listing subscriptions that are expiring soon.
- *
- * This is date-driven (not status-driven) so it stays accurate even if the
- * status sync command hasn't run yet.
- */
 class ExpiringSoonSubscriptionsTableWidget extends TableWidget
 {
     use InteractsWithPageFilters;
@@ -32,19 +26,15 @@ class ExpiringSoonSubscriptionsTableWidget extends TableWidget
 
     protected static ?string $heading = null;
 
-    /**
-     * @var int | string | array<string, int | null>
-     */
+    
+
     protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 3,
     ];
 
-    /**
-     * Build the query that powers the expiring soon table.
-     *
-     * @return Builder<Subscription>
-     */
+    
+
     protected function getExpiringSoonQuery(): Builder
     {
         $today = CarbonImmutable::today(AppConfig::timezone());

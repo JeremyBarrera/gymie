@@ -1,14 +1,5 @@
 <?php
 
-// ============================================================================
-// PHASE 4 — QR Code Generation
-//
-// Status: active — the standalone `PrintQrCodes` page is the dedicated print
-// surface: it lists every location with its scan tokens and generates
-// printable PNG/SVG QR codes for each type. The reception page no longer
-// carries its own QR action.
-// ============================================================================
-
 use App\Filament\Pages\PrintQrCodes;
 use App\Filament\Pages\QrCodePreview;
 use App\Models\Location;
@@ -179,7 +170,7 @@ it('streams the qr code file for download', function (): void {
         ->assertHeader('Content-Type', 'image/png')
         ->assertDownload();
 
-    // Download is always PNG even when svg is requested via the format param.
+    
     $this->actingAs($user)
         ->get(route('qr-codes.download', [
             'location_id' => $location->id,

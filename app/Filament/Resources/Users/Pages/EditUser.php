@@ -13,9 +13,6 @@ use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
-/**
- * @property-read User $record
- */
 class EditUser extends EditRecord
 {
     protected static string $resource = UserResource::class;

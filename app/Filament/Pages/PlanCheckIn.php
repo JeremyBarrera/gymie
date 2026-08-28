@@ -46,7 +46,7 @@ class PlanCheckIn extends Page implements HasActions, HasForms, HasTable
 
     protected string $view = 'filament.pages.plan-check-in';
 
-    /** @var array<string, mixed>|null */
+    
     public ?array $data = [];
 
     public function mount(): void
@@ -309,14 +309,8 @@ class PlanCheckIn extends Page implements HasActions, HasForms, HasTable
         return app(PlanCheckInService::class)->hasCheckedInToday($subscription);
     }
 
-    /**
-     * Location ids to scope today's check-ins to, or `null` to skip filtering.
-     *
-     * Super admins (and owners) see every location; any other account is limited
-     * to its `user_locations` rows.
-     *
-     * @return list<int>|null
-     */
+    
+
     private function locationScope(): ?array
     {
         return LocationAccess::accessibleLocationIds(Auth::user());

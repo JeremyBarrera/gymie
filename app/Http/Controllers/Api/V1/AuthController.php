@@ -12,16 +12,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Authentication endpoints for API v1 (Sanctum bearer tokens).
- */
 class AuthController extends ApiController
 {
-    /**
-     * Create a Sanctum bearer token for a user.
-     *
-     * @unauthenticated
-     */
+    
+
     public function login(LoginRequest $request): JsonResponse
     {
         $user = User::query()
@@ -52,12 +46,11 @@ class AuthController extends ApiController
         ]);
     }
 
-    /**
-     * Return the authenticated user (includes roles and permissions).
-     */
+    
+
     public function me(Request $request): UserResource
     {
-        /** @var User $user */
+        
         $user = $request->user();
 
         $user->load('roles');
@@ -65,12 +58,11 @@ class AuthController extends ApiController
         return new UserResource($user);
     }
 
-    /**
-     * Revoke the current token.
-     */
+    
+
     public function logout(Request $request): JsonResponse
     {
-        /** @var User $user */
+        
         $user = $request->user();
 
         if ($request->bearerToken() !== null) {

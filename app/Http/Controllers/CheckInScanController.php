@@ -58,12 +58,8 @@ class CheckInScanController extends Controller
             ->header('Pragma', 'no-cache');
     }
 
-    /**
-     * The scanned token no longer exists (for example the QR code was
-     * deleted from the admin panel), so every lookup below fails.
-     *
-     * Renders a friendly, localized page instead of a bare 404.
-     */
+    
+
     private function showInvalidToken()
     {
         $themeColor = Helpers::getSettings()['general']['theme_color'] ?? '#2563eb';
@@ -75,10 +71,8 @@ class CheckInScanController extends Controller
             ->view('checkin.invalid-token', compact('palette', 'background', 'accent'), 404);
     }
 
-    /**
-     * Neutral "contact front desk" page — shown after 3 failed check-in
-     * attempts (client-side redirect) or when the member needs assistance.
-     */
+    
+
     public function contactFrontDesk(Request $request)
     {
         $themeColor = $request->query('theme_color')
@@ -130,12 +124,8 @@ class CheckInScanController extends Controller
         }
     }
 
-    /**
-     * The one public check-in refusal: identical shape and copy no matter
-     * why the identifier cannot self-check-in (unknown, inactive, expired,
-     * uses exhausted). Anyone holding the location QR can probe this
-     * endpoint, so it must never reveal membership status (AGENTS.md UI-11).
-     */
+    
+
     private function neutralCheckInRefusal(): JsonResponse
     {
         return response()->json([
@@ -159,9 +149,9 @@ class CheckInScanController extends Controller
             return $this->neutralCheckInRefusal();
         }
 
-        // Banned is the only member-level gate; lifecycle statuses check in
-        // like anyone else. Refused members get the same neutral body as any
-        // other non-match — no status detail leaves publicly.
+        
+        
+        
         $eligibleMatches = $matches->filter(fn (Member $member): bool => $member->checkInBlocker() === null)
             ->values();
 
@@ -190,7 +180,7 @@ class CheckInScanController extends Controller
             return $this->neutralCheckInRefusal();
         }
 
-        // Get location token for this location (checkin kind)
+        
         $locationToken = LocationToken::where('tokenable_type', Location::class)
             ->where('tokenable_id', $location->id)
             ->where('kind', 'checkin')
@@ -203,7 +193,7 @@ class CheckInScanController extends Controller
             ]);
         }
 
-        // Create queue entry with first eligible subscription as payload
+        
         $queueEntry = QueueEntry::create([
             'uuid' => Str::uuid(),
             'location_id' => $location->id,
@@ -219,7 +209,7 @@ class CheckInScanController extends Controller
             'expires_at' => now()->addMinutes(10),
         ]);
 
-        // Schedule auto-expiration at expires_at (event-driven, no polling)
+        
         if (! app()->environment('testing')) {
             ExpireQueueEntry::dispatch(
                 $queueEntry->id,
@@ -228,7 +218,7 @@ class CheckInScanController extends Controller
             )->delay($queueEntry->expires_at);
         }
 
-        // Broadcast QueueEntryCreated event
+        
         $position = $queueEntry->position();
 
         event(new QueueEntryCreated(
@@ -324,7 +314,7 @@ class CheckInScanController extends Controller
             'expires_at' => now()->addMinutes(10),
         ]);
 
-        // Schedule auto-expiration at expires_at (event-driven, no polling)
+        
         if (! app()->environment('testing')) {
             ExpireQueueEntry::dispatch(
                 $queueEntry->id,
@@ -351,14 +341,8 @@ class CheckInScanController extends Controller
         ]);
     }
 
-    /**
-     * Look up every member by contact, matching either the normalized form
-     * (with country code) or the raw submitted value so both legacy and
-     * newly-stored numbers resolve. Returns every match so the staff can
-     * pick the correct profile when a number is shared.
-     *
-     * @return Collection<int, Member>
-     */
+    
+
     private function lookupMembersByContact(string $value): Collection
     {
         $normalized = Helpers::normalizePhone($value);
@@ -367,13 +351,8 @@ class CheckInScanController extends Controller
         return Member::whereIn('contact', $candidates)->orderBy('id')->get();
     }
 
-    /**
-     * Create a check-in queue entry when an identifier matches more than one
-     * active member. The payload carries every candidate id; staff resolves
-     * the correct profile in the live popup before approving.
-     *
-     * @param  Collection<int, Member>  $members
-     */
+    
+
     private function createAmbiguousCheckIn(Location $location, Collection $members, string $identifierType, string $value): JsonResponse
     {
         $locationToken = LocationToken::where('tokenable_type', Location::class)
@@ -402,7 +381,7 @@ class CheckInScanController extends Controller
             'expires_at' => now()->addMinutes(10),
         ]);
 
-        // Schedule auto-expiration at expires_at (event-driven, no polling)
+        
         if (! app()->environment('testing')) {
             ExpireQueueEntry::dispatch(
                 $queueEntry->id,
@@ -465,15 +444,8 @@ class CheckInScanController extends Controller
         ));
     }
 
-    /**
-     * Public status check for the waiting page's reconnect resync: returns
-     * the current terminal/queued state for a queue uuid, exposing only the
-     * fields the visitor's page renders (never the PII in the payload, the
-     * claimant, or staff names). A row that no longer exists means it was
-     * expired, since approved/denied rows are kept.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
+    
+
     public function status(string $uuid)
     {
         $entry = QueueEntry::where('uuid', $uuid)->first();
@@ -505,11 +477,8 @@ class CheckInScanController extends Controller
         ]);
     }
 
-    /**
-     * Best-effort: a signup that went through the optional auto check-in
-     * leaves a PlanCheckIn on its member shortly after approval. Used only
-     * for the fallback resync so the visitor sees the checked-in copy.
-     */
+    
+
     private function signupDidCheckIn(QueueEntry $entry): bool
     {
         $contact = $entry->payload['contact'] ?? null;

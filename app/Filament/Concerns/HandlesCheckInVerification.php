@@ -19,61 +19,47 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
 
-/**
- * Shared check-in verification flow used by the Reception page and the
- * global LiveSignupPopup component: a live popup opens when a check-in
- * queue entry arrives, shows the matching profile (or a candidate picker
- * when the identifier matches more than one member), and lets staff
- * approve (picking the service the member checks in against) or deny the
- * check-in. Non-access services can be overridden after confirmation.
- *
- * The same overlay doubles as the manual walk-up flow: staff searches a
- * member directly (no queue entry exists), and every entry-dependent step
- * (status updates, broadcasts, resolution notifications) is skipped.
- */
 trait HandlesCheckInVerification
 {
     public bool $showCheckInOverlay = false;
 
     public ?int $selectedCheckInEntryId = null;
 
-    /** The member chosen for the entry; auto-resolved for single matches. */
+    
     public ?int $selectedCheckInMemberId = null;
 
-    /** The service (from the location's services) the member checks in against. */
+    
     public ?int $checkInServiceId = null;
 
-    /** True when the overlay was opened by the manual walk-up search instead of a queue entry. */
+    
     public bool $checkInManualMode = false;
 
-    /** @var array<int> Member ids found by the manual walk-up search (picker shown when several). */
+    
     public array $manualCheckInCandidates = [];
 
-    /** Manual walk-up search term (name, contact, code or government ID). */
+    
     public string $manualCheckInSearch = '';
 
     public bool $checkInDenyStep = false;
 
     public string $checkInDenyReason = '';
 
-    /** Override confirm step: which recipients will be notified + optional reason. */
+    
     public bool $checkInOverrideStep = false;
 
     public string $checkInOverrideReason = '';
 
-    /** @var array<string> Recipient names shown on the override confirm step. */
+    
     public array $checkInOverrideRecipients = [];
 
-    /** Same-day duplicate alert step for limited plans (gym timezone, approved-only). */
+    
     public bool $checkInSameDayDuplicateStep = false;
 
-    /** @var array<int> Check-in entries that arrived while the overlay was already open. */
+    
     public array $checkInPopupQueue = [];
 
-    /**
-     * Open the check-in overlay for a live check-in entry, or queue it when
-     * the overlay is already showing another entry.
-     */
+    
+
     public function queueOrOpenCheckIn(QueueEntry $entry): void
     {
         if (! in_array($entry->status, ['waiting', 'attending'], true)) {
@@ -87,11 +73,8 @@ trait HandlesCheckInVerification
         }
     }
 
-    /**
-     * Run the manual walk-up search and open the shared check-in overlay:
-     * exactly one active match opens the profile straight away, several
-     * matches open it on the candidate picker step.
-     */
+    
+
     public function openManualCheckInOverlay(): void
     {
         $search = trim($this->manualCheckInSearch);
@@ -106,8 +89,8 @@ trait HandlesCheckInVerification
             ->values();
 
         if ($eligible->isEmpty()) {
-            // Banned is the only member-level refusal; lifecycle statuses
-            // walk up like anyone else.
+            
+            
             $this->dispatch('notify',
                 type: 'danger',
                 message: $matches->isNotEmpty()
@@ -121,13 +104,8 @@ trait HandlesCheckInVerification
         $this->beginManualCheckIn($eligible);
     }
 
-    /**
-     * Open the overlay in manual mode for the given candidates. A single
-     * candidate skips the picker, mirroring how single-candidate queue
-     * entries behave.
-     *
-     * @param  Collection<int, Member>  $candidates
-     */
+    
+
     protected function beginManualCheckIn(Collection $candidates): void
     {
         $this->resetCheckInOverlay(dispatchClose: false);
@@ -143,10 +121,8 @@ trait HandlesCheckInVerification
         }
     }
 
-    /**
-     * The queue entry backing the open overlay, or null in manual walk-up
-     * mode / when the entry disappeared or is not a check-in entry.
-     */
+    
+
     private function resolveCurrentCheckInEntry(): ?QueueEntry
     {
         if ($this->selectedCheckInEntryId === null) {
@@ -203,9 +179,9 @@ trait HandlesCheckInVerification
 
     private function resetCheckInOverlay(bool $dispatchClose = true): void
     {
-        // Close through Filament's modal manager BEFORE the state clear can
-        // morph the modal out of the DOM — an unmount while open leaves a
-        // stuck semi-transparent window stacked on top of the next modal.
+        
+        
+        
         if ($dispatchClose) {
             $this->dispatch('close-modal', id: 'checkin-overlay');
         }
@@ -231,9 +207,8 @@ trait HandlesCheckInVerification
         }
     }
 
-    /**
-     * Hook for hosts that track check-ins closed without being attended.
-     */
+    
+
     protected function checkInOverlayClosed(int $queueEntryId): void {}
 
     private function openNextCheckInFromQueue(): void
@@ -244,10 +219,8 @@ trait HandlesCheckInVerification
         }
     }
 
-    /**
-     * Preselect the only accessible service, falling back to the first row,
-     * whenever the overlay shows a resolved member.
-     */
+    
+
     private function autoSelectCheckInService(): void
     {
         $services = $this->checkInServices;
@@ -262,11 +235,8 @@ trait HandlesCheckInVerification
             : (int) $services[0]['id'];
     }
 
-    /**
-     * Resolve an ambiguous identifier: pick the correct profile among the
-     * candidates carried by the entry payload, or among the manual walk-up
-     * search results when no entry backs the overlay.
-     */
+    
+
     public function selectCheckInMember(int $memberId): void
     {
         $entry = $this->resolveCurrentCheckInEntry();
@@ -288,15 +258,8 @@ trait HandlesCheckInVerification
         $this->autoSelectCheckInService();
     }
 
-    /**
-     * The location the current check-in physically happens at: the queue
-     * entry's own location when an entry backs the overlay, otherwise the
-     * operating account's current location — the same resolution the
-     * Reception queue uses. It must never resolve to the unscoped
-     * owner-tenancy null, which would read as "cross-location services
-     * only" and render the manual walk-up service list empty on
-     * location-scoped data.
-     */
+    
+
     private function checkInLocation(?QueueEntry $entry): ?int
     {
         if ($entry !== null) {
@@ -306,13 +269,8 @@ trait HandlesCheckInVerification
         return LocationAccess::firstAccessibleLocationId(Auth::user());
     }
 
-    /**
-     * Per-service check-in states for the selected member: at the queue
-     * entry's location, or at the operating account's current location for
-     * the manual walk-up flow (see `PlanCheckInService::serviceStatesForMember()`).
-     *
-     * @return array<int, array<string, mixed>>
-     */
+    
+
     public function getCheckInServicesProperty(): array
     {
         if (! $this->selectedCheckInMemberId) {
@@ -378,11 +336,8 @@ trait HandlesCheckInVerification
         $this->checkInOverrideStep = false;
     }
 
-    /**
-     * Broadcast the queue entry's resolution to its location scanner, when
-     * the overlay is backed by a queue entry at all (manual walk-ups have
-     * nothing to broadcast to).
-     */
+    
+
     private function broadcastCheckInResolution(QueueEntry $entry, bool $approved, ?string $reason): void
     {
         $locationToken = LocationToken::where('tokenable_type', Location::class)
@@ -477,14 +432,8 @@ trait HandlesCheckInVerification
         }
     }
 
-    /**
-     * Move the overlay to the override confirm step for the given service:
-     * shows who will be notified, with an optional reason.
-     *
-     * The no-access and uses-exhausted states offer the generic override —
-     * expired goes through the renewal modal and past-due states through the
-     * payment / due-date modals instead.
-     */
+    
+
     public function openCheckInOverrideFor(int $serviceId): void
     {
         $this->selectCheckInService($serviceId);
@@ -710,7 +659,7 @@ trait HandlesCheckInVerification
             return;
         }
 
-        // Audit the denial as an override-type record with distinct reason, then deny the queue entry.
+        
         try {
             $subscription = $row ? Subscription::find($row['subscription_id']) : null;
 
@@ -724,7 +673,7 @@ trait HandlesCheckInVerification
                 $this->checkInLocation($entry),
             );
         } catch (\Throwable) {
-            // Audit failure should not block the deny itself.
+            
         }
 
         $wasManualPostSignup = $this->pendingSignupCheckInQueueId !== null && $entry === null;
@@ -757,11 +706,8 @@ trait HandlesCheckInVerification
         }
     }
 
-    /**
-     * Open the renewal popup for an expired service row: the child Livewire
-     * component receives the context and shows its own modal on top of the
-     * overlay. After a successful renew + check-in both close together.
-     */
+    
+
     public function openExpiredSubscriptionModal(int $serviceId): void
     {
         $member = Member::find($this->selectedCheckInMemberId);
@@ -789,9 +735,8 @@ trait HandlesCheckInVerification
         );
     }
 
-    /**
-     * Open the add-payment popup for an unpaid / overdue service row.
-     */
+    
+
     public function openAddPaymentModal(int $serviceId): void
     {
         $context = $this->pastDueModalContext($serviceId);
@@ -803,9 +748,8 @@ trait HandlesCheckInVerification
         $this->dispatch('open-add-payment-modal', ...$context);
     }
 
-    /**
-     * Open the change-due-date popup for an unpaid / overdue service row.
-     */
+    
+
     public function openChangeDueDateModal(int $serviceId): void
     {
         $context = $this->pastDueModalContext($serviceId);
@@ -817,11 +761,8 @@ trait HandlesCheckInVerification
         $this->dispatch('open-change-due-date-modal', ...$context);
     }
 
-    /**
-     * Complete a normal check-in after a modal resolved the blocking issue:
-     * the renewed subscription (expired path) or the settled invoice
-     * (paid-in-full payment path).
-     */
+    
+
     #[On('check-in.resolved-by-modal')]
     public function completeResolvedCheckIn(int $subscriptionId): void
     {
@@ -892,11 +833,8 @@ trait HandlesCheckInVerification
         }
     }
 
-    /**
-     * Complete an override-semantics check-in after the payment or due-date
-     * modal recorded its write (both skip the overdue gate: the blocking
-     * invoice was just settled or pushed out).
-     */
+    
+
     #[On('check-in.assisted-override')]
     public function completeAssistedOverrideCheckIn(int $serviceId, ?string $reason = null): void
     {
@@ -975,11 +913,8 @@ trait HandlesCheckInVerification
         }
     }
 
-    /**
-     * The most recently ending subscription of the member for a service —
-     * the "expired one" whose plan preselects the renewal form and whose id
-     * chains the new subscription via `renewed_from_subscription_id`.
-     */
+    
+
     private function latestSubscriptionForService(Member $member, int $serviceId): ?Subscription
     {
         return $member->subscriptions()
@@ -990,12 +925,8 @@ trait HandlesCheckInVerification
             ->first();
     }
 
-    /**
-     * Shared context for the two past-due popups: validates the selected row
-     * is actually unpaid/overdue and resolves the open invoice to act on.
-     *
-     * @return array{memberId: int, invoiceId: int, serviceId: int, subscriptionId: int|null}|null
-     */
+    
+
     private function pastDueModalContext(int $serviceId): ?array
     {
         $member = Member::find($this->selectedCheckInMemberId);
@@ -1024,11 +955,8 @@ trait HandlesCheckInVerification
         ];
     }
 
-    /**
-     * The member's most urgent open invoice with money due — the row's own
-     * subscription's first when it has one, otherwise the earliest across
-     * all subscriptions (the member-wide overdue gate).
-     */
+    
+
     private function pastDueInvoiceForMember(Member $member, array $row): ?Invoice
     {
         $subscriptionId = (int) ($row['subscription_id'] ?? 0);
@@ -1043,9 +971,8 @@ trait HandlesCheckInVerification
             ->first();
     }
 
-    /**
-     * Move the overlay to the deny step where an optional reason is entered.
-     */
+    
+
     public function denyCheckIn(): void
     {
         $this->checkInDenyStep = true;
@@ -1088,10 +1015,8 @@ trait HandlesCheckInVerification
         }
     }
 
-    /**
-     * Close the check-in overlay when the entry it shows was handled or
-     * expired by another tab / device, so every tab stays in sync.
-     */
+    
+
     public function closeCheckInIfStale(int $queueEntryId, bool $notifyHandledElsewhere): void
     {
         if (! $this->showCheckInOverlay || (int) $this->selectedCheckInEntryId !== $queueEntryId) {
@@ -1108,8 +1033,7 @@ trait HandlesCheckInVerification
         }
     }
 
-    /**
-     * Hook for hosts that render a check-in queue (e.g. the Reception page).
-     */
+    
+
     protected function removeCheckInFromView(int $queueEntryId): void {}
 }

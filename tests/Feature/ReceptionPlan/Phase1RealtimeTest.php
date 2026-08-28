@@ -17,11 +17,6 @@ use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-/**
- * Pull the closure Laravel registered for the given channel pattern (e.g.
- * "location.{token}") so tests can run the exact auth logic from
- * routes/channels.php.
- */
 function channelClosure(string $pattern): Closure
 {
     $manager = app('Illuminate\Broadcasting\BroadcastManager');

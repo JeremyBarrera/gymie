@@ -12,23 +12,12 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 
-/**
- * Single source of truth for User API validation and serialization.
- */
 final class UserSchema
 {
     private function __construct() {}
 
-    /**
-     * @return array{
-     *   searchable: list<string>,
-     *   sortable: list<string>,
-     *   default_sort: string,
-     *   status_column: string|null,
-     *   includes: list<string>,
-     *   filters: array<string, array{type: string, column: string}>
-     * }
-     */
+    
+
     public static function queryRules(): array
     {
         return [
@@ -44,9 +33,8 @@ final class UserSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function storeRules(): array
     {
         return [
@@ -68,9 +56,8 @@ final class UserSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function updateRules(int|string $userId): array
     {
         return [
@@ -92,9 +79,8 @@ final class UserSchema
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     public static function resource(User $user, bool $includePermissions = false): array
     {
         $roles = $user->relationLoaded('roles')

@@ -9,13 +9,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Encrypt `government_id` at rest and add a deterministic blind-index
-     * hash column so the duplicate check, lookups and searches keep working
-     * (the `encrypted` cast uses a random nonce, making ciphertext equality
-     * impossible). Existing rows are encrypted in place; every row gets its
-     * hash computed from the plaintext before it is replaced.
-     */
+    
+
     public function up(): void
     {
         Schema::table('members', function (Blueprint $table): void {

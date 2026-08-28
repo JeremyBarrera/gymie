@@ -16,9 +16,8 @@ final class AppConfig
         return self::string('app.timezone', 'UTC');
     }
 
-    /**
-     * @return list<string>
-     */
+    
+
     public static function supportedLocales(): array
     {
         $locales = config('app.supported_locales', []);
@@ -46,9 +45,8 @@ final class AppConfig
         return $values !== [] ? $values : [self::string('app.locale', 'en')];
     }
 
-    /**
-     * @return array<string, string>
-     */
+    
+
     public static function localeFlags(): array
     {
         return [

@@ -64,10 +64,6 @@ function g2Staff(): User
     return $staff;
 }
 
-// ---------------------------------------------------------------------------
-// Service: eligibility follows the blocker, not the lifecycle flag
-// ---------------------------------------------------------------------------
-
 it('keeps an inactive member with an ongoing subscription eligible', function (): void {
     $plan = g2Plan();
     $member = g2Member(['status' => Status::Inactive]);
@@ -134,10 +130,6 @@ it('allows an inactive member through the override path and refuses a banned one
     }
 });
 
-// ---------------------------------------------------------------------------
-// Public scan: banned refused neutrally, inactive flows into the queue
-// ---------------------------------------------------------------------------
-
 it('answers a banned member with the identical neutral public refusal', function (): void {
     $location = Location::factory()->create();
     LocationToken::factory()->create([
@@ -187,10 +179,6 @@ it('routes an inactive member with a subscription into the staff queue', functio
         ->and($entry->payload['member_id'])->toBe((int) $member->id);
 });
 
-// ---------------------------------------------------------------------------
-// API lookup: same blocker semantics, unchanged shape
-// ---------------------------------------------------------------------------
-
 it('matches an inactive member with a subscription on the api and refuses a banned one', function (): void {
     $plan = g2Plan();
     $inactive = g2Member(['status' => Status::Inactive, 'contact' => '5552223333']);
@@ -218,10 +206,6 @@ it('matches an inactive member with a subscription on the api and refuses a bann
 
     expect($refused->json())->toBe($unknown->json());
 });
-
-// ---------------------------------------------------------------------------
-// Reception overlay: banned toast, inactive walk-up proceeds
-// ---------------------------------------------------------------------------
 
 it('opens the walk-up overlay for an inactive member and toasts for a banned one', function (): void {
     $plan = g2Plan();

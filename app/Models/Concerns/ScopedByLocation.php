@@ -10,21 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Restricts a model to the current location (tenant).
- *
- * - Every query is filtered to the account's accessible locations when the
- *   account is authenticated (via `user_locations`).
- * - Rows with a `null` location belong to **every** location ("all locations"
- *   jurisdiction — used by all-locations plans and the members that follow
- *   them), so they are always included.
- * - Unauthenticated public flows are filtered to the pinned location resolved
- *   from the location token / queue entry.
- * - The `owner` role bypasses the scope entirely (sees every location).
- * - New records get the current location's id filled in automatically.
- * - When no location can be resolved the scope is inert, which keeps
- *   single-tenant installs working as before.
- */
 trait ScopedByLocation
 {
     public static function bootScopedByLocation(): void
@@ -47,8 +32,8 @@ trait ScopedByLocation
                 return;
             }
 
-            // Models without a location_id column (users) are scoped through
-            // their `user_locations` pivot.
+            
+            
             $builder->whereHas('locations', function (Builder $query) use ($locationIds): void {
                 $query->whereIn('locations.id', $locationIds);
             });
@@ -71,11 +56,8 @@ trait ScopedByLocation
         });
     }
 
-    /**
-     * The location ids to scope queries with, or null when the scope is inert.
-     *
-     * @return list<int>|null
-     */
+    
+
     protected static function currentLocationIds(): ?array
     {
         $user = Auth::user();
@@ -93,9 +75,8 @@ trait ScopedByLocation
         return $locationId !== null ? [(int) $locationId] : null;
     }
 
-    /**
-     * The location id to fill on new records, or null when none is resolved.
-     */
+    
+
     protected static function defaultLocationId(): ?int
     {
         $user = Auth::user();

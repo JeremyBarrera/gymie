@@ -1,12 +1,10 @@
-@php
-$heading = $this->getHeading();
+@php $heading = $this->getHeading();
 $breadcrumbs = filament()->hasBreadcrumbs() ? $this->getBreadcrumbs() : [];
 $subheading = $this->getSubheading();
 $period = (string) ($this->filters['period'] ?? '7days');
 
 $beforeActions = \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::PAGE_HEADER_ACTIONS_BEFORE, scopes: $this->getRenderHookScopes());
-$afterActions = \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::PAGE_HEADER_ACTIONS_AFTER, scopes: $this->getRenderHookScopes());
-@endphp
+$afterActions = \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::PAGE_HEADER_ACTIONS_AFTER, scopes: $this->getRenderHookScopes()); @endphp
 
 <header @class(['fi-header', 'fi-header-has-breadcrumbs'=> $breadcrumbs])>
     <div>

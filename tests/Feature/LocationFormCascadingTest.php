@@ -76,11 +76,11 @@ it('hides state and city selects when there are no options, and reveals them whe
 
     $schema = LocationForm::configure(Schema::make($livewire)->model(Location::class));
 
-    // With no country chosen, state and city are hidden.
+    
     expect($schema->getComponentByStatePath('state'))->toBeNull()
         ->and($schema->getComponentByStatePath('city'))->toBeNull();
 
-    // With a country + state chosen, the selects become visible.
+    
     $livewire->country = 'Testland';
     $livewire->state = 'Test State';
     $schema = LocationForm::configure(Schema::make($livewire)->model(Location::class));

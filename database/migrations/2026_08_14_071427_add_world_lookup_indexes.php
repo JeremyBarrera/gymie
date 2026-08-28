@@ -6,9 +6,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Add lookup indexes to the world tables used by the cascading location selects.
-     */
+    
+
     public function up(): void
     {
         Schema::table('states', function (Blueprint $table): void {
@@ -20,9 +19,8 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
+
     public function down(): void
     {
         Schema::table('states', function (Blueprint $table): void {

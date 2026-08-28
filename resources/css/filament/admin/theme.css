@@ -5,7 +5,6 @@
 @source '../../../../app/Support/**/*';
 @source '../../../../resources/views/filament/**/*';
 
-/* Canonical money-row text colors (theme + dark-mode aware) */
 .fi-text {
     color: var(--gray-950);
 }
@@ -26,15 +25,11 @@
     color: var(--primary-500);
 }
 
-/* Fix: sidebarFullyCollapsibleOnDesktop sets opacity-0 on .fi-main-ctn;
-   Alpine overrides via inline style but the transition causes a flash
-   of semi-transparent content on every page load. Override to always visible. */
 .fi-body-has-sidebar-fully-collapsible-on-desktop .fi-main-ctn {
     opacity: 1 !important;
     transition: none !important;
 }
 
-/* Reception: dark camera viewfinder + caption (functional necessity, theme-safe) */
 .verify-camera-wrap {
     background: var(--gray-950);
     aspect-ratio: 4 / 3;
@@ -51,7 +46,6 @@
     color: white;
 }
 
-/* Reception: waiting-line queue badge — global fixed FAB at bottom-right */
 [x-cloak] {
     display: none !important;
 }
@@ -123,9 +117,6 @@
     justify-content: center;
 }
 
-/* Hide native number-input spinners — every browser (WebKit needs the
-   pseudo-elements, Firefox/standard need appearance). Filament v4 puts
-   extraAttributes on the input WRAPPER, so target the inner input too. */
 .verify-money-input,
 .verify-money-input input {
     -moz-appearance: textfield;
@@ -140,15 +131,10 @@
     margin: 0;
 }
 
-/* Filament paints dark-mode repeater items with a 5% white wash; on large
-   items (the invoice details form) that reads as a semi-transparent white
-   window stacked on top of the content. Items must follow the surface they
-   sit on (AGENTS.md styling rule 7) — no translucent white layers. */
 .fi-fo-repeater .fi-fo-repeater-item:where(.dark, .dark *) {
     background-color: transparent;
 }
 
-/* Reception: flashing importance chip on the live check-in overlay */
 .checkin-flash-chip {
     display: inline-flex;
     align-items: center;

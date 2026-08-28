@@ -10,23 +10,12 @@ use App\Models\Subscription;
 use App\Rules\ModelExists;
 use Illuminate\Contracts\Validation\ValidationRule;
 
-/**
- * Single source of truth for Subscription API validation and serialization.
- */
 final class SubscriptionSchema
 {
     private function __construct() {}
 
-    /**
-     * @return array{
-     *   searchable: list<string>,
-     *   sortable: list<string>,
-     *   default_sort: string,
-     *   status_column: string|null,
-     *   includes: list<string>,
-     *   filters: array<string, array{type: string, column: string}>
-     * }
-     */
+    
+
     public static function queryRules(): array
     {
         return [
@@ -46,9 +35,8 @@ final class SubscriptionSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function storeRules(): array
     {
         return [
@@ -62,9 +50,8 @@ final class SubscriptionSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function updateRules(): array
     {
         return [
@@ -76,9 +63,8 @@ final class SubscriptionSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function renewRules(): array
     {
         return [
@@ -90,9 +76,8 @@ final class SubscriptionSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     private static function invoiceRules(string $prefix): array
     {
         return [
@@ -107,9 +92,8 @@ final class SubscriptionSchema
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     public static function resource(Subscription $subscription): array
     {
         $payload = [

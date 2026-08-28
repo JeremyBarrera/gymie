@@ -14,9 +14,8 @@ class SetAppLocale
 {
     public const COOKIE_DEVICE_LOCALE = 'gymie_device_locale';
 
-    /**
-     * @param  Closure(Request): Response  $next
-     */
+    
+
     public function handle(Request $request, Closure $next): Response
     {
         $supportedLocales = AppConfig::supportedLocales();
@@ -37,9 +36,9 @@ class SetAppLocale
         $headerLocale = $request->getPreferredLanguage($supportedLocales);
         $headerLocale = is_string($headerLocale) ? trim($headerLocale) : null;
 
-        // Device language recorded by resources/js/device-locale.js. Only
-        // meaningful for the admin panel, where a saved preset may not exist
-        // yet; public screens keep their header-driven behaviour.
+        
+        
+        
         $cookieLocale = $request->cookie(self::COOKIE_DEVICE_LOCALE);
         $cookieLocale = is_string($cookieLocale) ? strtolower(trim($cookieLocale)) : '';
         $cookieLocale = in_array($cookieLocale, $supportedLocales, true) ? $cookieLocale : null;

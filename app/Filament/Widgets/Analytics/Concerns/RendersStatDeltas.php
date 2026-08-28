@@ -5,16 +5,10 @@ namespace App\Filament\Widgets\Analytics\Concerns;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
 
-/**
- * Shared rendering helpers for the analytics KPI stat widgets.
- */
 trait RendersStatDeltas
 {
-    /**
-     * Build an inline delta label for KPI cards.
-     *
-     * @return array{label: string, icon: string|null, class: string}
-     */
+    
+
     private function deltaInline(int|float $current, int|float $previous, callable $format): array
     {
         if ($previous <= 0) {
@@ -61,14 +55,8 @@ trait RendersStatDeltas
         ];
     }
 
-    /**
-     * Render a KPI value with an inline delta.
-     *
-     * The row wraps so the delta drops below the value when space is tight,
-     * and the value truncates with an ellipsis instead of escaping the card.
-     *
-     * @param  array{label: string, icon: string|null, class: string}  $delta
-     */
+    
+
     private function valueWithDelta(string $value, array $delta, string $margin = 'my-1'): HtmlString
     {
         $value = e($value);
@@ -91,13 +79,8 @@ trait RendersStatDeltas
 HTML);
     }
 
-    /**
-     * Tailwind selector classes applied to the stat card root.
-     *
-     * Colors the main stat icon with the panel primary color and keeps the
-     * description line inside the card (truncated with an ellipsis instead
-     * of overflowing the card boundary).
-     */
+    
+
     private function statCardClasses(): string
     {
         return '[&_.fi-wi-stats-overview-stat-label-ctn>.fi-icon]:text-primary-400 dark:[&_.fi-wi-stats-overview-stat-label-ctn>.fi-icon]:text-primary-400 [&_.fi-wi-stats-overview-stat-description]:min-w-0 [&_.fi-wi-stats-overview-stat-description>span]:truncate [&_.fi-wi-stats-overview-stat-description>span]:whitespace-nowrap';

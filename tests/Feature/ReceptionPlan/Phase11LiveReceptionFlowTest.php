@@ -79,9 +79,6 @@ function liveReceptionPlan(): Plan
     return Plan::factory()->create(['amount' => 100, 'status' => Status::Active]);
 }
 
-/**
- * @return array<string, mixed>
- */
 function liveReceptionSale(Plan $plan, array $overrides = []): array
 {
     return array_merge([
@@ -1027,8 +1024,8 @@ it('allows a signup that shares the government ID even when the contact differs'
         'government_id' => 'GOV-RACE',
     ]), liveReceptionPhoto(), $sale, liveReceptionStaff());
 
-    // Identifiers may repeat across members: only name + contact + government
-    // ID matching ALL THREE blocks a signup.
+    
+    
     $service->approveSignup($entryB, liveReceptionSignupPayload($location, [
         'contact' => '5553334444',
         'government_id' => 'GOV-RACE',

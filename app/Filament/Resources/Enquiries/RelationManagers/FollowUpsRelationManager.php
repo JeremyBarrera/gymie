@@ -24,27 +24,22 @@ class FollowUpsRelationManager extends RelationManager
         return __('app.titles.follow_up_timeline');
     }
 
-    /**
-     * Determine if the relation manager is read-only.
-     *
-     * @return bool Returns false, indicating the relation manager is not read-only.
-     */
+    
+
     public function isReadOnly(): bool
     {
         return false;
     }
 
-    /**
-     * Define the form schema for the resource.
-     */
+    
+
     public function form(Schema $schema): Schema
     {
         return FollowUpResource::form($schema);
     }
 
-    /**
-     * Define the table for listing records in the resource.
-     */
+    
+
     public function table(Table $table): Table
     {
         return $table

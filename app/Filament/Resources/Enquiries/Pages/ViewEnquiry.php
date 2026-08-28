@@ -11,9 +11,6 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
-/**
- * @property-read Enquiry $record
- */
 class ViewEnquiry extends ViewRecord
 {
     protected static string $resource = EnquiryResource::class;

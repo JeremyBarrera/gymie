@@ -9,12 +9,8 @@ use Illuminate\Support\HtmlString;
 
 class SubscriptionDetails
 {
-    /**
-     * The shared subscription detail card: member, plan, service and date
-     * rows with the subscription status badge beside the section heading.
-     *
-     * @param  callable(mixed): ?Subscription  $subscriptionFor
-     */
+    
+
     public static function section(callable $subscriptionFor): Section
     {
         return Section::make()
@@ -31,12 +27,8 @@ class SubscriptionDetails
             ->schema(self::rows($subscriptionFor));
     }
 
-    /**
-     * The shared member → plan → service → start/end entry rows.
-     *
-     * @param  callable(mixed): ?Subscription  $subscriptionFor
-     * @return non-empty-list<TextEntry>
-     */
+    
+
     public static function rows(callable $subscriptionFor): array
     {
         return [

@@ -48,7 +48,7 @@ class UserResource extends Resource
 
     public static function getGlobalSearchResultDetails(Model $record): array
     {
-        /** @var User $record */
+        
         $details = [];
 
         if (filled($record->email)) {
@@ -66,25 +66,22 @@ class UserResource extends Resource
         return $details;
     }
 
-    /**
-     * Define the form schema for the resource.
-     */
+    
+
     public static function form(Schema $schema): Schema
     {
         return UserForm::configure($schema);
     }
 
-    /**
-     * Define the table for listing records in the resource.
-     */
+    
+
     public static function table(Table $table): Table
     {
         return UserTable::configure($table);
     }
 
-    /**
-     * Add infolist to the resource.
-     */
+    
+
     public static function infolist(Schema $schema): Schema
     {
         return UserInfolist::configure($schema);

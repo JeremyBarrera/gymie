@@ -87,12 +87,8 @@ class MemberOnboardingStep2 extends Page implements HasForms
             ->components(self::saleSchema($this->member));
     }
 
-    /**
-     * The first-subscription sale schema (plan, dates, invoice, payment),
-     * reused by the standalone page and the sign-up verification modal.
-     *
-     * @return array<int, mixed>
-     */
+    
+
     public static function saleSchema(Member $member): array
     {
         return [
@@ -372,13 +368,8 @@ class MemberOnboardingStep2 extends Page implements HasForms
         $this->redirect(route('filament.admin.resources.members.view', ['record' => $this->member->id]));
     }
 
-    /**
-     * Create a subscription for the member with its invoice, inside one
-     * transaction. Reused by the page and the sign-up verification modal.
-     *
-     * @param  array<string, mixed>  $validated
-     * @return array{0: Subscription, 1: Invoice}
-     */
+    
+
     public static function createSale(Member $member, array $validated): array
     {
         return DB::transaction(function () use ($member, $validated): array {
@@ -389,8 +380,8 @@ class MemberOnboardingStep2 extends Page implements HasForms
             $plan = Plan::findOrFail(Data::int($validated['plan_id'] ?? null));
             $quantity = max(1, Data::int($validated['quantity'] ?? 1));
             $startDate = Carbon::parse(Data::string($validated['start_date'] ?? null))->toDateString();
-            // Evergreen plans (no day count) have no end date at all; quantity
-            // extends the end date by that many plan periods.
+            
+            
             $endDate = Data::string($validated['end_date'] ?? null)
                 ?: ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id), $quantity));
 
@@ -407,7 +398,7 @@ class MemberOnboardingStep2 extends Page implements HasForms
                 'location_id' => $plan->location_id,
             ]);
 
-            // Create invoice
+            
             $fee = round(Data::float($plan->amount) * $quantity);
             $discountPct = max(Data::int($invoiceData['discount'] ?? 0), 0);
             $discountAmount = Data::float($invoiceData['discount_amount'] ?? 0);
@@ -437,7 +428,7 @@ class MemberOnboardingStep2 extends Page implements HasForms
                 'location_id' => $plan->location_id,
             ]);
 
-            // Update member status to Active if it was Pending
+            
             if ($member->status === Status::Pending) {
                 $member->update(['status' => Status::Active]);
             }

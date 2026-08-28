@@ -13,14 +13,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-/**
- * Nested invoice transaction endpoints.
- */
 class InvoiceTransactionsController extends ApiController
 {
-    /**
-     * List transactions for an invoice.
-     */
+    
+
     public function index(Request $request, Invoice $invoice): AnonymousResourceCollection
     {
         $this->requirePermission($request, 'View:Invoice');
@@ -34,9 +30,8 @@ class InvoiceTransactionsController extends ApiController
         return InvoiceTransactionResource::collection($transactions);
     }
 
-    /**
-     * Create a payment/refund transaction for an invoice.
-     */
+    
+
     public function store(InvoiceTransactionStoreRequest $request, Invoice $invoice): InvoiceTransactionResource
     {
         $this->requirePermission($request, 'Update:Invoice');
@@ -56,9 +51,8 @@ class InvoiceTransactionsController extends ApiController
         return new InvoiceTransactionResource($transaction);
     }
 
-    /**
-     * Delete a transaction belonging to an invoice.
-     */
+    
+
     public function destroy(Request $request, Invoice $invoice, InvoiceTransaction $transaction): JsonResponse
     {
         $this->requirePermission($request, 'Update:Invoice');

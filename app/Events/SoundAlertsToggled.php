@@ -16,13 +16,8 @@ class SoundAlertsToggled implements ShouldBroadcastNow
         public bool $enabled,
     ) {}
 
-    /**
-     * Every open panel tab of the toggling user follows along live.
-     * Public channel scoped by the owning user id — mirrors the theme
-     * live-sync pattern (admin.theme) for reliability: no private-auth
-     * handshake, just a lightweight filter by the known GYMIE_USER_ID.
-     * Payload is only a boolean, not sensitive.
-     */
+    
+
     public function broadcastOn(): array
     {
         return [

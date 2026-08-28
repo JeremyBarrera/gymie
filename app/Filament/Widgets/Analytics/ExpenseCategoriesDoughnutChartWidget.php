@@ -11,41 +11,27 @@ use Filament\Support\Facades\FilamentColor;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Collection;
 
-/**
- * Spending overview card showing expense category breakdown for the selected period.
- *
- * This widget is intentionally not a Chart.js widget, so it can render a "stacked bar"
- * and a compact category list (similar to common analytics dashboards).
- */
 class ExpenseCategoriesDoughnutChartWidget extends Widget
 {
     protected static ?int $sort = -39;
 
-    /**
-     * @var view-string
-     */
+    
+
     protected string $view = 'filament.widgets.analytics.expense-spending-overview';
 
-    /**
-     * Selected range key for this widget.
-     *
-     * This powers the default widget select filter UI in the header.
-     */
+    
+
     public ?string $filter = '6months';
 
-    /**
-     * @var int | string | array<string, int | null>
-     */
+    
+
     protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 2,
     ];
 
-    /**
-     * Range filters for the default widget select UI.
-     *
-     * @return array<string, string>
-     */
+    
+
     public function getFilters(): array
     {
         return [
@@ -57,9 +43,8 @@ class ExpenseCategoriesDoughnutChartWidget extends Widget
         ];
     }
 
-    /**
-     * Resolve the date range used for this widget.
-     */
+    
+
     private function resolveRange(): AnalyticsDateRange
     {
         $rangeKey = $this->filter ?: '6months';
@@ -81,11 +66,8 @@ class ExpenseCategoriesDoughnutChartWidget extends Widget
         );
     }
 
-    /**
-     * Resolve a registered Filament color shade (or return a fallback).
-     *
-     * @param  array<int | string, string | int> | null  $palette
-     */
+    
+
     private function colorShade(?array $palette, int|string $shade, string $fallback): string
     {
         if (is_array($palette)) {
@@ -103,14 +85,8 @@ class ExpenseCategoriesDoughnutChartWidget extends Widget
         return $fallback;
     }
 
-    /**
-     * Segment color palette for expense categories.
-     *
-     * Colors are resolved from the panel color configuration registered in
-     * `app/Providers/Filament/AdminPanelProvider.php`.
-     *
-     * @return array<int, string>
-     */
+    
+
     private function segmentPalette(): array
     {
         $primary = FilamentColor::getColor('primary');
@@ -127,9 +103,8 @@ class ExpenseCategoriesDoughnutChartWidget extends Widget
         ];
     }
 
-    /**
-     * Color used for the "Other" segment.
-     */
+    
+
     private function otherSegmentColor(): string
     {
         $gray = FilamentColor::getColor('gray');
@@ -137,9 +112,8 @@ class ExpenseCategoriesDoughnutChartWidget extends Widget
         return $this->colorShade($gray, 400, '#94A3B8');
     }
 
-    /**
-     * @return Collection<int, array{label: string, total: float, flex: float, color: string}>
-     */
+    
+
     private function buildSegments(AnalyticsDateRange $range): Collection
     {
         $rows = app(AnalyticsService::class)->expenseCategoryBreakdownForChart($range, 5);
@@ -169,9 +143,8 @@ class ExpenseCategoriesDoughnutChartWidget extends Widget
             ->values();
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     protected function getViewData(): array
     {
         $range = $this->resolveRange();

@@ -59,9 +59,8 @@ use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
+    
+
     public function register(): void
     {
         $this->app->singleton(SettingsRepository::class, JsonSettingsRepository::class);
@@ -69,21 +68,20 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singletonIf(TenantContext::class, LocationTenantContext::class);
     }
 
-    /**
-     * Bootstrap any application services.
-     */
+    
+
     public function boot(Request $request): void
     {
         $this->configureTenantAwareAuthProvider();
 
-        // Resolve the public disk URL from the current request so stored-file
-        // previews (member photos, etc.) work on any host/port (e.g. `php
-        // artisan serve` on :8000) instead of a port-less APP_URL.
+        
+        
+        
         config(['filesystems.disks.public.url' => url('storage')]);
 
-        // Override the built-in 'date' validation rule to enforce a sensible
-        // year range (1900–2100). Laravel's default rule accepts any value
-        // strtotime() can parse, including 5-digit years like 10000-01-01.
+        
+        
+        
         Validator::extend('date', function (string $attribute, mixed $value): bool {
             if (! is_string($value) && ! $value instanceof \DateTimeInterface) {
                 return false;
@@ -98,10 +96,10 @@ class AppServiceProvider extends ServiceProvider
             return $date->year >= 1900 && $date->year <= 3000;
         }, 'The :attribute must be a valid date between 1900 and 3000.');
 
-        // Force https only on the internet-facing funnel door (Tailscale
-        // terminates TLS upstream, so generated links must be https/wss).
-        // Private doors (LAN IP, tailnet) keep the arriving scheme — forcing
-        // https there would bounce browsers at the placeholder certificate.
+        
+        
+        
+        
         $funnelHost = rtrim((string) config('gymie.funnel_host'), '.');
 
         if ($request->isSecure() || ($funnelHost !== '' && strcasecmp($request->getHost(), $funnelHost) === 0)) {
@@ -114,9 +112,8 @@ class AppServiceProvider extends ServiceProvider
             Css::make('gymie-styles', __DIR__.'/../../resources/css/custom.css'),
         ]);
 
-        /**
-         * Configure form components globally to sync state and natively clear validation errors.
-         */
+        
+
         $resetError = function (LivewireComponent $livewire, SchemaComponent $component): void {
             $livewire->resetValidation($component->getStatePath());
         };
@@ -130,44 +127,38 @@ class AppServiceProvider extends ServiceProvider
         Toggle::configureUsing(fn (Toggle $field) => $field->live()->afterStateUpdated($resetError));
         TagsInput::configureUsing(fn (TagsInput $field) => $field->live()->afterStateUpdated($resetError));
 
-        /**
-         * Configure the CreateAction globally to use a specific icon.
-         */
+        
+
         CreateAction::configureUsing(function (CreateAction $action) {
             $action->icon('heroicon-s-plus');
         });
 
-        /**
-         * Configure the EditAction and DeleteAction globally to use specific icons.
-         */
+        
+
         EditAction::configureUsing(function (EditAction $action) {
             $action->icon('heroicon-s-pencil-square');
         });
 
-        /**
-         * Configure the DeleteAction globally to use a specific icon.
-         */
+        
+
         DeleteAction::configureUsing(function (DeleteAction $action) {
             $action->icon('heroicon-s-trash');
         });
 
-        /**
-         * Configure the ViewAction globally to use a specific icon.
-         */
+        
+
         ViewAction::configureUsing(function (ViewAction $action) {
             $action->icon('heroicon-s-eye');
         });
 
-        /**
-         * Configure the Table component globally to set default sorting.
-         */
+        
+
         Table::configureUsing(function (Table $table) {
             $table->defaultSort('id', 'desc');
         });
 
-        /**
-         * Configure the Select component globally to be searchable, non-native, and preloaded.
-         */
+        
+
         Select::configureUsing(function (Select $select) {
             $select
                 ->searchable()
@@ -175,10 +166,8 @@ class AppServiceProvider extends ServiceProvider
                 ->preload();
         });
 
-        /**
-         * Configure the DatePicker component globally to use the device's
-         * date convention and a matching placeholder.
-         */
+        
+
         DatePicker::configureUsing(function (DatePicker $datePicker) {
             $datePicker
                 ->native(false)
@@ -189,10 +178,8 @@ class AppServiceProvider extends ServiceProvider
                 ->maxDate(now()->addYears(1000));
         });
 
-        /**
-         * Configure the DateTimePicker component globally to use the device's
-         * date/time conventions and a matching placeholder.
-         */
+        
+
         DateTimePicker::configureUsing(function (DateTimePicker $datePicker) {
             $datePicker
                 ->native(false)
@@ -201,16 +188,14 @@ class AppServiceProvider extends ServiceProvider
                 ->prefixIcon('heroicon-o-calendar-days');
         });
 
-        /**
-         * Configure the TextColumn globally to be toggleable and hidden by default.
-         */
+        
+
         TextColumn::configureUsing(function (TextColumn $column) {
             $column->toggleable(isToggledHiddenByDefault: false);
         });
 
-        /**
-         * Configure the TextInput component globally to automatically set dynamic phone placeholder on telephone inputs.
-         */
+        
+
         TextInput::configureUsing(function (TextInput $component) {
             $component->placeholder(function (TextInput $component): ?string {
                 if ($component->isTel()) {
@@ -226,16 +211,8 @@ class AppServiceProvider extends ServiceProvider
         $this->registerPermissionFeatureFlags();
     }
 
-    /**
-     * Register an auth provider whose lookups never apply the tenant scope.
-     *
-     * The session guard resolves the logged-in user by id. Running the User
-     * model's "location" global scope during that lookup would re-enter
-     * Auth::user() before the guard has cached the user, recursing until
-     * memory is exhausted on the first authenticated request of each
-     * process. Authentication is global; tenant scoping applies to business
-     * data, not to resolving who is logged in.
-     */
+    
+
     private function configureTenantAwareAuthProvider(): void
     {
         Auth::provider('eloquent-tenant-aware', function (mixed $app, array $config): EloquentUserProvider {
@@ -244,11 +221,8 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    /**
-     * Configure Scramble (OpenAPI) generation for the v1 API.
-     *
-     * This is guarded so the app remains bootable even when Scramble isn't installed yet.
-     */
+    
+
     private function configureScrambleApiDocs(): void
     {
         if (! class_exists(Scramble::class)) {
@@ -276,12 +250,8 @@ class AppServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Configure API rate limiters used by the `api` middleware group.
-     *
-     * Defining these explicitly prevents "throttle:api" from relying on
-     * framework defaults that can vary between versions.
-     */
+    
+
     private function configureApiRateLimiting(): void
     {
         RateLimiter::for('api', function (Request $request): Limit {
@@ -311,9 +281,8 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    /**
-     * Register model observers.
-     */
+    
+
     private function registerModelObservers(): void
     {
         Invoice::observe(InvoiceObserver::class);
@@ -321,18 +290,8 @@ class AppServiceProvider extends ServiceProvider
         Location::observe(LocationObserver::class);
     }
 
-    /**
-     * Enforce permission feature flags on the gate and protect the owner role.
-     *
-     * Spatie's built-in gate callback is disabled via `config/permission.php`
-     * (`register_permission_check_method`), so this single callback owns every
-     * permission check and can apply the flags before any access is granted.
-     *
-     * - Users with the `owner` role bypass every gate check.
-     * - When the permissions master switch is off, every permission check is denied.
-     * - Individual permissions can be flagged off to deny only those checks.
-     * - The `owner` role can never be deleted.
-     */
+    
+
     private function registerPermissionFeatureFlags(): void
     {
         Gate::before(function (mixed $user, string $ability, array $arguments): ?bool {
@@ -368,9 +327,8 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    /**
-     * Prevent deletion of records that still have related data.
-     */
+    
+
     protected function configureDeletionPrevention(): void
     {
         $map = [];

@@ -100,10 +100,6 @@ function o3o4o5ConfigureRecipients(User $pinned): void
     ]);
 }
 
-// ---------------------------------------------------------------------------
-// O3 — Expired path: renewal popup replaces the Override button
-// ---------------------------------------------------------------------------
-
 it('swaps the override button for add-new-subscription when the selected service is expired', function (): void {
     $location = Location::factory()->create();
     $plan = o3o4o5Plan();
@@ -184,7 +180,7 @@ it('renews via SubscriptionRenewalService and completes a normal check-in when f
         ->and($renewal->start_date->format('Y-m-d'))->toBe($startDate)
         ->and($renewal->invoices()->count())->toBe(1)
         ->and((float) $renewal->invoices()->first()->due_amount)->toBe(0.0)
-        // Fully paid: no follow-up alert anywhere.
+        
         ->and(User::query()->get()->sum(fn (User $u) => $u->unreadNotifications()->count()))->toBe(0);
 
     Livewire::actingAs(o3o4o5Staff())
@@ -223,7 +219,7 @@ it('fires the new_subscription follow-up alert when the renewed invoice is left 
     $renewal = Subscription::query()->whereKeyNot($previous->id)->where('member_id', $member->id)->first();
     $invoice = $renewal->invoices()->first();
 
-    /** @var array<string, mixed> $payload */
+    
     $payload = $pinned->unreadNotifications()->first()->data;
 
     expect($payload['action'])->toBe('new_subscription')
@@ -279,10 +275,6 @@ it('blocks the renewal popup behind billing permissions', function (): void {
         ->and($previous->refresh()->status)->toBe(Status::Expired);
 });
 
-// ---------------------------------------------------------------------------
-// O4 — No-access path: optional-message override with follow-up alert
-// ---------------------------------------------------------------------------
-
 it('sends an override_checkin alert with the system default reason when the message is blank', function (): void {
     Feature::activate('checkin.override');
 
@@ -306,7 +298,7 @@ it('sends an override_checkin alert with the system default reason when the mess
 
     $checkIn = PlanCheckIn::query()->first();
 
-    /** @var array<string, mixed> $payload */
+    
     $payload = $pinned->unreadNotifications()->first()->data;
 
     expect($checkIn->override)->toBeTrue()
@@ -340,7 +332,7 @@ it('passes the typed optional message as the override_checkin alert reason', fun
 
     $checkIn = PlanCheckIn::query()->first();
 
-    /** @var array<string, mixed> $payload */
+    
     $payload = $pinned->unreadNotifications()->first()->data;
 
     expect($payload['action'])->toBe('override_checkin')
@@ -368,10 +360,6 @@ it('keeps the generic override step exclusive to no-access rows', function (): v
     expect(PlanCheckIn::count())->toBe(0)
         ->and($expired->refresh()->status)->toBe(Status::Expired);
 });
-
-// ---------------------------------------------------------------------------
-// O5 — Past-due split: Add payment / Change due date
-// ---------------------------------------------------------------------------
 
 it('shows two past-due buttons instead of the generic override and resolves the blocking invoice', function (): void {
     $location = Location::factory()->create();
@@ -528,7 +516,7 @@ it('requires a future next-payment date for a partial balance and fires payment_
         ->and((float) $invoice->due_amount)->toBe(60.0)
         ->and($invoice->due_date->format('Y-m-d'))->toBe($nextDue);
 
-    /** @var array<string, mixed> $payload */
+    
     $payload = $pinned->unreadNotifications()->first()->data;
 
     expect($payload['action'])->toBe('payment_added')
@@ -604,11 +592,11 @@ it('changes only the due date, fires due_date_changed and completes the override
 
     expect($invoice->due_date->format('Y-m-d'))->toBe($newDue)
         ->and($invoice->only(['paid_amount', 'total_amount', 'subscription_fee']))->toBe($before)
-        // Only the due date moved: with a future due date and nothing paid,
-        // the invoice reads as plain issued again (no longer overdue).
+        
+        
         ->and($invoice->status->value)->toBe('issued');
 
-    /** @var array<string, mixed> $payload */
+    
     $payload = $pinned->unreadNotifications()->first()->data;
 
     expect($payload['action'])->toBe('due_date_changed')

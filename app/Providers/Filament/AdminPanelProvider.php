@@ -45,23 +45,18 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-/**
- * Filament panel provider for the main admin panel.
- */
 class AdminPanelProvider extends PanelProvider
 {
-    /**
-     * Configure the panel.
-     */
+    
+
     public function panel(Panel $panel): Panel
     {
         return $this->basePanel($panel)
             ->navigation(fn (NavigationBuilder $builder) => $this->buildNavigation($builder));
     }
 
-    /**
-     * Configure the base panel options.
-     */
+    
+
     public function basePanel(Panel $panel): Panel
     {
         return $panel
@@ -121,9 +116,9 @@ class AdminPanelProvider extends PanelProvider
                     Blade::render('@livewire(\\App\\Filament\\Livewire\\LocaleSwitcher::class, [], key(\'locale-switcher\'))')
                 ),
             )
-            // Registered after the locale switcher on the same hook so the
-            // topbar reads: search · language · sound · settings ·
-            // notifications · profile.
+            
+            
+            
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,
                 fn (): HtmlString => new HtmlString(
@@ -181,9 +176,9 @@ class AdminPanelProvider extends PanelProvider
                     Blade::render('@vite([\'resources/js/app.js\'])')
                 ),
             )
-            // The global waiting-line icon (fixed-position FAB rendered by
-            // LiveSignupPopup) is reachable from every admin page and owns
-            // the queue badge logic there.
+            
+            
+            
             ->renderHook(
                 PanelsRenderHook::TOPBAR_END,
                 function (): HtmlString {
@@ -204,9 +199,8 @@ class AdminPanelProvider extends PanelProvider
             );
     }
 
-    /**
-     * Build grouped navigation for the admin panel.
-     */
+    
+
     protected function buildNavigation(NavigationBuilder $builder): NavigationBuilder
     {
         $administration = [
@@ -286,11 +280,8 @@ class AdminPanelProvider extends PanelProvider
             ->items($topLevel);
     }
 
-    /**
-     * Panel color palette.
-     *
-     * @return array<string, mixed>
-     */
+    
+
     protected function colors(): array
     {
         return [

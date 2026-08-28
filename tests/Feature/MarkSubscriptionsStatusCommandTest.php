@@ -26,7 +26,7 @@ class MarkSubscriptionsStatusCommandTest extends TestCase
             ],
         ]);
 
-        // Ensure the owner role exists for the test user
+        
         Role::create(['name' => 'owner']);
     }
 

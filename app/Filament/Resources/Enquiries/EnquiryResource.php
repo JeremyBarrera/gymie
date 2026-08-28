@@ -19,7 +19,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-/** @extends resource<Enquiry> */
 class EnquiryResource extends Resource
 {
     protected static ?string $model = Enquiry::class;
@@ -50,9 +49,8 @@ class EnquiryResource extends Resource
         ];
     }
 
-    /**
-     * @param  Builder<Enquiry>  $query
-     */
+    
+
     public static function modifyGlobalSearchQuery(Builder $query, string $search): void
     {
         $query->with(['user']);
@@ -82,33 +80,29 @@ class EnquiryResource extends Resource
         return $details;
     }
 
-    /**
-     * Define the form schema for the resource.
-     */
+    
+
     public static function form(Schema $schema): Schema
     {
         return EnquiryForm::configure($schema);
     }
 
-    /**
-     * Get the Filament table configuration for the list view.
-     */
+    
+
     public static function table(Table $table): Table
     {
         return EnquiryTable::configure($table);
     }
 
-    /**
-     * Add infolist to the resource.
-     */
+    
+
     public static function infolist(Schema $schema): Schema
     {
         return EnquiryInfolist::configure($schema);
     }
 
-    /**
-     * Define the relations for the resource.
-     */
+    
+
     public static function getRelations(): array
     {
         return [
@@ -126,9 +120,8 @@ class EnquiryResource extends Resource
         ];
     }
 
-    /**
-     * @return Builder<Enquiry>
-     */
+    
+
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()

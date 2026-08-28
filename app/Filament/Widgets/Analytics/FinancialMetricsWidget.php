@@ -11,9 +11,6 @@ use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
-/**
- * Financial overview widget for key revenue and expense KPIs.
- */
 class FinancialMetricsWidget extends StatsOverviewWidget
 {
     use InteractsWithPageFilters;
@@ -21,22 +18,19 @@ class FinancialMetricsWidget extends StatsOverviewWidget
 
     protected static ?int $sort = -40;
 
-    /**
-     * @var int | string | array<string, int | null>
-     */
+    
+
     protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 2,
     ];
 
-    /**
-     * @var int | array<string, ?int> | null
-     */
+    
+
     protected int|array|null $columns = 2;
 
-    /**
-     * @return array<int, Stat>
-     */
+    
+
     protected function getStats(): array
     {
         $range = AnalyticsDateRange::fromFilters($this->pageFilters);

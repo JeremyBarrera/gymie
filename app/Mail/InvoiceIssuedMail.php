@@ -11,18 +11,12 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-/**
- * Invoice issued email (member-facing).
- *
- * Sends an invoice summary and attaches the invoice PDF.
- */
 class InvoiceIssuedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    /**
-     * @param  non-empty-string  $gymName
-     */
+    
+
     public function __construct(
         public readonly Invoice $invoice,
         public readonly string $subjectLine,
@@ -34,9 +28,8 @@ class InvoiceIssuedMail extends Mailable
         public readonly string $pdfBytes,
     ) {}
 
-    /**
-     * Get the message envelope.
-     */
+    
+
     public function envelope(): Envelope
     {
         return new Envelope(
@@ -44,9 +37,8 @@ class InvoiceIssuedMail extends Mailable
         );
     }
 
-    /**
-     * Get the message content definition.
-     */
+    
+
     public function content(): Content
     {
         return new Content(
@@ -62,11 +54,8 @@ class InvoiceIssuedMail extends Mailable
         );
     }
 
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, Attachment>
-     */
+    
+
     public function attachments(): array
     {
         return [

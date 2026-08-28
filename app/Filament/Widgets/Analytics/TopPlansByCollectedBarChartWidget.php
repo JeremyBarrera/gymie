@@ -9,9 +9,6 @@ use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Contracts\Support\Htmlable;
 
-/**
- * Bar chart showing the top-performing plans by collected amount.
- */
 class TopPlansByCollectedBarChartWidget extends ChartWidget
 {
     use InteractsWithPageFilters;
@@ -20,9 +17,8 @@ class TopPlansByCollectedBarChartWidget extends ChartWidget
 
     protected ?string $maxHeight = '320px';
 
-    /**
-     * @var int | string | array<string, int | null>
-     */
+    
+
     protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 1,
@@ -38,9 +34,8 @@ class TopPlansByCollectedBarChartWidget extends ChartWidget
         return __('app.widgets.top_plans_collected');
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     protected function getData(): array
     {
         $range = AnalyticsDateRange::fromFilters($this->pageFilters);

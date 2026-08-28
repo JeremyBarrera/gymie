@@ -27,11 +27,8 @@ use Illuminate\Support\Facades\Gate;
 
 class PlanTable
 {
-    /**
-     * Status toggle shared by the row dropdown and the preview popup footer.
-     * Custom actions get no default policy authorization, so the permission
-     * is checked for rendering AND enforced again inside the action itself.
-     */
+    
+
     public static function markAsActiveAction(): Action
     {
         return Action::make('mark_as_active')
@@ -68,9 +65,8 @@ class PlanTable
             ->visible(fn (Plan $record): bool => $record->status->value === 'active');
     }
 
-    /**
-     * Configure the plan table schema.
-     */
+    
+
     public static function configure(Table $table): Table
     {
         return $table

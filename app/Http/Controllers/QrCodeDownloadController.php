@@ -8,13 +8,6 @@ use App\Support\Locations\LocationAccess;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/**
- * Streams a generated QR code file for download.
- *
- * Rebuilds the QR server-side (same service the preview page uses) and sends
- * the raw bytes with `Content-Disposition: attachment`, so the browser offers
- * a real file download instead of relying on a client-side blob.
- */
 class QrCodeDownloadController extends Controller
 {
     public function __invoke(Request $request): StreamedResponse

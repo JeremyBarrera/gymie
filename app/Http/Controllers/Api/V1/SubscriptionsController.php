@@ -20,16 +20,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-/**
- * Subscriptions CRUD endpoints.
- */
 class SubscriptionsController extends ApiController
 {
     private const RESOURCE_KEY = 'subscriptions';
 
-    /**
-     * Display a listing of the resource.
-     */
+    
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->requirePermission($request, 'ViewAny:Subscription');
@@ -43,9 +39,8 @@ class SubscriptionsController extends ApiController
         return SubscriptionResource::collection($query->paginate($perPage));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
+
     public function store(SubscriptionStoreRequest $request): SubscriptionResource
     {
         $this->requirePermission($request, 'Create:Subscription');
@@ -58,7 +53,7 @@ class SubscriptionsController extends ApiController
         $plan = Plan::findOrFail(Data::int($data['plan_id'] ?? null));
 
         $startDate = Carbon::parse(Data::string($data['start_date'] ?? null))->toDateString();
-        // Evergreen plans (no day count) have no end date at all.
+        
         $endDate = Data::string($data['end_date'] ?? null)
             ?: ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id)));
         $endDate = $endDate !== null ? Carbon::parse($endDate)->toDateString() : null;
@@ -114,9 +109,8 @@ class SubscriptionsController extends ApiController
         return new SubscriptionResource($subscription);
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
+
     public function show(Request $request, Subscription $subscription): SubscriptionResource
     {
         $this->requirePermission($request, 'View:Subscription');
@@ -126,9 +120,8 @@ class SubscriptionsController extends ApiController
         return new SubscriptionResource($subscription);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    
+
     public function update(SubscriptionUpdateRequest $request, Subscription $subscription): SubscriptionResource
     {
         $this->requirePermission($request, 'Update:Subscription');
@@ -139,17 +132,15 @@ class SubscriptionsController extends ApiController
         return new SubscriptionResource($subscription);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
+
     public function destroy(Request $request, Subscription $subscription): JsonResponse
     {
         return $this->deleteModel($request, 'Delete:Subscription', $subscription);
     }
 
-    /**
-     * Restore a soft deleted subscription.
-     */
+    
+
     public function restore(Request $request, int $subscription): SubscriptionResource
     {
         $record = $this->restoreSoftDeleted($request, 'RestoreAny:Subscription', Subscription::class, $subscription);
@@ -158,9 +149,8 @@ class SubscriptionsController extends ApiController
         return new SubscriptionResource($record->refresh());
     }
 
-    /**
-     * Permanently delete a subscription.
-     */
+    
+
     public function forceDelete(Request $request, int $subscription): JsonResponse
     {
         $this->forceDeleteSoftDeleted($request, 'ForceDeleteAny:Subscription', Subscription::class, $subscription);
@@ -168,29 +158,14 @@ class SubscriptionsController extends ApiController
         return $this->noContent();
     }
 
-    /**
-     * Renew a subscription and create a new invoice.
-     */
+    
+
     public function renew(SubscriptionRenewRequest $request, Subscription $subscription): JsonResponse
     {
         $this->requirePermission($request, 'Update:Subscription');
 
-        /** @var array{
-         *   plan_id: int,
-         *   start_date: string,
-         *   end_date?: string|null,
-         *   invoice?: array{
-         *     number?: string|null,
-         *     date?: string|null,
-         *     due_date?: string|null,
-         *     payment_method?: string|null,
-         *     discount?: float|int|string|null,
-         *     discount_amount?: float|int|string|null,
-         *     discount_note?: string|null,
-         *     paid_amount?: float|int|string|null
-         *   }
-         * } $validated
-         */
+        
+
         $validated = $request->validated();
 
         $result = app(SubscriptionRenewalService::class)->renew($subscription, $validated);

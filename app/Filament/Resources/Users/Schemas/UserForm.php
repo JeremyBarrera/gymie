@@ -17,9 +17,8 @@ use Illuminate\Support\Str;
 
 class UserForm
 {
-    /**
-     * Configure the user form schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

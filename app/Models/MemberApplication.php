@@ -8,17 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
-/**
- * @property int $id
- * @property string $identifier_type
- * @property string $identifier_value
- * @property array $payload
- * @property string $status
- * @property int|null $created_member_id
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @property-read Member|null $createdMember
- */
 class MemberApplication extends Model
 {
     use HasFactory, ScopedByLocation;

@@ -18,9 +18,8 @@ class LocaleSwitcher extends Component
         $this->locale = AppConfig::string('app.locale', 'en');
     }
 
-    /**
-     * @return array<string, array{label: string, flag: string}>
-     */
+    
+
     public function getOptionsProperty(): array
     {
         $options = [];
@@ -48,12 +47,12 @@ class LocaleSwitcher extends Component
             return null;
         }
 
-        /** @var SettingsRepository $repository */
+        
         $repository = app(SettingsRepository::class);
 
         $settings = $repository->get();
         data_set($settings, 'general.locale', $locale);
-        /** @var array<string, mixed> $settings */
+        
         $repository->put($settings);
 
         LocaleChanged::dispatch($locale);

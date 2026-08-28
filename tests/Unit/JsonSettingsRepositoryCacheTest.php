@@ -12,7 +12,7 @@ afterEach(function (): void {
 });
 
 it('returns updated settings after put() within the same request', function (): void {
-    /** @var SettingsRepository $repo */
+    
     $repo = app(SettingsRepository::class);
 
     $original = $repo->get();

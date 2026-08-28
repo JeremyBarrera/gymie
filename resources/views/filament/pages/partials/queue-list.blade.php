@@ -6,8 +6,7 @@
         />
     @else
         @foreach($entries as $entry)
-            @php
-                $member = ($entry['kind'] === 'checkin' && ! empty($entry['payload']['member_id']))
+            @php $member = ($entry['kind'] === 'checkin' && ! empty($entry['payload']['member_id']))
                     ? \App\Models\Member::find($entry['payload']['member_id'])
                     : null;
 
@@ -40,8 +39,8 @@
                     default => 'gray',
                 };
 
-                // Action flags so the button column below renders each
-                // possible action exactly once.
+                
+                
                 $isSignup = $entry['kind'] === 'signup';
                 $isWaiting = $entry['status'] === 'waiting';
                 $isAttending = $entry['status'] === 'attending';
@@ -51,8 +50,7 @@
                 $canDeny = $isSignup && $isAttending && $isMine;
                 $canClaim = ! $isSignup && $isWaiting;
                 $canResume = ! $isSignup && $isAttending && $isMine;
-                $canDelete = $isWaiting || ($isAttending && ($isSignup || $isMine));
-            @endphp
+                $canDelete = $isWaiting || ($isAttending && ($isSignup || $isMine)); @endphp
 
             <x-filament::section compact wire:key="entry-{{ $entry['id'] }}">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-start">

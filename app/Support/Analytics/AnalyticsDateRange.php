@@ -5,12 +5,6 @@ namespace App\Support\Analytics;
 use App\Support\AppConfig;
 use Carbon\CarbonImmutable;
 
-/**
- * A timezone-aware analytics date range derived from dashboard filters.
- *
- * Widgets receive raw filter data via `$this->pageFilters`. This value object
- * normalizes that data into an inclusive start/end range.
- */
 final readonly class AnalyticsDateRange
 {
     public function __construct(
@@ -18,16 +12,8 @@ final readonly class AnalyticsDateRange
         public CarbonImmutable $end,
     ) {}
 
-    /**
-     * Create a normalized date range from raw page filters.
-     *
-     * Supported keys:
-     * - `period`: `7days|30days|month|quarter|year|custom`
-     * - `startDate`: `Y-m-d`
-     * - `endDate`: `Y-m-d`
-     *
-     * @param  array<string, mixed>|null  $filters
-     */
+    
+
     public static function fromFilters(?array $filters, ?string $timezone = null): self
     {
         $filters ??= [];
@@ -64,9 +50,8 @@ final readonly class AnalyticsDateRange
         return new self($start, $end);
     }
 
-    /**
-     * Get the reference date (end of range) as a date string for snapshot metrics.
-     */
+    
+
     public function referenceDateString(): string
     {
         return $this->end->toDateString();

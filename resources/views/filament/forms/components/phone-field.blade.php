@@ -1,7 +1,5 @@
-@php
-    $dialStatePath = $getStatePath() . '_dial_code';
-    $currentDial = data_get($getLivewire(), $dialStatePath) ?? \App\Helpers\Helpers::getPhoneCountryCodePlaceholder();
-@endphp
+@php $dialStatePath = $getStatePath() . '_dial_code';
+    $currentDial = data_get($getLivewire(), $dialStatePath) ?? \App\Helpers\Helpers::getPhoneCountryCodePlaceholder(); @endphp
 
 <x-dynamic-component
     :component="$getFieldWrapperView()"

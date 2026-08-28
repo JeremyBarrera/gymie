@@ -9,25 +9,18 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ClearQueue extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+    
+
     protected $signature = 'gymie:clear-queue
                             {--location= : Only clear the queue for this location id}
                             {--force : Skip the confirmation prompt}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+    
+
     protected $description = 'Remove all active queue entries (waiting/attending) and notify waiting screens';
 
-    /**
-     * Execute the console command.
-     */
+    
+
     public function handle(): int
     {
         $query = QueueEntry::query()->whereIn('status', ['waiting', 'attending']);

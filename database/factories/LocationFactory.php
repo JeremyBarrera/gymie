@@ -6,9 +6,6 @@ use App\Models\Location;
 use Database\Factories\Concerns\WithSynchronizedLocation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Location>
- */
 class LocationFactory extends Factory
 {
     use WithSynchronizedLocation;

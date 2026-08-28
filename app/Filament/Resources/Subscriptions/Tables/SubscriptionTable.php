@@ -31,9 +31,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SubscriptionTable
 {
-    /**
-     * Configure the subscription table schema.
-     */
+    
+
     public static function configure(Table $table): Table
     {
         return $table

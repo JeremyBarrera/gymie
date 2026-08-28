@@ -1,20 +1,4 @@
-/*
- * Sound alerts for live queue arrivals.
- *
- * Robustness contract:
- *  - The server preference is mirrored per page load via
- *    window.GYMIE_SOUND_ALERTS. Other tabs of the same user follow live
- *    through the private "user.{id}" websocket channel
- *    (SoundAlertsToggled), so a toggle in one tab applies everywhere.
- *  - Browser autoplay policy forbids audio before a user gesture: while
- *    the preference is on but this page has not been unlocked yet, a
- *    capture-phase pointerdown listener silently creates/resumes the
- *    AudioContext on the next interaction anywhere.
- *  - Every entry point is guarded; any failure degrades to silence and
- *    never propagates into page code.
- *  - Beeps within 1.5 s of each other are collapsed (the Reception page
- *    and the global popup both subscribe to QueueEntryCreated).
- */
+
 
 const UNLOCKED_KEY = 'gymie-sound-unlocked';
 const DEDUPE_MS = 1500;
@@ -243,11 +227,6 @@ export function beep() {
     } catch {}
 }
 
-/**
- * Called synchronously inside the "Enable" click: unlocks audio within the
- * user gesture, flips the client-side flag immediately (no round-trip race),
- * and plays the confirmation chime as soon as the context is running.
- */
 export function enableFromGesture() {
     try {
         const context = ensureContext();
@@ -267,11 +246,6 @@ export function enableFromGesture() {
     }
 }
 
-/**
- * Called synchronously inside the click that toggles the preference so
- * the AudioContext is created/resumed while the user gesture is still
- * valid (browsers reject resumes outside gestures).
- */
 export function ensureUnlocked() {
     try {
         const context = ensureContext();
@@ -291,11 +265,11 @@ export function ensureUnlocked() {
 function boot() {
     setEnabled(window.GYMIE_SOUND_ALERTS === true || window.GYMIE_SOUND_ALERTS === '1');
 
-    // The preference is a server-side setting: when this user toggles it in
-    // any tab (or device), the public user channel tells every other open
-    // panel tab live (mirrors theme's `admin.theme` public-channel pattern
-    // for reliability — no private-auth handshake to fail). Receiving side
-    // only syncs state — it never dings.
+    
+    
+    
+    
+    
     if (window.Echo && window.GYMIE_USER_ID) {
         window.Echo.channel(`user.${window.GYMIE_USER_ID}`).listen('SoundAlertsToggled', (e) => {
             const on = Boolean(e?.enabled);

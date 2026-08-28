@@ -10,13 +10,6 @@ use App\Support\AppConfig;
 use App\Support\Dates\DeviceDateFormat;
 use Carbon\Carbon;
 
-/**
- * Computes the membership status badge (color + label) for a member.
- *
- * The badge reflects the member's best subscription: green while valid,
- * yellow inside the expiring window, red once expired, gray when the
- * member has no subscription at all.
- */
 final class MembershipStatus
 {
     private const COLOR_GREEN = 'success';
@@ -29,11 +22,8 @@ final class MembershipStatus
 
     private function __construct() {}
 
-    /**
-     * Status badge for the member's best (latest-ending) subscription.
-     *
-     * @return array{color: string, label: string, hint: string|null, help: string|null}
-     */
+    
+
     public static function forMember(Member $member): array
     {
         $subscription = self::bestSubscription($member);
@@ -74,8 +64,8 @@ final class MembershipStatus
         }
 
         $expiringDays = Helpers::getSubscriptionExpiringDays();
-        // Absolute day count — a signed diff would make every future date
-        // negative and read as "expiring soon".
+        
+        
         $daysLeft = (int) $today->diffInDays($endDate);
 
         if ($daysLeft <= $expiringDays) {
@@ -95,10 +85,8 @@ final class MembershipStatus
         ];
     }
 
-    /**
-     * The member's best subscription: an evergreen one (no end date) wins,
-     * otherwise the one ending latest.
-     */
+    
+
     private static function bestSubscription(Member $member): ?Subscription
     {
         return $member->subscriptions()

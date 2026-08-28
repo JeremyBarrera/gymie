@@ -20,27 +20,22 @@ class SubscriptionsRelationManager extends RelationManager
         return __('app.resources.subscriptions.plural');
     }
 
-    /**
-     * Determine if the relation manager is read-only.
-     *
-     * @return bool Returns false, indicating the relation manager is not read-only.
-     */
+    
+
     public function isReadOnly(): bool
     {
         return false;
     }
 
-    /**
-     * Define the form schema for the resource.
-     */
+    
+
     public function form(Schema $schema): Schema
     {
         return SubscriptionResource::form($schema);
     }
 
-    /**
-     * Define the table for listing records in the resource.
-     */
+    
+
     public function table(Table $table): Table
     {
         return SubscriptionResource::table($table)

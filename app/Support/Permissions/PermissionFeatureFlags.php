@@ -7,25 +7,14 @@ namespace App\Support\Permissions;
 use App\Helpers\Helpers;
 use Spatie\Permission\Models\Role;
 
-/**
- * Settings-backed feature flags for permissions.
- *
- * Every permission can be flagged off individually, and a master switch can
- * deny every permission check at once. The `owner` role always bypasses the
- * feature flags and the deletion protection below. All other accounts are
- * scoped through their location-based roles and `user_locations`.
- */
 final class PermissionFeatureFlags
 {
     public const OWNER_ROLE = 'owner';
 
     private const PERMISSION_ABILITY_PATTERN = '/^[A-Z][a-zA-Z]+:[\w]+$/';
 
-    /**
-     * Roles that may never be deleted.
-     *
-     * @return list<string>
-     */
+    
+
     public static function protectedRoleNames(): array
     {
         return [self::OWNER_ROLE];
@@ -43,9 +32,8 @@ final class PermissionFeatureFlags
         return ($permissions['enabled'] ?? true) !== false;
     }
 
-    /**
-     * @return list<string>
-     */
+    
+
     public static function disabledPermissions(): array
     {
         $disabled = self::settingsSection()['disabled'] ?? [];
@@ -81,11 +69,8 @@ final class PermissionFeatureFlags
         return in_array($roleName, self::protectedRoleNames(), true);
     }
 
-    /**
-     * Whether the given gate ability targets a protected role.
-     *
-     * @param  array<int, mixed>  $arguments
-     */
+    
+
     public static function isProtectedRoleDeletion(string $ability, array $arguments): bool
     {
         if (! in_array($ability, ['delete', 'forceDelete', 'restore'], true)) {
@@ -101,9 +86,8 @@ final class PermissionFeatureFlags
         return false;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     private static function settingsSection(): array
     {
         $settings = Helpers::getSettings();

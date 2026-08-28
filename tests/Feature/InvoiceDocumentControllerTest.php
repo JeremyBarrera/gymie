@@ -17,9 +17,6 @@ afterEach(function (): void {
     Helpers::setTestSettingsOverride(null);
 });
 
-/**
- * @return array{user: User, invoice: Invoice}
- */
 function makeInvoiceWithViewer(): array
 {
     Helpers::setTestSettingsOverride([

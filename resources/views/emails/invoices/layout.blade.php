@@ -1,8 +1,4 @@
-@php
-    /** @var string $gymName */
-    /** @var string|null $gymEmail */
-    /** @var string|null $gymContact */
-@endphp
+@php @endphp
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family: Arial, sans-serif; background: #f6f7fb; padding: 24px 0;">
     <tr>

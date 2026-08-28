@@ -16,35 +16,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * @property int $id
- * @property string|null $number
- * @property int|null $subscription_id
- * @property Carbon|null $date
- * @property Carbon|null $due_date
- * @property string|null $payment_method
- * @property Status|null $status
- * @property float|null $tax
- * @property int|float|string|null $discount
- * @property float|null $discount_amount
- * @property string|null $discount_note
- * @property float|null $paid_amount
- * @property float|null $total_amount
- * @property float|null $due_amount
- * @property float|null $subscription_fee
- * @property-read Subscription|null $subscription
- * @property-read Collection<int, InvoiceTransaction> $transactions
- */
 class Invoice extends Model
 {
-    /** @use HasFactory<InvoiceFactory> */
+    
     use HasFactory, ScopedByLocation, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    
+
     protected $fillable = [
         'location_id',
         'number',
@@ -71,26 +49,17 @@ class Invoice extends Model
         'tax_percent' => 'decimal:2',
     ];
 
-    /**
-     * The subscription this invoice is for.
-     */
-    /**
-     * @return BelongsTo<Subscription, $this>
-     */
+    
+
+    
+
     public function subscription(): BelongsTo
     {
         return $this->belongsTo(Subscription::class);
     }
 
-    /**
-     * Get the status the invoice should display right now.
-     *
-     * The stored status is only refreshed on save (`syncFromTransactions`)
-     * or by the daily `gymie:invoices --mark-overdue` scheduler; this
-     * recomputes the overdue state at read time so an issued/partial invoice
-     * whose due date has passed always shows as overdue, regardless of when
-     * the stored value was last synced.
-     */
+    
+
     public function effectiveStatus(): ?Status
     {
         $status = $this->status;
@@ -109,14 +78,8 @@ class Invoice extends Model
         return $status;
     }
 
-    /**
-     * Mark issued/partial invoices overdue whose due date has passed.
-     *
-     * Reused by the `gymie:invoices --mark-overdue` command (and its tenants
-     * variant) and by the invoice pages on mount, so the stored status stays
-     * in sync with `effectiveStatus()` even when the daily scheduler hasn't
-     * run (e.g. dev environments).
-     */
+    
+
     public static function markOverdue(): int
     {
         return static::query()
@@ -127,31 +90,24 @@ class Invoice extends Model
             ->update(['status' => 'overdue']);
     }
 
-    /**
-     * Get a human-friendly label for the invoice status.
-     *
-     * This is useful for tables and UI elements where you want a consistent
-     * display label regardless of whether the attribute is currently cast.
-     */
+    
+
     public function getDisplayStatusLabel(): string
     {
         return $this->effectiveStatus()?->getLabel() ?? '';
     }
 
-    /**
-     * Get the transactions for the invoice.
-     */
-    /**
-     * @return HasMany<InvoiceTransaction, $this>
-     */
+    
+
+    
+
     public function transactions(): HasMany
     {
         return $this->hasMany(InvoiceTransaction::class);
     }
 
-    /**
-     * Sync the invoice's paid_amount, due_amount, and status based on its transactions.
-     */
+    
+
     public function syncFromTransactions(): void
     {
         $paymentsTotal = (float) $this->transactions()
@@ -207,9 +163,8 @@ class Invoice extends Model
         $this->refresh();
     }
 
-    /**
-     * Boot the model and handle invoice calculations on saving.
-     */
+    
+
     protected static function boot(): void
     {
         parent::boot();

@@ -8,9 +8,8 @@ use Filament\Schemas\Schema;
 
 class ServiceInfolist
 {
-    /**
-     * Configure the service "view" infolist schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

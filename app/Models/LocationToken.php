@@ -8,17 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 
-/**
- * @property int $id
- * @property string $token
- * @property string $tokenable_type
- * @property int $tokenable_id
- * @property string $kind
- * @property int|null $location_id
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @property-read Model $tokenable
- */
 class LocationToken extends Model
 {
     use HasFactory, ScopedByLocation;
@@ -29,12 +18,8 @@ class LocationToken extends Model
         'kind' => 'string',
     ];
 
-    /**
-     * A token's location is its tokenable's, not the creating account's
-     * default location. The ScopedByLocation creating hook fills location_id
-     * from the default location, so re-derive it from the tokenable here
-     * (listeners registered in this boot run after the trait's).
-     */
+    
+
     protected static function boot(): void
     {
         parent::boot();
@@ -48,10 +33,8 @@ class LocationToken extends Model
         });
     }
 
-    /**
-     * The location owning the tokenable: a Location's own id, or another
-     * tokenable model's location_id. Mirrors SetCurrentLocation.
-     */
+    
+
     private static function locationIdFromTokenable(Model $model): ?int
     {
         $tokenableType = $model->getAttribute('tokenable_type');

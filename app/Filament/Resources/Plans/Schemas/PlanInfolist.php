@@ -12,9 +12,8 @@ use Illuminate\Support\HtmlString;
 
 class PlanInfolist
 {
-    /**
-     * Configure the plan "view" infolist schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

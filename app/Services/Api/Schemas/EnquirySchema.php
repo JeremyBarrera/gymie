@@ -10,23 +10,12 @@ use App\Rules\ModelUnique;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 
-/**
- * Single source of truth for Enquiry API validation and serialization.
- */
 final class EnquirySchema
 {
     private function __construct() {}
 
-    /**
-     * @return array{
-     *   searchable: list<string>,
-     *   sortable: list<string>,
-     *   default_sort: string,
-     *   status_column: string|null,
-     *   includes: list<string>,
-     *   filters: array<string, array{type: string, column: string}>
-     * }
-     */
+    
+
     public static function queryRules(): array
     {
         return [
@@ -44,9 +33,8 @@ final class EnquirySchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function storeRules(): array
     {
         return [
@@ -74,9 +62,8 @@ final class EnquirySchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function updateRules(int|string $enquiryId): array
     {
         return [
@@ -101,9 +88,8 @@ final class EnquirySchema
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     public static function resource(Enquiry $enquiry): array
     {
         return [

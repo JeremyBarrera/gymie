@@ -9,9 +9,6 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
-/**
- * @property-read Subscription $record
- */
 class ViewSubscription extends ViewRecord
 {
     protected static string $resource = SubscriptionResource::class;

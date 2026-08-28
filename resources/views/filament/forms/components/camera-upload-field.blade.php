@@ -1,6 +1,4 @@
-@php
-    $cameraFieldId = str($getStatePath())->replace('.', '_')->toString();
-@endphp
+@php $cameraFieldId = str($getStatePath())->replace('.', '_')->toString(); @endphp
 
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
     <div

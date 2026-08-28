@@ -50,14 +50,12 @@
                     </x-slot>
 
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
-                        @php
-                            $fields = [
+                        @php $fields = [
                                 'location' => $this->getLocation()?->name ?? __('app.placeholders.dash'),
                                 'type' => $type === 'checkin' ? __('app.reception.qr_type_checkin') : __('app.reception.qr_type_signup'),
                                 'format' => strtoupper($format),
                                 'size' => "{$size} × {$size}",
-                            ];
-                        @endphp
+                            ]; @endphp
                         @foreach($fields as $label => $value)
                             <div class="flex flex-col gap-1">
                                 <dt class="fi-text-muted text-xs font-medium uppercase tracking-wider">

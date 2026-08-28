@@ -11,20 +11,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
-/**
- * Global waiting line: verifies new sign-ups and check-ins from any admin
- * page without opening the Reception page.
- *
- * Two independent tasks:
- *  - popup: live arrivals auto-open the verify/check-in overlay, one after
- *    another;
- *  - pending: entries closed without being attended stay visible in a
- *    floating queue badge (a single waiting-line icon covering BOTH kinds),
- *    and can be attended later from any page.
- *
- * On the Reception page the popup task is delegated to the page itself,
- * only the pending badge remains. Rendered via a panel render hook.
- */
 class LiveSignupPopup extends Component
 {
     use HandlesCheckInVerification;
@@ -32,16 +18,16 @@ class LiveSignupPopup extends Component
 
     public ?string $selectedQueueEntryId = null;
 
-    /** Auto-open popups on this page (disabled on Reception, which does it itself). */
+    
     public bool $popupEnabled = true;
 
-    /** @var array<int, array<string, mixed>> Sign-ups and check-ins waiting to be attended. */
+    
     public array $pendingQueue = [];
 
-    /** @var array<int, array<string, mixed>> Entries being attended elsewhere — hidden, restored to their spot if never resolved. */
+    
     public array $claimedQueue = [];
 
-    /** How long an entry stays hidden while claimed, before it returns to the pending queue. */
+    
     public const CLAIM_RECOVERY_SECONDS = 300;
 
     protected $listeners = [
@@ -57,10 +43,8 @@ class LiveSignupPopup extends Component
         $this->refreshPendingQueue();
     }
 
-    /**
-     * Re-fetches both queues from the database — the socket-reconnect resync
-     * entry point (events missed during a drop are never replayed).
-     */
+    
+
     public function refreshPendingQueue(): void
     {
         [$this->pendingQueue, $this->claimedQueue] = $this->loadQueues();
@@ -142,11 +126,8 @@ class LiveSignupPopup extends Component
         $this->popupQueue = array_values(array_diff($this->popupQueue, [$entryId]));
     }
 
-    /**
-     * Called by the claimed-entry recovery timer: if the entry was never
-     * resolved, put it back on the pending queue at the spot it had before
-     * it was claimed.
-     */
+    
+
     public function restoreClaimedToPending(int $queueEntryId): void
     {
         $index = array_search($queueEntryId, array_column($this->claimedQueue, 'id'), true);
@@ -204,9 +185,8 @@ class LiveSignupPopup extends Component
         ]);
     }
 
-    /**
-     * @return array{0: array<int, array<string, mixed>>, 1: array<int, array<string, mixed>>}
-     */
+    
+
     private function loadQueues(): array
     {
         $query = QueueEntry::query()
@@ -235,7 +215,7 @@ class LiveSignupPopup extends Component
         return [array_slice($pending, 0, 20), array_slice($claimed, 0, 20)];
     }
 
-    /** @return array<string, mixed> */
+    
     private function pendingItem(QueueEntry $entry): array
     {
         $kind = (string) $entry->kind;
@@ -260,11 +240,8 @@ class LiveSignupPopup extends Component
         ];
     }
 
-    /**
-     * @return array<string, mixed> A claimed entry with the spot it held in
-     *                              the pending queue and the seconds left
-     *                              before it is restored.
-     */
+    
+
     private function claimedItem(QueueEntry $entry, int $index): array
     {
         return array_merge($this->pendingItem($entry), [

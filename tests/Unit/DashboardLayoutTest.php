@@ -8,11 +8,6 @@ use App\Filament\Widgets\Analytics\MembershipOverviewSubscriptionsTableWidget;
 use App\Filament\Widgets\Analytics\RecentTransactionsTableWidget;
 use Filament\Schemas\Components\Livewire;
 
-/**
- * Collect Livewire component class names from a schema component tree.
- *
- * @return array<int, string>
- */
 function collectLivewireComponentsFromSchema(mixed $component): array
 {
     $components = [];
@@ -34,7 +29,7 @@ function collectLivewireComponentsFromSchema(mixed $component): array
     $property = $reflection->getProperty('childComponents');
     $property->setAccessible(true);
 
-    /** @var mixed $childComponents */
+    
     $childComponents = $property->getValue($component);
 
     if (! is_array($childComponents)) {

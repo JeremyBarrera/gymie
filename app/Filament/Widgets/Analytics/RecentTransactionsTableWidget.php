@@ -15,11 +15,6 @@ use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
 
-/**
- * Recent invoice transactions table for the selected dashboard range.
- *
- * This helps users quickly verify payments/refunds without leaving the dashboard.
- */
 class RecentTransactionsTableWidget extends TableWidget
 {
     use InteractsWithPageFilters;
@@ -28,9 +23,8 @@ class RecentTransactionsTableWidget extends TableWidget
 
     protected static ?string $heading = null;
 
-    /**
-     * @var int | string | array<string, int | null>
-     */
+    
+
     protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 2,

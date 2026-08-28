@@ -2,10 +2,6 @@
 
 namespace App\Support;
 
-/**
- * Derives a cohesive CSS palette from a single theme color so member-facing
- * pages fully follow the configured theme instead of hard-coding neutrals.
- */
 final class ThemeColor
 {
     private string $hex;
@@ -25,25 +21,22 @@ final class ThemeColor
         return $this->hex;
     }
 
-    /**
-     * Mix toward white. 0 keeps the color, 1 is pure white.
-     */
+    
+
     public function tint(float $amount): string
     {
         return self::mix($this->hex, '#ffffff', $amount);
     }
 
-    /**
-     * Mix toward black. 0 keeps the color, 1 is pure black.
-     */
+    
+
     public function shade(float $amount): string
     {
         return self::mix($this->hex, '#000000', $amount);
     }
 
-    /**
-     * The readable text color to sit on top of the theme color.
-     */
+    
+
     public function contrastText(): string
     {
         [$r, $g, $b] = self::rgb($this->hex);
@@ -55,9 +48,8 @@ final class ThemeColor
         return $luminance > 0.55 ? '#111827' : '#ffffff';
     }
 
-    /**
-     * @return array<string, string> CSS custom property values (without the -- prefix).
-     */
+    
+
     public function palette(): array
     {
         return [
@@ -90,9 +82,8 @@ final class ThemeColor
         return '#'.strtolower(substr($hex, 0, 6));
     }
 
-    /**
-     * @return array{int, int, int}
-     */
+    
+
     private static function rgb(string $hex): array
     {
         $hex = ltrim(self::normalize($hex), '#');

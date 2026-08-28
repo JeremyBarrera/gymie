@@ -4,31 +4,22 @@ namespace App\Services;
 
 use App\Contracts\SettingsRepository;
 
-/**
- * JSON-backed settings repository (OSS default).
- *
- * Settings are stored under `storage/data/settingsData.json`.
- * Other installations can override this binding to store settings elsewhere.
- */
 class JsonSettingsRepository implements SettingsRepository
 {
     private const SETTINGS_PATH = 'data/settingsData.json';
 
     private const EXAMPLE_SETTINGS_PATH = 'data/settingsData.json.example';
 
-    /**
-     * @var array<string, mixed>|null
-     */
+    
+
     private ?array $cachedSettings = null;
 
-    /**
-     * @var array<string, mixed>|null
-     */
+    
+
     protected static ?array $testOverride = null;
 
-    /**
-     * @param  array<string, mixed>|null  $override
-     */
+    
+
     public function setTestOverride(?array $override): void
     {
         static::$testOverride = $override;
@@ -119,10 +110,8 @@ class JsonSettingsRepository implements SettingsRepository
         ], JSON_PRETTY_PRINT));
     }
 
-    /**
-     * @param  array<string, mixed>  $settings
-     * @return array<string, mixed>
-     */
+    
+
     private function normalize(array $settings): array
     {
         foreach ([
@@ -141,7 +130,7 @@ class JsonSettingsRepository implements SettingsRepository
             }
         }
 
-        /** @var array<string, mixed> $general */
+        
         $general = $settings['general'];
         if (
             ! array_key_exists('locale', $general) ||
@@ -154,7 +143,7 @@ class JsonSettingsRepository implements SettingsRepository
         }
         $settings['general'] = $general;
 
-        /** @var array<string, mixed> $notifications */
+        
         $notifications = $settings['notifications'];
         if (
             ! array_key_exists('email', $notifications) ||
@@ -164,7 +153,7 @@ class JsonSettingsRepository implements SettingsRepository
         }
         $settings['notifications'] = $notifications;
 
-        /** @var array<string, mixed> $emailSettings */
+        
         $emailSettings = $settings['notifications']['email'];
 
         foreach ([
@@ -180,7 +169,7 @@ class JsonSettingsRepository implements SettingsRepository
         }
         $settings['notifications']['email'] = $emailSettings;
 
-        // Upgrade path: the stored `override` scope was renamed to `follow_up`.
+        
         $storedNotifications = $settings['notifications'];
         if (
             (! isset($storedNotifications['follow_up']) || ! is_array($storedNotifications['follow_up'])) &&
@@ -210,7 +199,7 @@ class JsonSettingsRepository implements SettingsRepository
             $settings['notifications'][$topic] = $topicSettings;
         }
 
-        /** @var array<string, mixed> $payments */
+        
         $payments = $settings['payments'];
         if (
             ! array_key_exists('provider', $payments) ||
@@ -221,7 +210,7 @@ class JsonSettingsRepository implements SettingsRepository
         }
         $settings['payments'] = $payments;
 
-        /** @var array<string, mixed> $permissions */
+        
         $permissions = $settings['permissions'];
         if (
             ! array_key_exists('enabled', $permissions) ||

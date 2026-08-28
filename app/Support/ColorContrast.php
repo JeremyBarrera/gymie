@@ -2,16 +2,6 @@
 
 namespace App\Support;
 
-/**
- * WCAG-correct colour math for the member-facing scanner UI.
- *
- * The QR flow lets a gym pick a background colour and an accent colour. Those
- * two values can land on any point of the wheel, so hard-coding foreground
- * colours would eventually produce unreadable pairings. This class derives
- * every foreground/background pair from the chosen colours using the WCAG
- * relative-luminance contrast ratio, guaranteeing AA (>= 4.5:1) text on its
- * surface and on the accent, for any input.
- */
 final class ColorContrast
 {
     public static function normalize(string $hex): string
@@ -25,9 +15,8 @@ final class ColorContrast
         return '#'.strtolower(substr($hex, 0, 6));
     }
 
-    /**
-     * @return array{int, int, int}
-     */
+    
+
     private static function rgb(string $hex): array
     {
         $hex = ltrim(self::normalize($hex), '#');
@@ -56,9 +45,8 @@ final class ColorContrast
         return self::toHex($r, $g, $b);
     }
 
-    /**
-     * WCAG 2.1 relative luminance (gamma-corrected).
-     */
+    
+
     public static function relativeLuminance(string $hex): float
     {
         [$r, $g, $b] = self::rgb($hex);
@@ -72,9 +60,8 @@ final class ColorContrast
             + 0.0722 * $linear($b / 255);
     }
 
-    /**
-     * WCAG 2.1 contrast ratio between two colours (1.0 – 21.0).
-     */
+    
+
     public static function ratio(string $a, string $b): float
     {
         $la = self::relativeLuminance($a);
@@ -86,25 +73,19 @@ final class ColorContrast
         return ($lighter + 0.05) / ($darker + 0.05);
     }
 
-    /**
-     * Pick the readable foreground (near-white or near-black) for a background.
-     *
-     * Prefers whichever candidate meets the AA threshold (>= $min) and has
-     * the higher ratio. If only one candidate clears AA, use it. If neither
-     * does (extremely rare mid-luminance edge case), return whichever is
-     * closer to the threshold so a future caller can keep adjusting.
-     */
+    
+
     public static function readableOn(string $bg, string $light = '#ffffff', string $dark = '#0f172a', float $min = 4.5): string
     {
         $rl = self::ratio($light, $bg);
         $rd = self::ratio($dark, $bg);
 
-        // Both clear AA — prefer the higher ratio
+        
         if ($rl >= $min && $rd >= $min) {
             return $rl >= $rd ? $light : $dark;
         }
 
-        // Exactly one clears AA — use it
+        
         if ($rl >= $min) {
             return $light;
         }
@@ -112,14 +93,12 @@ final class ColorContrast
             return $dark;
         }
 
-        // Neither clears AA — pick whichever is closer
+        
         return $rl >= $rd ? $light : $dark;
     }
 
-    /**
-     * A muted variant of the readable foreground that still clears the AA
-     * threshold against the surface.
-     */
+    
+
     public static function mutedOn(string $surface, float $min = 4.5): string
     {
         $candidate = self::readableOn($surface);
@@ -137,25 +116,20 @@ final class ColorContrast
         return $candidate;
     }
 
-    /**
-     * Ensure a foreground colour has at least the required contrast ratio
-     * against a background. If it already does, return unchanged; otherwise
-     * pick whichever extreme (white or black) gives the higher contrast,
-     * then binary-search along that axis for the lightest/darkest value
-     * that clears the threshold.
-     */
+    
+
     public static function ensureContrast(string $fg, string $bg, float $min = 4.5): string
     {
         if (self::ratio($fg, $bg) >= $min) {
             return $fg;
         }
 
-        // Pick the direction that maximises contrast.
+        
         $whiteRatio = self::ratio('#ffffff', $bg);
         $blackRatio = self::ratio('#000000', $bg);
         $extreme = $whiteRatio >= $blackRatio ? '#ffffff' : '#000000';
 
-        // Binary-search along the fg → extreme axis for the threshold.
+        
         $lo = 0.0;
         $hi = 1.0;
         $best = $fg;
@@ -176,19 +150,8 @@ final class ColorContrast
         return $best;
     }
 
-    /**
-     * Build the full set of CSS custom properties for the scanner UI from a
-     * brand background colour and a brand accent colour.
-     *
-     * Every text/background pairing is derived so it is readable regardless of
-     * how wild the two input colours are:
-     *  - the surface (card) is pushed toward neutral from the background,
-     *  - body text is the AA-safe foreground on that surface,
-     *  - the accent button uses the AA-safe foreground on the accent,
-     *  - success/danger tints are computed against the surface luminance.
-     *
-     * @return array<string, string>
-     */
+    
+
     public static function derivePalette(string $background, string $accent): array
     {
         $background = self::normalize($background);

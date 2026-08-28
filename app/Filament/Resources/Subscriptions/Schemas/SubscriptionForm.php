@@ -32,19 +32,15 @@ use Illuminate\Validation\Rule;
 
 class SubscriptionForm
 {
-    /**
-     * Default payment method options for forms.
-     *
-     * @return array<string, string>
-     */
+    
+
     public static function paymentMethodOptions(): array
     {
         return PaymentMethod::options();
     }
 
-    /**
-     * Configure the subscription form schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -76,8 +72,8 @@ class SubscriptionForm
                                 $fee = (float) ($plan->amount ?? 0);
                                 $taxRate = Helpers::getTaxRate() ?: 0;
 
-                                // Preserve Filament repeater UUID keys — numeric re-indexing
-                                // would $set into invoices.0.* and create duplicate children.
+                                
+                                
                                 $invoices = $get('invoices');
 
                                 if (is_array($invoices)) {
@@ -290,9 +286,8 @@ class SubscriptionForm
             ]);
     }
 
-    /**
-     * @return array<int, Component>
-     */
+    
+
     public static function renewSchema(Subscription $record): array
     {
         $today = Carbon::today(AppConfig::timezone())->toDateString();
@@ -505,12 +500,8 @@ class SubscriptionForm
         ];
     }
 
-    /**
-     * Handle the subscription renewal process, including creating a new subscription and associated invoice.
-     *
-     * @param  Subscription  $record  The subscription being renewed
-     * @param  array<string, mixed>  $data  The form data for the new subscription and invoice
-     */
+    
+
     public static function handleRenew(Subscription $record, array $data): void
     {
         Subscription::query()->getConnection()->transaction(function () use ($record, $data): void {
@@ -519,7 +510,7 @@ class SubscriptionForm
 
             $plan = Plan::findOrFail(Data::int($data['plan_id'] ?? null));
             $startDate = Carbon::parse(Data::string($data['start_date'] ?? null))->toDateString();
-            // Evergreen plans (no day count) have no end date at all.
+            
             $endDate = Data::string($data['end_date'] ?? null)
                 ?: ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id)));
 
@@ -580,9 +571,8 @@ class SubscriptionForm
         });
     }
 
-    /**
-     * Recalculate invoice summary fields (subscription_fee, tax, total_amount, due_amount) based on the selected plan and discount.
-     */
+    
+
     private static function recalculateRenewInvoiceSummary(Get $get, Set $set): void
     {
         $plan = self::planFromState($get);
@@ -592,9 +582,8 @@ class SubscriptionForm
         self::recalculateInvoiceSummary($get, $set, $fee, $taxRate);
     }
 
-    /**
-     * Recalculate invoice summary fields (subscription_fee, tax, total_amount, due_amount).
-     */
+    
+
     private static function recalculateInvoiceSummary(Get $get, Set $set, ?float $fee = null, ?float $taxRate = null): void
     {
         $fee = $fee ?? self::floatState($get, 'subscription_fee');
@@ -618,9 +607,8 @@ class SubscriptionForm
         $set('due_amount', $summary['due']);
     }
 
-    /**
-     * Format the plan option label for the select input.
-     */
+    
+
     public static function formatPlanOptionLabel(Plan $plan): string
     {
         return sprintf(

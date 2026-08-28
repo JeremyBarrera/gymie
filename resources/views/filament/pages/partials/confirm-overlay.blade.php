@@ -1,6 +1,5 @@
 @if($entry)
-    @php
-        $member = ($entry->kind === 'checkin' && ! empty($entry->payload['member_id']))
+    @php $member = ($entry->kind === 'checkin' && ! empty($entry->payload['member_id']))
             ? \App\Models\Member::find($entry->payload['member_id'])
             : null;
 
@@ -18,8 +17,7 @@
                 'limited' => $s->plan?->daily_checkin_limit !== null,
             ])->filter(fn ($s) => $s['name'])->values()->all();
             $hasLimited = collect($eligible)->contains('limited', true);
-        }
-    @endphp
+        } @endphp
 
     <div
         wire:key="confirm-overlay-{{ $entry->id }}"
@@ -92,13 +90,11 @@
 
             <x-slot name="footer">
                 <div class="flex w-full gap-3">
-                    @php
-                        [$confirmColor, $confirmLabel] = match ($action) {
+                    @php [$confirmColor, $confirmLabel] = match ($action) {
                             'approve' => ['success', __('app.reception.confirm.approve_confirm')],
                             'deny' => ['danger', __('app.reception.confirm.deny_confirm')],
                             default => ['warning', __('app.reception.confirm.override_confirm')],
-                        };
-                    @endphp
+                        }; @endphp
 
                     <x-filament::button
                         :color="$confirmColor"

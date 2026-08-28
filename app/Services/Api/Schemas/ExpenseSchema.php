@@ -5,23 +5,12 @@ namespace App\Services\Api\Schemas;
 use App\Models\Expense;
 use Illuminate\Contracts\Validation\ValidationRule;
 
-/**
- * Single source of truth for Expense API validation and serialization.
- */
 final class ExpenseSchema
 {
     private function __construct() {}
 
-    /**
-     * @return array{
-     *   searchable: list<string>,
-     *   sortable: list<string>,
-     *   default_sort: string,
-     *   status_column: string|null,
-     *   includes: list<string>,
-     *   filters: array<string, array{type: string, column: string}>
-     * }
-     */
+    
+
     public static function queryRules(): array
     {
         return [
@@ -39,9 +28,8 @@ final class ExpenseSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function storeRules(): array
     {
         return [
@@ -57,9 +45,8 @@ final class ExpenseSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function updateRules(): array
     {
         return [
@@ -75,9 +62,8 @@ final class ExpenseSchema
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     public static function resource(Expense $expense): array
     {
         return [

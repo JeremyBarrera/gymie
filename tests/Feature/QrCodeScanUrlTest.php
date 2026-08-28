@@ -49,5 +49,3 @@ it('falls back to the app URL when no base URL is configured', function (): void
         ->and($url)->toStartWith(url('/'));
 });
 
-// build() encodes scanUrl() verbatim as its QR data, so the base-URL
-// behavior above carries straight into the generated codes.

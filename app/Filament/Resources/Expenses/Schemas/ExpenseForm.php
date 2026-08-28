@@ -19,9 +19,8 @@ use Filament\Support\RawJs;
 
 class ExpenseForm
 {
-    /**
-     * @return array<string, string>
-     */
+    
+
     public static function getStatusOptions(): array
     {
         return [
@@ -32,9 +31,8 @@ class ExpenseForm
         ];
     }
 
-    /**
-     * Configure the expense form schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

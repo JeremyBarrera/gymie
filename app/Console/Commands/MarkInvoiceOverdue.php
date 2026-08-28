@@ -7,23 +7,16 @@ use Illuminate\Console\Command;
 
 class MarkInvoiceOverdue extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+    
+
     protected $signature = 'gymie:invoices {--mark-overdue : Mark invoices as overdue based on due date}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+    
+
     protected $description = 'Perform operations on invoices (e.g., mark as overdue)';
 
-    /**
-     * Execute the console command.
-     */
+    
+
     public function handle(): int
     {
         if (! $this->option('mark-overdue')) {

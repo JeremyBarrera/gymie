@@ -16,23 +16,10 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
-/**
- * Analytics query service for dashboards and reports.
- *
- * Metrics are "collected-first": revenue is derived from the payment ledger
- * (`invoice_transactions`) rather than invoice statuses.
- */
 class AnalyticsService
 {
-    /**
-     * Scope a member query to the given location ids (null = no scoping).
-     *
-     * A member's location is derived from the plans of its subscriptions:
-     * a member is counted at a location when any of its plans is offered
-     * there (or everywhere via an "All Locations" plan).
-     *
-     * @param  list<int>|null  $locationIds
-     */
+    
+
     private function scopeMembersByLocation(Builder $query, ?array $locationIds): Builder
     {
         return $query->when(
@@ -44,11 +31,8 @@ class AnalyticsService
         );
     }
 
-    /**
-     * Scope a query through a `member` (or `...->member`) relation chain.
-     *
-     * @param  list<int>|null  $locationIds
-     */
+    
+
     private function scopeByMemberLocation(Builder $query, ?array $locationIds, string $memberPath = 'member'): Builder
     {
         return $query->when(
@@ -63,9 +47,8 @@ class AnalyticsService
         );
     }
 
-    /**
-     * Build a SQL expression that groups a date/datetime column by month.
-     */
+    
+
     private function monthGroupExpression(string $column, string $driver): string
     {
         return match ($driver) {
@@ -75,20 +58,8 @@ class AnalyticsService
         };
     }
 
-    /**
-     * Financial metrics for the given date range.
-     *
-     * Definitions:
-     * - `net_revenue`: total invoiced sales - refunds (sales based on invoice dates)
-     * - `collected`: payments - refunds (from transactions in range)
-     * - `refunds`: refund transactions total (in range)
-     * - `discounts`: invoice discount_amount total (invoice date in range)
-     * - `outstanding`: sum of invoice due_amount as-of the range end date
-     * - `expenses`: sum of expenses (expense date in range)
-     * - `profit`: collected - expenses
-     *
-     * @return array{net_revenue: float, collected: float, refunds: float, discounts: float, outstanding: float, expenses: float, profit: float}
-     */
+    
+
     public function financialMetrics(AnalyticsDateRange $range, ?array $locationIds = null): array
     {
         $salesTotal = (float) $this->scopeByMemberLocation(
@@ -141,14 +112,11 @@ class AnalyticsService
         ];
     }
 
-    /**
-     * Total revenue (invoiced) by date for the given range.
-     *
-     * @return array<string, float> Map of `Y-m-d` => amount
-     */
+    
+
     public function revenueTrendByDate(AnalyticsDateRange $range, ?array $locationIds = null): array
     {
-        /** @var Collection<string, float> $rows */
+        
         $rows = $this->scopeByMemberLocation(
             Invoice::query()->whereBetween('date', [$range->start->toDateString(), $range->end->toDateString()]),
             $locationIds,
@@ -161,17 +129,14 @@ class AnalyticsService
             ->pluck('total', 'day')
             ->map(fn ($value): float => Data::float($value));
 
-        /** @var array<string, float> $result */
+        
         $result = $rows->all();
 
         return $result;
     }
 
-    /**
-     * Membership metrics for the given date range.
-     *
-     * @return array{active_members: int, new_signups: int, renewals: int, expired_not_renewed: int}
-     */
+    
+
     public function membershipMetrics(AnalyticsDateRange $range, ?array $locationIds = null): array
     {
         $referenceDate = $range->referenceDateString();
@@ -212,12 +177,8 @@ class AnalyticsService
         ];
     }
 
-    /**
-     * Count subscriptions that are expiring within the configured window.
-     *
-     * This is based on dates (not status), so it works even if status syncing
-     * hasn't run yet.
-     */
+    
+
     public function expiringSubscriptionsCount(?CarbonImmutable $today = null, ?array $locationIds = null): int
     {
         $today ??= CarbonImmutable::today(AppConfig::timezone());
@@ -233,9 +194,8 @@ class AnalyticsService
         )->count();
     }
 
-    /**
-     * Count invoices that are currently overdue and still have due amount.
-     */
+    
+
     public function overdueInvoicesCount(?array $locationIds = null): int
     {
         return $this->scopeByMemberLocation(
@@ -247,14 +207,11 @@ class AnalyticsService
         )->count();
     }
 
-    /**
-     * Net collected by date for the given range (payments - refunds).
-     *
-     * @return array<string, float> Map of `Y-m-d` => amount
-     */
+    
+
     public function collectedTrendByDate(AnalyticsDateRange $range, ?array $locationIds = null): array
     {
-        /** @var Collection<string, float> $rows */
+        
         $rows = $this->scopeByMemberLocation(
             InvoiceTransaction::query()->whereBetween('occurred_at', [$range->start, $range->end]),
             $locationIds,
@@ -267,23 +224,20 @@ class AnalyticsService
             ->pluck('net', 'day')
             ->map(fn ($value): float => Data::float($value));
 
-        /** @var array<string, float> $result */
+        
         $result = $rows->all();
 
         return $result;
     }
 
-    /**
-     * Net collected by month for the given range (payments - refunds).
-     *
-     * @return array<string, float> Map of `Y-m` => amount
-     */
+    
+
     public function collectedTrendByMonth(AnalyticsDateRange $range, ?array $locationIds = null): array
     {
         $driver = InvoiceTransaction::query()->getModel()->getConnection()->getDriverName();
         $monthExpression = $this->monthGroupExpression('occurred_at', $driver);
 
-        /** @var Collection<string, float> $rows */
+        
         $rows = $this->scopeByMemberLocation(
             InvoiceTransaction::query()->whereBetween('occurred_at', [$range->start, $range->end]),
             $locationIds,
@@ -296,20 +250,17 @@ class AnalyticsService
             ->pluck('net', 'month')
             ->map(fn ($value): float => Data::float($value));
 
-        /** @var array<string, float> $result */
+        
         $result = $rows->all();
 
         return $result;
     }
 
-    /**
-     * Expense totals by date for the given range.
-     *
-     * @return array<string, float> Map of `Y-m-d` => amount
-     */
+    
+
     public function expenseTrendByDate(AnalyticsDateRange $range): array
     {
-        /** @var Collection<string, float> $rows */
+        
         $rows = Expense::query()
             ->whereBetween('date', [$range->start->toDateString(), $range->end->toDateString()])
             ->selectRaw('date as day')
@@ -319,23 +270,20 @@ class AnalyticsService
             ->pluck('total', 'day')
             ->map(fn ($value): float => Data::float($value));
 
-        /** @var array<string, float> $result */
+        
         $result = $rows->all();
 
         return $result;
     }
 
-    /**
-     * Expense totals by month for the given range.
-     *
-     * @return array<string, float> Map of `Y-m` => amount
-     */
+    
+
     public function expenseTrendByMonth(AnalyticsDateRange $range): array
     {
         $driver = Expense::query()->getModel()->getConnection()->getDriverName();
         $monthExpression = $this->monthGroupExpression('date', $driver);
 
-        /** @var Collection<string, float> $rows */
+        
         $rows = Expense::query()
             ->whereBetween('date', [$range->start->toDateString(), $range->end->toDateString()])
             ->selectRaw("{$monthExpression} as month")
@@ -345,22 +293,17 @@ class AnalyticsService
             ->pluck('total', 'month')
             ->map(fn ($value): float => Data::float($value));
 
-        /** @var array<string, float> $result */
+        
         $result = $rows->all();
 
         return $result;
     }
 
-    /**
-     * Top plans by collected amount in the given range.
-     *
-     * Note: Table widgets that use array records require a unique `key` entry.
-     *
-     * @return Collection<int, array{key: string, plan_id: int, plan_name: string, collected: float, subscriptions: int}>
-     */
+    
+
     public function topPlansByCollected(AnalyticsDateRange $range, int $limit = 5, ?array $locationIds = null): Collection
     {
-        /** @var Collection<int, object{plan_id:int, plan_name:string, collected: float, subscriptions:int}> $rows */
+        
         $rows = Plan::query()
             ->when(
                 $locationIds !== null,
@@ -398,16 +341,11 @@ class AnalyticsService
         });
     }
 
-    /**
-     * Expense totals by category for the given range.
-     *
-     * Note: Table widgets that use array records require a unique `key` entry.
-     *
-     * @return Collection<int, array{key: string, category: string, total: float}>
-     */
+    
+
     public function expenseBreakdownByCategory(AnalyticsDateRange $range, int $limit = 10): Collection
     {
-        /** @var Collection<int, object{category: string, total: float}> $rows */
+        
         $rows = Expense::query()
             ->whereBetween('date', [$range->start->toDateString(), $range->end->toDateString()])
             ->select('category')
@@ -426,14 +364,11 @@ class AnalyticsService
         });
     }
 
-    /**
-     * Expense category breakdown for charts with an optional "Other" bucket.
-     *
-     * @return Collection<int, array{category: string, total: float}>
-     */
+    
+
     public function expenseCategoryBreakdownForChart(AnalyticsDateRange $range, int $limit = 5): Collection
     {
-        /** @var Collection<int, array{category: string, total: float}> $rows */
+        
         $rows = $this->expenseBreakdownByCategory($range, 50)
             ->map(fn (array $row): array => [
                 'category' => (string) $row['category'],

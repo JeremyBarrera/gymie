@@ -82,8 +82,7 @@
 
         <x-slot name="footer">
             @if($this->projectedRemaining > 0)
-                {{-- Balance remains: this confirm records the payment and
-                     completes an override-semantics check-in. --}}
+                
                 <x-filament::button
                     wire:key="add-payment-partial-submit"
                     color="info"

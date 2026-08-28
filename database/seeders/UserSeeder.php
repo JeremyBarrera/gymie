@@ -11,14 +11,8 @@ class UserSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Run the database seeds.
-     *
-     * Bootstrap-only: creates the owner account from `.env`
-     * (`OWNER_NAME` / `OWNER_EMAIL` / `OWNER_PASSWORD`) when one with that
-     * email does not exist yet. It never modifies an existing account — the
-     * env credentials are not re-applied to a running install.
-     */
+    
+
     public function run(): void
     {
         User::query()->firstOrCreate(

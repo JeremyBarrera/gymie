@@ -8,18 +8,12 @@ use App\Models\InvoiceTransaction;
 use App\Support\Data;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Invoice transaction observer.
- *
- * Responsible for triggering receipt emails on payment transactions.
- */
 class InvoiceTransactionObserver
 {
     public function __construct(private readonly SettingsRepository $settingsRepository) {}
 
-    /**
-     * Handle the InvoiceTransaction "created" event.
-     */
+    
+
     public function created(InvoiceTransaction $invoiceTransaction): void
     {
         if ($invoiceTransaction->type !== 'payment') {
@@ -68,5 +62,5 @@ class InvoiceTransactionObserver
         )->afterCommit();
     }
 
-    // Other lifecycle events intentionally left unhandled for v1.
+    
 }

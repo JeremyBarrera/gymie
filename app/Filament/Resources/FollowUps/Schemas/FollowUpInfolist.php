@@ -13,9 +13,8 @@ use Illuminate\Support\HtmlString;
 
 class FollowUpInfolist
 {
-    /**
-     * Configure the follow-up "view" infolist schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

@@ -7,25 +7,18 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Translation\PotentiallyTranslatedString;
 
-/**
- * Eloquent-based "unique" rule (respects global scopes like tenancy / soft deletes).
- *
- * @template TModel of \Illuminate\Database\Eloquent\Model
- */
 final class ModelUnique implements ValidationRule
 {
-    /**
-     * @param  class-string<TModel>  $modelClass
-     */
+    
+
     public function __construct(
         private string $modelClass,
         private string $column,
         private int|string|null $ignoreId = null,
     ) {}
 
-    /**
-     * @param  Closure(string, string|null=): PotentiallyTranslatedString  $fail
-     */
+    
+
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if ($value === null || $value === '') {
@@ -34,7 +27,7 @@ final class ModelUnique implements ValidationRule
 
         $modelClass = $this->modelClass;
 
-        /** @var Model $model */
+        
         $model = new $modelClass;
 
         $query = $modelClass::query()->where($this->column, $value);

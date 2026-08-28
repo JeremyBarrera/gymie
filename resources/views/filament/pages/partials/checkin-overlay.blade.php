@@ -1,5 +1,4 @@
-@php
-    $checkInEntry = $selectedCheckInEntryId ? \App\Models\QueueEntry::find($selectedCheckInEntryId) : null;
+@php $checkInEntry = $selectedCheckInEntryId ? \App\Models\QueueEntry::find($selectedCheckInEntryId) : null;
     $checkInCandidateIds = $checkInEntry
         ? collect($checkInEntry->payload['candidate_member_ids'] ?? [])
         : collect($this->manualCheckInCandidates);
@@ -14,11 +13,11 @@
         ? \App\Support\Membership\MembershipStatus::forMember($checkInMember)
         : null;
 
-    // Single severity order for the member card:
-    // ok (success) < attention (unpaid / expiring) < blocked (overdue / expired / no access / uses exhausted).
-    // The photo border always shows the WORST applicable status across the
-    // plan-expiry badge and every payment/service state, so border and
-    // badges can never disagree.
+    
+    
+    
+    
+    
     $cardSeverityRank = function (string $stateOrColor): int {
         return match (true) {
             in_array($stateOrColor, ['overdue', 'expired', 'no_access', 'uses_exhausted', 'danger'], true) => 2,
@@ -31,10 +30,10 @@
         ->map(fn (array $row): int => $cardSeverityRank((string) ($row['state'] ?? 'access')));
     $planRank = $cardSeverityRank((string) ($checkInStatus['color'] ?? 'gray'));
 
-    // Only statuses APPLICABLE to this attendance decision may darken the
-    // card: the selected service's own state, plus a member-wide overdue
-    // invoice (which blocks every service). Non-entitled rows elsewhere in
-    // the picker must not paint the whole member red.
+    
+    
+    
+    
     $selectedRowRank = $checkInSelectedRow !== null
         ? $cardSeverityRank((string) ($checkInSelectedRow['state'] ?? 'access'))
         : 0;
@@ -46,13 +45,13 @@
         ? $checkInSelectedRow
         : $overdueRow;
 
-    // The plan-expiry badge and the worst payment/service badge share one
-    // severity scale — whichever wins paints the border.
+    
+    
     $planWins = $planRank >= $serviceRank;
     $cardRank = max($planRank, $serviceRank);
     $planIsNone = ($checkInStatus['color'] ?? null) === 'gray';
 
-    // Theme tokens only (AGENTS.md rule 7) — never hardcoded hex/rgba.
+    
     [$cardRingVar, $cardIcon] = match (true) {
         $cardRank >= 2 => ['var(--danger-500)', 'heroicon-m-exclamation-triangle'],
         $cardRank === 1 => ['var(--warning-500)', 'heroicon-m-clock'],
@@ -60,7 +59,7 @@
         default => ['var(--success-500)', 'heroicon-m-check-circle'],
     };
 
-    // Accessible title for the status marker: name the blocking reason.
+    
     $cardTitle = ! $planWins && $worstServiceRow !== null
         ? match ((string) ($worstServiceRow['state'] ?? '')) {
             'overdue' => __('app.reception.service_overdue_short'),
@@ -73,8 +72,8 @@
         }
         : (string) ($checkInStatus['label'] ?? '');
 
-    // One shared state→label map for the service picker options and the
-    // selected-service badge below.
+    
+    
     $serviceStateLabel = fn (?string $state): string => match ($state ?? 'access') {
         'access' => __('app.reception.service_access'),
         'unpaid' => __('app.reception.service_unpaid_short'),
@@ -85,15 +84,15 @@
         default => __('app.reception.service_no_access_short'),
     };
 
-    // Same severity scale as the photo border: blocked states are red,
-    // attention is amber.
+    
+    
     $selectedStateColor = match ($checkInSelectedRow['state'] ?? 'access') {
         'unpaid', 'same_day_duplicate' => 'warning',
         'overdue', 'expired', 'no_access', 'uses_exhausted' => 'danger',
         default => 'success',
     };
 
-    // Member card detail columns (label/value pairs; null values are hidden).
+    
     $memberDetailsLeft = [
         ['label' => __('app.fields.member_id'), 'value' => $checkInMember?->code],
         ['label' => __('app.fields.contact'), 'value' => $checkInMember?->contact],
@@ -104,7 +103,7 @@
         ['label' => __('app.fields.dob'), 'value' => filled($checkInMember?->dob) ? \App\Support\Dates\DeviceDateFormat::format($checkInMember->dob) : null],
     ];
 
-    // Footer step: which back/confirm pair to render (null = member actions).
+    
     $footerStep = $checkInDenyStep
         ? 'deny'
         : ($checkInOverrideStep ? 'override' : null);
@@ -131,8 +130,7 @@
             'label' => __('app.reception.override_confirm'),
             'action' => 'confirmCheckInOverride',
         ],
-    ];
-@endphp
+    ]; @endphp
 
 @if($showCheckInOverlay)
     <div
@@ -211,9 +209,7 @@
 
                     <div class="space-y-3">
                         @foreach($checkInCandidates as $candidate)
-                            @php
-                                $candidateStatus = \App\Support\Membership\MembershipStatus::forMember($candidate);
-                            @endphp
+                            @php $candidateStatus = \App\Support\Membership\MembershipStatus::forMember($candidate); @endphp
 
                             <x-filament::section compact wire:key="checkin-candidate-{{ $candidate->id }}">
                                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -268,7 +264,7 @@
                                 </div>
                             @endif
 
-                            {{-- Non-color reinforcement of the card status (a11y) --}}
+                            
                             <span
                                 class="absolute -top-2 -end-2 z-10 flex h-7 w-7 items-center justify-center rounded-full"
                                 style="background: {{ $cardRingVar }};"
@@ -387,12 +383,7 @@
                         </x-filament::button>
                     @else
                         @if($checkInMember)
-                            {{-- Actions use neutral/info/success styles, never the status palette —
-                                 red/amber/green must only ever mean state, not action.
-                                 The action set is driven by the selected service's state:
-                                 access → approve · expired → renewal popup (O3) ·
-                                 no_access → optional-message override (O4) ·
-                                 unpaid/overdue → payment / due-date popups (O5). --}}
+                            
                             <x-filament::button
                                 wire:key="checkin-deny"
                                 color="gray"
@@ -515,9 +506,7 @@
             </x-slot>
         </x-filament::modal>
 
-        {{-- Override-path popups (O3/O5): mounted while the overlay is open,
-             opened on top of it via the open-modal dispatch, and closed
-             together with the overlay on success. --}}
+        
         @livewire(\App\Filament\Livewire\ExpiredSubscriptionModal::class, [], key('livewire-expired-subscription-modal'))
         @livewire(\App\Filament\Livewire\AddPaymentModal::class, [], key('livewire-add-payment-modal'))
         @livewire(\App\Filament\Livewire\ChangeDueDateModal::class, [], key('livewire-change-due-date-modal'))

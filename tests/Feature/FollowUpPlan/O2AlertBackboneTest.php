@@ -25,9 +25,6 @@ afterEach(function (): void {
     Helpers::setTestSettingsOverride(null);
 });
 
-/**
- * @return array<string, mixed> The shared alert payload contract.
- */
 function o2Payload(array $overrides = []): array
 {
     return array_merge([
@@ -75,7 +72,7 @@ it('broadcasts one escalation per instance on the recipient private channel only
     expect($channels)->toHaveCount(1)
         ->and($channels[0])->toBeInstanceOf(PrivateChannel::class)
         ->and($channels[0]->name)->toBe('private-user.42')
-        // Wire payload = the frozen contract + notification id, nothing else.
+        
         ->and($event->broadcastWith())->toBe(array_merge(
             ['notification_id' => $notificationId],
             $payload,
@@ -90,7 +87,7 @@ it('escalates every resolved recipient over their own channel with the persisted
     $pinned = User::factory()->create();
     $outsider = User::factory()->create();
     o2PinUsers($pinned);
-    // The role-based recipient joins via her manager role.
+    
     $manager->assignRole('manager');
 
     $actor = User::factory()->create(['name' => 'Toro']);
@@ -105,7 +102,7 @@ it('escalates every resolved recipient over their own channel with the persisted
     foreach ([$manager, $pinned] as $recipient) {
         Event::assertDispatched(FollowUpEscalated::class,
             function (FollowUpEscalated $event) use ($recipient, $actor, $member, $subscription, $invoice): bool {
-                /** @var DatabaseNotification $row */
+                
                 $row = $recipient->unreadNotifications()->first();
 
                 return $event->broadcastOn()[0]->name === 'private-user.'.$recipient->id
@@ -118,14 +115,14 @@ it('escalates every resolved recipient over their own channel with the persisted
                     && $event->member === ['id' => (int) $member->id, 'name' => 'Jane Doe', 'code' => 'GY-42']
                     && $event->subscription_id === (int) $subscription->id
                     && $event->invoice_id === (int) $invoice->id
-                    // Broadcast mirrors the persisted DB payload exactly.
+                    
                     && $row->data['action'] === $event->action
                     && $row->data['reason'] === $event->reason
                     && $row->data['occurred_at'] === $event->occurred_at;
             });
     }
 
-    // Users outside the settings scope never receive an escalation.
+    
     Event::assertDispatched(FollowUpEscalated::class,
         fn (FollowUpEscalated $event): bool => $event->broadcastOn()[0]->name !== 'private-user.'.$outsider->id);
 });

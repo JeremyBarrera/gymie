@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('subscriptions', function (Blueprint $table): void {
-            // Evergreen subscriptions (plans without a duration) never end:
-            // their end_date stays null for the whole lifetime.
+            
+            
             $table->date('end_date')->nullable()->change();
         });
     }

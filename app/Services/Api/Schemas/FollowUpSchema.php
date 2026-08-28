@@ -10,23 +10,12 @@ use App\Rules\ModelExists;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 
-/**
- * Single source of truth for FollowUp API validation and serialization.
- */
 final class FollowUpSchema
 {
     private function __construct() {}
 
-    /**
-     * @return array{
-     *   searchable: list<string>,
-     *   sortable: list<string>,
-     *   default_sort: string,
-     *   status_column: string|null,
-     *   includes: list<string>,
-     *   filters: array<string, array{type: string, column: string}>
-     * }
-     */
+    
+
     public static function queryRules(): array
     {
         return [
@@ -45,11 +34,8 @@ final class FollowUpSchema
         ];
     }
 
-    /**
-     * Rules for creating a follow-up under an enquiry (enquiry_id comes from route).
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function nestedStoreRules(): array
     {
         return [
@@ -61,11 +47,8 @@ final class FollowUpSchema
         ];
     }
 
-    /**
-     * Rules for creating a follow-up directly.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function storeRules(): array
     {
         return [
@@ -78,9 +61,8 @@ final class FollowUpSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function updateRules(): array
     {
         return [
@@ -93,9 +75,8 @@ final class FollowUpSchema
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     public static function resource(FollowUp $followUp): array
     {
         return [

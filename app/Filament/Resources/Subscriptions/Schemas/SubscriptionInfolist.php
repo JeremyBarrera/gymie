@@ -11,9 +11,8 @@ use Filament\Schemas\Schema;
 
 class SubscriptionInfolist
 {
-    /**
-     * Configure the subscription "view" infolist schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

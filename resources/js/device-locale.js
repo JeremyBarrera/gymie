@@ -7,8 +7,8 @@ function detectOrder() {
     let order = 'dmy';
 
     try {
-        // May 3, 2020 — month/day are numerically distinct, so formatToParts
-        // reveals the device's component order (mdy, dmy or ymd).
+        
+        
         const parts = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'numeric', day: 'numeric' })
             .formatToParts(new Date(2020, 4, 3));
 
@@ -27,7 +27,7 @@ function detectOrder() {
             }
         }
     } catch {
-        // fall back to the server-side Accept-Language heuristic
+        
     }
 
     return order;
@@ -39,7 +39,7 @@ function detectHour12() {
     try {
         hour12 = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hour12 ?? true;
     } catch {
-        // fall back to the server-side Accept-Language heuristic
+        
     }
 
     return hour12;
@@ -56,8 +56,8 @@ function detectLanguage() {
                 continue;
             }
 
-            // Only the primary subtag is recorded ("fr-CA" -> "fr"); the
-            // server validates it against the supported locales.
+            
+            
             const primary = candidate.trim().split(/[-_]/)[0].toLowerCase();
 
             if (primary !== '') {
@@ -65,7 +65,7 @@ function detectLanguage() {
             }
         }
     } catch {
-        // fall back to the server-side Accept-Language heuristic
+        
     }
 
     return '';
@@ -73,9 +73,9 @@ function detectLanguage() {
 
 function detectTimezone() {
     try {
-        // IANA identifier of the device's timezone ("Asia/Riyadh",
-        // "America/New_York", ...) — used by the server to show every
-        // date/time in the viewer's local wall clock.
+        
+        
+        
         return Intl.DateTimeFormat().resolvedOptions().timeZone || '';
     } catch {
         return '';

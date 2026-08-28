@@ -67,7 +67,7 @@ it('treats each notification topic independently', function (): void {
 
     expect(NotificationRecipients::resolve('subscription_status')->pluck('id'))->toContain($manager->id);
 
-    // The follow-up topic is unconfigured, so it falls back to owners.
+    
     expect(NotificationRecipients::resolve('follow_up')->pluck('id'))->not->toContain($manager->id);
 });
 

@@ -6,13 +6,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Drop the member's stored location.
-     *
-     * A member's location is derived from the plan of its subscriptions (the
-     * "jurisdiction" the plan grants) and is never assigned manually, so the
-     * column and its foreign key are removed.
-     */
+    
+
     public function up(): void
     {
         Schema::table('members', function (Blueprint $table) {
@@ -20,9 +15,8 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
+
     public function down(): void
     {
         Schema::table('members', function (Blueprint $table) {

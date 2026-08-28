@@ -1,14 +1,5 @@
 <?php
 
-// ============================================================================
-// PHASE 5 — Split Onboarding Forms A / B / C
-//
-// Status: active. Per the plan, Form A reuses the existing MemberResource
-// create page (payment-free), Form B is the dedicated first-subscription page
-// (`MemberOnboardingStep2`), and Form C reuses `SubscriptionForm::renewSchema()`
-// + `handleRenew()` from the subscription resource.
-// ============================================================================
-
 use App\Enums\Status;
 use App\Filament\Pages\MemberOnboardingStep2;
 use App\Filament\Resources\Members\Pages\CreateMember;

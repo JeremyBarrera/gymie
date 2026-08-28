@@ -20,11 +20,11 @@ class MemberCodeGeneratorTest extends TestCase
 
         Carbon::setTestNow(Carbon::create(2025, 6, 17));
 
-        // The generator reads existing rows, not saved state — keep model
-        // events out so factories don't recurse into code generation.
+        
+        
         Member::flushEventListeners();
 
-        // Override settings in-memory so we always start at "GY-1"
+        
         Helpers::setTestSettingsOverride([
             'member' => ['prefix' => ''],
         ]);
@@ -99,7 +99,7 @@ class MemberCodeGeneratorTest extends TestCase
     #[TestDox('Step 3: Given only out-of-range members → returns GY-1')]
     public function out_of_range_members_returns_g_y1(): void
     {
-        // This one is dated before the FY start, so should be ignored
+        
         Member::factory()->create([
             'code' => 'GY-1',
             'created_at' => Carbon::create(2025, 3, 31, 23, 59, 59),

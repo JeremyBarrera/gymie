@@ -20,7 +20,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-/** @extends resource<Invoice> */
 class InvoiceResource extends Resource
 {
     protected static ?string $model = Invoice::class;
@@ -54,9 +53,8 @@ class InvoiceResource extends Resource
         ];
     }
 
-    /**
-     * @param  Builder<Invoice>  $query
-     */
+    
+
     public static function modifyGlobalSearchQuery(Builder $query, string $search): void
     {
         $query->with(['subscription.member', 'subscription.plan']);
@@ -91,33 +89,29 @@ class InvoiceResource extends Resource
         return false;
     }
 
-    /**
-     * Define the form schema for the resource.
-     */
+    
+
     public static function form(Schema $schema): Schema
     {
         return InvoiceForm::configure($schema);
     }
 
-    /**
-     * Get the Filament table columns for the invoice list view.
-     */
+    
+
     public static function table(Table $table): Table
     {
         return InvoiceTable::configure($table);
     }
 
-    /**
-     * Add infolist to the resource.
-     */
+    
+
     public static function infolist(Schema $schema): Schema
     {
         return InvoiceInfolist::configure($schema);
     }
 
-    /**
-     * Get the relation managers for the resource.
-     */
+    
+
     public static function getRelations(): array
     {
         return [
@@ -134,13 +128,12 @@ class InvoiceResource extends Resource
         ];
     }
 
-    /**
-     * @return Builder<Invoice>
-     */
+    
+
     public static function getEloquentQuery(): Builder
     {
-        // The member's own location scope restricts visibility to the
-        // account's accessible locations (derived from the member's plans).
+        
+        
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,

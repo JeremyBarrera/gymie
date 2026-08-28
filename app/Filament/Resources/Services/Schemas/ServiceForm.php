@@ -11,9 +11,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ServiceForm
 {
-    /**
-     * Configure the service form schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

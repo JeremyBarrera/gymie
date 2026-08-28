@@ -38,10 +38,10 @@ it('shows same_day_duplicate for limited plan after one approved check-in same d
     $member = sameDayMember(); $sub = sameDaySub($member, $plan);
     LocationTenantContext::setLocationId($loc->id);
     try {
-        // First check-in should be access, then create a PlanCheckIn
+        
         Livewire::actingAs(sameDayStaff())->test(Reception::class)
             ->call('loadQueueEntries');
-        // Simulate prior approved check-in today
+        
         \App\Models\PlanCheckIn::create(['member_id'=>$member->id,'subscription_id'=>$sub->id,'plan_id'=>$plan->id,'service_id'=>$svc->id,'location_id'=>$loc->id,'checked_in_by'=>sameDayStaff()->id,'checked_in_at'=>now()]);
         $svc2 = app(\App\Services\Membership\PlanCheckInService::class);
         $states = $svc2->serviceStatesForMember($member, $loc->id);
@@ -68,7 +68,7 @@ it('Check In via same_day_duplicate creates override with same_day_duplicate and
     $member = sameDayMember(); $sub = sameDaySub($member, $plan);
     LocationTenantContext::setLocationId($loc->id);
     try {
-        // Create prior check-in today
+        
         \App\Models\PlanCheckIn::create(['member_id'=>$member->id,'subscription_id'=>$sub->id,'plan_id'=>$plan->id,'service_id'=>$svc->id,'location_id'=>$loc->id,'checked_in_by'=>sameDayStaff()->id,'checked_in_at'=>now()]);
         $entry = sameDayQueueEntry($loc, $member);
         $usedBefore = app(\App\Services\Membership\PlanCheckInService::class)->usedCount($sub);
@@ -80,7 +80,7 @@ it('Check In via same_day_duplicate creates override with same_day_duplicate and
             ->call('confirmSameDayDuplicateCheckIn')
             ->assertDispatched('notify');
         $usedAfter = app(\App\Services\Membership\PlanCheckInService::class)->usedCount($sub);
-        expect($usedAfter)->toBe($usedBefore); // not counted
+        expect($usedAfter)->toBe($usedBefore); 
         $last = PlanCheckIn::latest('id')->first();
         expect($last->override)->toBeTrue()->and($last->override_reason)->toBe('same_day_duplicate');
         expect($entry->fresh()->status)->toBe('approved');

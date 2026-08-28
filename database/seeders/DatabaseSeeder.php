@@ -8,9 +8,8 @@ use Throwable;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
+    
+
     public function run(): void
     {
         $this->seedWorldData();
@@ -36,9 +35,8 @@ class DatabaseSeeder extends Seeder
         }
     }
 
-    /**
-     * Seed supporting world data when the package is available.
-     */
+    
+
     private function seedWorldData(): void
     {
         try {

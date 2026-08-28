@@ -209,8 +209,8 @@ it('allows a signup from another location when only the government ID matches', 
         'kind' => 'signup',
     ]);
 
-    // Government IDs may repeat across members: an application is rejected
-    // only when name + contact + government ID ALL match an existing member.
+    
+    
     $this->postJson('/api/v1/signup/apply', [
         'name' => 'New Person',
         'government_id' => 'GOV-777',

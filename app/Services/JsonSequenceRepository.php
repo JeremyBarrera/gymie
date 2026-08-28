@@ -10,28 +10,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
-/**
- * JSON-backed sequence generator (OSS default).
- *
- * Reads prefix / last_number from SettingsRepository and also inspects the DB
- * to avoid collisions within the current fiscal span.
- */
 class JsonSequenceRepository implements SequenceRepository
 {
     public function __construct(
         protected SettingsRepository $settingsRepository,
     ) {}
 
-    /**
-     * Generate the next number for a given entity type.
-     *
-     * The database is the single source of truth: the highest numeric
-     * suffix within the fiscal span defines the sequence, so numbering
-     * always starts at 1 on an empty span and can never be poisoned by a
-     * stale settings value.
-     *
-     * @param  class-string  $modelClass
-     */
+    
+
     public function generate(
         string $type,
         string $modelClass,
@@ -42,7 +28,7 @@ class JsonSequenceRepository implements SequenceRepository
         [$start, $end] = Helpers::getFiscalSpan($date);
         $settings = $this->settingsRepository->get();
 
-        /** @var Model $model */
+        
         $model = new $modelClass;
         $table = $model->getTable();
 

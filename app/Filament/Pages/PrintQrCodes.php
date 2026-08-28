@@ -14,12 +14,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
-/**
- * Standalone QR codes page: lists every location with its public scan
- * tokens. Each QR code is rendered inline so it can be previewed or
- * downloaded directly. Tokens can be deleted to invalidate printed QR
- * codes, and a fresh token can be generated to replace them.
- */
 class PrintQrCodes extends Page
 {
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-qr-code';
@@ -28,9 +22,8 @@ class PrintQrCodes extends Page
 
     protected string $view = 'filament.pages.print-qr-codes';
 
-    /**
-     * @var Collection<int, Location>
-     */
+    
+
     public $locations;
 
     public ?int $locationId = null;
@@ -59,9 +52,8 @@ class PrintQrCodes extends Page
         return __('app.reception.qr_codes');
     }
 
-    /**
-     * Render an inline QR image (data URI) for a token, or null on failure.
-     */
+    
+
     public function qrDataUri(LocationToken $token): ?string
     {
         try {
@@ -73,9 +65,8 @@ class PrintQrCodes extends Page
         }
     }
 
-    /**
-     * Direct PNG download URL for a location's QR code.
-     */
+    
+
     public function downloadUrl(int $locationId, string $type): string
     {
         return route('qr-codes.download', [

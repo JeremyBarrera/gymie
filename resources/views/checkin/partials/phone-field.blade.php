@@ -9,10 +9,8 @@
     'dialCode' => null,
 ])
 
-@php
-    $phoneDialOptions = \App\Helpers\Helpers::getCountryDialOptions();
-    $phoneSelectedDialCode = $dialCode ?? \App\Helpers\Helpers::getPhoneCountryCodePlaceholder();
-@endphp
+@php $phoneDialOptions = \App\Helpers\Helpers::getCountryDialOptions();
+    $phoneSelectedDialCode = $dialCode ?? \App\Helpers\Helpers::getPhoneCountryCodePlaceholder(); @endphp
 
 @if($filament)
     <div class="fi-input-wrp">

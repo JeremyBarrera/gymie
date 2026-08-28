@@ -30,9 +30,8 @@ use Illuminate\Support\Carbon;
 
 class InvoiceTable
 {
-    /**
-     * Configure the invoice table schema.
-     */
+    
+
     public static function configure(Table $table): Table
     {
         return $table
@@ -102,7 +101,7 @@ class InvoiceTable
                     : 'heroicon-o-document-text'
             )
             ->emptyStateHeading(function ($livewire): string {
-                // If no subscription exist
+                
                 if (! Subscription::exists()) {
                     return __('app.empty.no_records', ['records' => __('app.resources.subscriptions.plural')]);
                 }
@@ -130,7 +129,7 @@ class InvoiceTable
                     : $heading;
             })
             ->emptyStateDescription(function ($livewire): string {
-                // If no subscriptions exist
+                
                 if (! Subscription::exists()) {
                     return __('app.empty.create_to_get_started', ['resource' => __('app.resources.subscriptions.singular')]);
                 }
@@ -230,7 +229,7 @@ class InvoiceTable
                                     return;
                                 }
 
-                                // Device wall clock in, store as UTC.
+                                
                                 $occurredAt = filled($data['occurred_at'] ?? null)
                                     ? Carbon::parse((string) $data['occurred_at'], DeviceDateFormat::timezone())->utc()
                                     : now()->utc();
@@ -299,7 +298,7 @@ class InvoiceTable
                                     return;
                                 }
 
-                                // Device wall clock in, store as UTC.
+                                
                                 $refundedAt = filled($data['occurred_at'] ?? null)
                                     ? Carbon::parse((string) $data['occurred_at'], DeviceDateFormat::timezone())->utc()
                                     : now()->utc();

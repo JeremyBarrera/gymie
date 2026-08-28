@@ -7,15 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
-/**
- * @property int $id
- * @property int $user_id
- * @property int $location_id
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @property-read User $user
- * @property-read Location $location
- */
 class UserLocation extends Model
 {
     use HasFactory;

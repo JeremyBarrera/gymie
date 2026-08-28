@@ -15,9 +15,8 @@ use Filament\Tables\Table;
 
 class ServiceTable
 {
-    /**
-     * Configure the service table schema.
-     */
+    
+
     public static function configure(Table $table): Table
     {
         return $table

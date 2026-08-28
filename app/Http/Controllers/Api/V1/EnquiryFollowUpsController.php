@@ -10,14 +10,10 @@ use App\Support\Data;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-/**
- * Nested follow-ups under an enquiry.
- */
 class EnquiryFollowUpsController extends ApiController
 {
-    /**
-     * List follow-ups for an enquiry.
-     */
+    
+
     public function index(Request $request, Enquiry $enquiry): AnonymousResourceCollection
     {
         $this->requirePermission($request, 'View:Enquiry');
@@ -31,9 +27,8 @@ class EnquiryFollowUpsController extends ApiController
         return FollowUpResource::collection($rows);
     }
 
-    /**
-     * Create a follow-up for an enquiry.
-     */
+    
+
     public function store(EnquiryFollowUpStoreRequest $request, Enquiry $enquiry): FollowUpResource
     {
         $this->requirePermission($request, 'Update:Enquiry');

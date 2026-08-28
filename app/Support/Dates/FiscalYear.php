@@ -6,17 +6,10 @@ use App\Support\Data;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 
-/**
- * Fiscal year helpers based on configurable start/end template dates.
- */
 final class FiscalYear
 {
-    /**
-     * Determine fiscal year start and end dates for the given date.
-     *
-     * @param  array<string, mixed>  $generalSettings
-     * @return array{0: Carbon, 1: Carbon}
-     */
+    
+
     public static function spanForDate(CarbonInterface $date, array $generalSettings): array
     {
         $tpl = self::parseTemplates($generalSettings);
@@ -34,10 +27,8 @@ final class FiscalYear
         return [$start, $end];
     }
 
-    /**
-     * @param  array<string, mixed>  $generalSettings
-     * @return array{start: Carbon, end: Carbon}
-     */
+    
+
     private static function parseTemplates(array $generalSettings): array
     {
         $start = self::parseTemplateMonthDay($generalSettings['financial_year_start'] ?? null, 4, 1);
@@ -58,7 +49,7 @@ final class FiscalYear
                 $day = $parsed->day;
             }
         } catch (\Throwable) {
-            // Fall back to template.
+            
         }
 
         return Carbon::parse(sprintf('2000-%02d-%02d', $month, $day))->startOfDay();

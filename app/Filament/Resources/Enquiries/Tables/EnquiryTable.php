@@ -23,9 +23,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class EnquiryTable
 {
-    /**
-     * Configure the enquiry table schema.
-     */
+    
+
     public static function configure(Table $table): Table
     {
         return $table

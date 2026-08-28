@@ -5,23 +5,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ __('app.invoices.pdf.title', ['number' => $invoice->number]) }}</title>
-    @php
-        /**
-         * Inter font files are included locally for PDF rendering.
-         *
-         * DomPDF does not support WOFF2, so we ship TTF weights under `public/fonts/inter`.
-         *
-         * @var array<int, string> $interFilesByWeight
-         */
-        $interFilesByWeight = [
+    @php $interFilesByWeight = [
             400 => 'Inter-Regular.ttf',
             500 => 'Inter-Medium.ttf',
             600 => 'Inter-SemiBold.ttf',
             700 => 'Inter-Bold.ttf',
             800 => 'Inter-ExtraBold.ttf',
             900 => 'Inter-Black.ttf',
-        ];
-    @endphp
+        ]; @endphp
     <style>
         @foreach ($interFilesByWeight as $weight => $filename)
         @if (file_exists(public_path("fonts/inter/{$filename}")))
@@ -291,8 +282,7 @@
 </head>
 
 <body>
-    @php
-    $gymName = (string) data_get($settings, 'general.gym_name', 'Gymie');
+    @php $gymName = (string) data_get($settings, 'general.gym_name', 'Gymie');
     $gymAddress = (string) data_get($settings, 'general.address', '');
     $gymEmail = (string) data_get($settings, 'general.gym_email', '');
     $gymContact = (string) data_get($settings, 'general.gym_contact', '');
@@ -314,8 +304,7 @@
     $taxRatePercentLabel = rtrim(rtrim(number_format($taxRatePercent, 2, '.', ''), '0'), '.');
 
     $gymDomain = preg_replace('/\\s+/', '', strtolower($gymName));
-    $gymDomain = preg_replace('/[^a-z0-9]+/', '', (string) $gymDomain);
-    @endphp
+    $gymDomain = preg_replace('/[^a-z0-9]+/', '', (string) $gymDomain); @endphp
 
     <div class="shell">
         <div class="header">

@@ -53,8 +53,8 @@ class ProductionHostSeparationTest extends TestCase
     #[TestDox('Private doors keep plain http; only the funnel door forces https')]
     public function https_is_forced_only_on_the_funnel_door(): void
     {
-        // Regression: APP_URL is https, which used to force https links on
-        // EVERY door and bounce LAN admins at the placeholder certificate.
+        
+        
         $this->get('http://192.168.10.23/dashboard')
             ->assertRedirect()
             ->assertLocation('http://192.168.10.23/login');

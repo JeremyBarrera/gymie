@@ -77,7 +77,7 @@ it('persists one follow-up notification per resolved recipient with the contract
     FollowUpAlert::send('override_checkin', $member, $actor, 'gate was busy', $subscription, $invoice);
 
     foreach ([$manager, $pinned] as $recipient) {
-        /** @var array<string, mixed> $payload */
+        
         $payload = $recipient->unreadNotifications()->first()?->data;
 
         expect($payload)->toBeArray()
@@ -112,7 +112,7 @@ it('leaves subscription and invoice ids null when they are not provided', functi
 
     FollowUpAlert::send('new_subscription', $member, $actor, null);
 
-    /** @var array<string, mixed> $payload */
+    
     $payload = $owner->unreadNotifications()->first()->data;
 
     expect($payload['action'])->toBe('new_subscription')

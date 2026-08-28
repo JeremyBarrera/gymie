@@ -21,11 +21,8 @@ class QueueEntryCreated implements ShouldBroadcast
         public ?int $position = null
     ) {}
 
-    /**
-     * Staff only. The payload carries applicant details (name, contact,
-     * government ID), so this event must never reach the public
-     * `queue.{uuid}` channel — visitors subscribe to that channel.
-     */
+    
+
     public function broadcastOn(): array
     {
         return [

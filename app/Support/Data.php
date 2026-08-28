@@ -36,17 +36,15 @@ final class Data
         return is_numeric($value) ? (float) $value : $default;
     }
 
-    /**
-     * @return array<array-key, mixed>
-     */
+    
+
     public static function array(mixed $value): array
     {
         return is_array($value) ? $value : [];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     public static function map(mixed $value): array
     {
         if (! is_array($value)) {

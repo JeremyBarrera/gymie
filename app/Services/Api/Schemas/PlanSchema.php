@@ -9,23 +9,12 @@ use App\Rules\ModelExists;
 use App\Rules\ModelUnique;
 use Illuminate\Contracts\Validation\ValidationRule;
 
-/**
- * Single source of truth for Plan API validation and serialization.
- */
 final class PlanSchema
 {
     private function __construct() {}
 
-    /**
-     * @return array{
-     *   searchable: list<string>,
-     *   sortable: list<string>,
-     *   default_sort: string,
-     *   status_column: string|null,
-     *   includes: list<string>,
-     *   filters: array<string, array{type: string, column?: string, relation?: string}>
-     * }
-     */
+    
+
     public static function queryRules(): array
     {
         return [
@@ -42,9 +31,8 @@ final class PlanSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function storeRules(): array
     {
         return [
@@ -61,9 +49,8 @@ final class PlanSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function updateRules(int|string $planId): array
     {
         return [
@@ -80,9 +67,8 @@ final class PlanSchema
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     public static function resource(Plan $plan): array
     {
         $payload = [

@@ -17,16 +17,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
-/**
- * Invoices CRUD endpoints.
- */
 class InvoicesController extends ApiController
 {
     private const RESOURCE_KEY = 'invoices';
 
-    /**
-     * Display a listing of invoices.
-     */
+    
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->requirePermission($request, 'ViewAny:Invoice');
@@ -41,16 +37,15 @@ class InvoicesController extends ApiController
         return InvoiceResource::collection($query->paginate($perPage));
     }
 
-    /**
-     * Store a newly created invoice.
-     */
+    
+
     public function store(InvoiceStoreRequest $request): InvoiceResource
     {
         $this->requirePermission($request, 'Create:Invoice');
 
         $data = $request->validated();
 
-        /** @var Subscription $subscription */
+        
         $subscription = Subscription::query()
             ->with('plan')
             ->findOrFail(Data::int($data['subscription_id'] ?? null));
@@ -70,9 +65,8 @@ class InvoicesController extends ApiController
         return new InvoiceResource($invoice);
     }
 
-    /**
-     * Display an invoice.
-     */
+    
+
     public function show(Request $request, Invoice $invoice): InvoiceResource
     {
         $this->requirePermission($request, 'View:Invoice');
@@ -82,9 +76,8 @@ class InvoicesController extends ApiController
         return new InvoiceResource($invoice);
     }
 
-    /**
-     * Update an invoice.
-     */
+    
+
     public function update(InvoiceUpdateRequest $request, Invoice $invoice): InvoiceResource
     {
         $this->requirePermission($request, 'Update:Invoice');
@@ -95,17 +88,15 @@ class InvoicesController extends ApiController
         return new InvoiceResource($invoice);
     }
 
-    /**
-     * Soft delete an invoice.
-     */
+    
+
     public function destroy(Request $request, Invoice $invoice): JsonResponse
     {
         return $this->deleteModel($request, 'Delete:Invoice', $invoice);
     }
 
-    /**
-     * Restore a soft deleted invoice.
-     */
+    
+
     public function restore(Request $request, int $invoice): InvoiceResource
     {
         $record = $this->restoreSoftDeleted($request, 'RestoreAny:Invoice', Invoice::class, $invoice);
@@ -114,9 +105,8 @@ class InvoicesController extends ApiController
         return new InvoiceResource($record->refresh());
     }
 
-    /**
-     * Permanently delete an invoice.
-     */
+    
+
     public function forceDelete(Request $request, int $invoice): JsonResponse
     {
         $this->forceDeleteSoftDeleted($request, 'ForceDeleteAny:Invoice', Invoice::class, $invoice);
@@ -124,9 +114,8 @@ class InvoicesController extends ApiController
         return $this->noContent();
     }
 
-    /**
-     * Render an invoice as an inline PDF.
-     */
+    
+
     public function pdf(Request $request, Invoice $invoice, InvoicePdfRenderer $renderer): Response|JsonResponse
     {
         $this->requirePermission($request, 'View:Invoice');
@@ -148,9 +137,8 @@ class InvoicesController extends ApiController
         ]);
     }
 
-    /**
-     * Download an invoice as a PDF attachment.
-     */
+    
+
     public function downloadPdf(Request $request, Invoice $invoice, InvoicePdfRenderer $renderer): Response|JsonResponse
     {
         $this->requirePermission($request, 'View:Invoice');

@@ -1,11 +1,4 @@
-/**
- * Live locale sync:
- *  - Admin panel (auto-detected via the `fi-body` class): subscribes to the
- *    public `admin.locale` channel and keeps open admin tabs in the same
- *    language. When an admin picks a locale the LocaleSwitcher persists it
- *    server-side and broadcasts `LocaleChanged`; every other tab reloads so
- *    translations and RTL direction re-render consistently.
- */
+
 
 const normalize = (value) => String(value ?? '').trim().toLowerCase().split(/[-_]/)[0];
 

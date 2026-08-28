@@ -7,9 +7,6 @@ use App\Services\Api\Schemas\UserSchema;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/**
- * @mixin User
- */
 class UserResource extends JsonResource
 {
     private function shouldIncludePermissions(Request $request): bool
@@ -24,14 +21,11 @@ class UserResource extends JsonResource
             || $request->boolean('include_permissions');
     }
 
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
+    
+
     public function toArray(Request $request): array
     {
-        /** @var User $user */
+        
         $user = $this->resource;
 
         return UserSchema::resource($user, $this->shouldIncludePermissions($request));

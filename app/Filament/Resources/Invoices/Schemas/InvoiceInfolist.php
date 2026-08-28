@@ -15,9 +15,8 @@ use Illuminate\Support\HtmlString;
 
 class InvoiceInfolist
 {
-    /**
-     * Configure the invoice "view" infolist schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

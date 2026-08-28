@@ -7,9 +7,8 @@ use Livewire\Livewire;
 it('persists settings via the settings repository when saving', function (): void {
     $repository = new class implements SettingsRepository
     {
-        /**
-         * @var array<string, mixed>
-         */
+        
+
         public array $lastPut = [];
 
         public function get(): array

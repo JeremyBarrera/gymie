@@ -1,6 +1,4 @@
-@php
-    $footerName = $footerName ?? ($location->name ?? config('app.name', 'Gymie'));
-@endphp
+@php $footerName = $footerName ?? ($location->name ?? config('app.name', 'Gymie')); @endphp
 <footer class="public-footer">
     <div class="public-footer__inner">
         <span class="public-footer__copy">{{ __('app.legal.copyright', ['year' => date('Y'), 'name' => $footerName]) }} {{ __('app.legal.rights_reserved') }}</span>
@@ -236,7 +234,7 @@
     closeEls.forEach(function (el) {
         el.addEventListener('click', close);
     });
-    // Close on overlay handled via data-terms-close above; prevent panel clicks from bubbling
+    
     if (panel) {
         panel.addEventListener('click', function (e) { e.stopPropagation(); });
     }

@@ -8,9 +8,6 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
-/**
- * @property-read Location $record
- */
 class ViewLocation extends ViewRecord
 {
     protected static string $resource = LocationResource::class;

@@ -9,26 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
-/**
- * @property int $id
- * @property string $uuid
- * @property int $location_id
- * @property string $kind
- * @property array $payload
- * @property string|null $identifier_type
- * @property string $status
- * @property int|null $claimed_by_user_id
- * @property Carbon|null $claimed_at
- * @property bool $override
- * @property int|null $override_by_user_id
- * @property string|null $denied_reason
- * @property Carbon|null $expires_at
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @property-read Location $location
- * @property-read User|null $claimedBy
- * @property-read User|null $overrideBy
- */
 class QueueEntry extends Model
 {
     use HasFactory, ScopedByLocation;
@@ -119,10 +99,8 @@ class QueueEntry extends Model
         );
     }
 
-    /**
-     * The entry's current position among active (waiting/attending) entries
-     * of the same kind at its location.
-     */
+    
+
     public function position(): int
     {
         return static::query()

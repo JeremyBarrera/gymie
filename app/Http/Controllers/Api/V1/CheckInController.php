@@ -31,9 +31,9 @@ class CheckInController extends ApiController
         $validated = $request->validate([
             'identifier_type' => ['required', 'string', 'in:contact,government_id,code'],
             'value' => ['required', 'string', 'max:255'],
-            // Optional tenant pin: when present, the member lookup is scoped
-            // to the location that owns this location token.
-            // When absent, the default location is used (single-tenant fallback).
+            
+            
+            
             'location_token' => ['nullable', 'string'],
         ]);
 
@@ -182,11 +182,8 @@ class CheckInController extends ApiController
         ]);
     }
 
-    /**
-     * Look up a member by contact, matching either the normalized form
-     * (with country code) or the raw submitted value so both legacy and
-     * newly-stored numbers resolve.
-     */
+    
+
     private function lookupMemberByContact(string $value): ?Member
     {
         $normalized = Helpers::normalizePhone($value);

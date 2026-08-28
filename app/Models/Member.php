@@ -17,39 +17,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
-/**
- * @property int $id
- * @property string|null $photo
- * @property string $code
- * @property string $name
- * @property string|null $email
- * @property string|null $contact
- * @property string|null $emergency_contact
- * @property string|null $health_issue
- * @property string|null $gender
- * @property Carbon|null $dob
- * @property string|null $address
- * @property string|null $country
- * @property string|null $state
- * @property string|null $city
- * @property string|null $pincode
- * @property string|null $source
- * @property string|null $goal
- * @property Status|null $status
- * @property-read Collection<int, Subscription> $subscriptions
- * @property-read Collection<int, PlanCheckIn> $checkIns
- * @property-read Location|null $currentLocation
- */
 class Member extends Model
 {
-    /** @use HasFactory<MemberFactory> */
+    
     use CascadesSoftDeletes, HasFactory, ScopedByLocation, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    
+
     protected $fillable = [
         'photo',
         'code',
@@ -74,34 +48,24 @@ class Member extends Model
 
     protected $casts = ['dob' => 'date', 'status' => Status::class, 'government_id' => 'encrypted'];
 
-    /**
-     * The attributes that should be mutated to dates.
-     * (SoftDeletes already adds deleted_at rollover.)
-     *
-     * @var list<string>
-     */
+    
+
     protected $dates = [
         'dob',
         'deleted_at',
     ];
 
-    /**
-     * Get the subscriptions for the member.
-     */
-    /**
-     * @return HasMany<Subscription, $this>
-     */
+    
+
+    
+
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
     }
 
-    /**
-     * Whether the member holds at least one date-valid subscription
-     * (ongoing/expiring, started, not ended) in the app timezone. Pure
-     * membership signal — no plan-availability or location filtering, those
-     * stay in PlanCheckInService::eligibleSubscriptions().
-     */
+    
+
     public function hasOngoingSubscription(): bool
     {
         $today = Carbon::today(AppConfig::timezone())->toDateString();
@@ -115,24 +79,15 @@ class Member extends Model
             ->exists();
     }
 
-    /**
-     * The single hard check-in blocker, or null when the member may proceed
-     * to the normal eligibility flow. Banned is the only unconditional gate;
-     * subscription problems route to the renewal / payment flows instead.
-     */
+    
+
     public function checkInBlocker(): ?string
     {
         return $this->status === Status::Banned ? 'banned' : null;
     }
 
-    /**
-     * The jurisdiction location of the member's most recent subscription.
-     *
-     * The member's location is not stored — it is derived from the plan of
-     * the member's latest subscription. `null` means an "All Locations" plan
-     * (or no subscriptions yet), i.e. the member is visible and check-in-able
-     * at every location.
-     */
+    
+
     public function currentLocation(): ?Location
     {
         return $this->subscriptions()
@@ -145,14 +100,8 @@ class Member extends Model
             ?->location;
     }
 
-    /**
-     * Location scoping for members: the member's location is never stored or
-     * auto-assigned — it is derived from the plan of the member's
-     * subscriptions (a plan with no location means an "All Locations"
-     * jurisdiction that is visible to every location-scoped account).
-     * Members without any subscription yet have no jurisdiction and stay
-     * visible to every location-scoped account, like legacy records.
-     */
+    
+
     protected static function bootScopedByLocation(): void
     {
         static::addGlobalScope('location', function (Builder $builder): void {
@@ -173,10 +122,8 @@ class Member extends Model
         });
     }
 
-    /**
-     * Exact-match scope against the encrypted government ID via its blind
-     * index. Null/blank values match rows without a government ID.
-     */
+    
+
     public function scopeWhereGovernmentId(Builder $query, ?string $value): Builder
     {
         $hash = BlindIndex::compute($value);
@@ -186,15 +133,8 @@ class Member extends Model
             : $query->whereNull('government_id_hash');
     }
 
-    /**
-     * Find a member that is a duplicate of the given identifiers: the
-     * member's name, contact, government ID and email must ALL match the
-     * submitted values (empty values only match empty values). `contact`
-     * may be an array of accepted values, e.g. the normalized and raw
-     * phone forms.
-     *
-     * @param  array{name?: string|null, contact?: string|list<string>|null, government_id?: string|null, email?: string|null}  $identifiers
-     */
+    
+
     public static function findDuplicateByIdentifiers(array $identifiers): ?self
     {
         $name = $identifiers['name'] ?? null;
@@ -230,17 +170,8 @@ class Member extends Model
             ->first();
     }
 
-    /**
-     * Shared identifier search for staff-facing member pickers and the
-     * reception walk-up check-in: matches name, member code, contact and
-     * government ID. Contact matches the raw term plus its normalized
-     * phone form; the government ID matches exactly (encrypted at rest,
-     * so partial matching is not possible). Queries run through the
-     * location global scope (accessible locations / current TenantContext
-     * location).
-     *
-     * @return Collection<int, self>
-     */
+    
+
     public static function searchByIdentifier(string $term, int $limit = 50): Collection
     {
         $term = trim($term);
@@ -262,17 +193,15 @@ class Member extends Model
             ->get();
     }
 
-    /**
-     * @return HasMany<PlanCheckIn, $this>
-     */
+    
+
     public function checkIns(): HasMany
     {
         return $this->hasMany(PlanCheckIn::class);
     }
 
-    /**
-     * Boot the model and add cascade delete and restore behavior.
-     */
+    
+
     protected static function boot(): void
     {
         parent::boot();
@@ -292,11 +221,8 @@ class Member extends Model
         });
     }
 
-    /**
-     * Relationship method names to cascade when deleting/restoring.
-     *
-     * @return list<string>
-     */
+    
+
     protected static function relationsToCascade(): array
     {
         return ['subscriptions'];

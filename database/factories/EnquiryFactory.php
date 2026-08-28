@@ -8,18 +8,12 @@ use App\Models\User;
 use Database\Factories\Concerns\WithSynchronizedLocation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Enquiry>
- */
 class EnquiryFactory extends Factory
 {
     use WithSynchronizedLocation;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    
+
     public function definition(): array
     {
         $location = $this->synchronizedLocation();

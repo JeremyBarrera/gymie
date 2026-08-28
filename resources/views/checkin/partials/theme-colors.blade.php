@@ -1,9 +1,7 @@
 <style>
-    @php
-        $bg = $background ?? ($palette['base'] ?? '#2563eb');
+    @php $bg = $background ?? ($palette['base'] ?? '#2563eb');
         $accent = $accent ?? ($palette['base'] ?? '#2563eb');
-        $c = \App\Support\ColorContrast::derivePalette($bg, $accent);
-    @endphp
+        $c = \App\Support\ColorContrast::derivePalette($bg, $accent); @endphp
     :root {
         --c-base: {{ $c['base'] }};
         --c-hover: {{ $c['hover'] }};

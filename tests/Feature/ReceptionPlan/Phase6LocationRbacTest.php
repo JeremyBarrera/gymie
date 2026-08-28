@@ -1,13 +1,5 @@
 <?php
 
-// ============================================================================
-// PHASE 6 — Location RBAC
-//
-// Status: active. `LocationAccess` (owner override, user_locations
-// scoping, jurisdiction-restricted options) and the founding-admin hook in
-// `LocationObserver` are implemented.
-// ============================================================================
-
 use App\Models\Location;
 use App\Models\User;
 use App\Support\Locations\LocationAccess;

@@ -4,24 +4,14 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 
-/**
- * Prints the post-setup guidance after `composer run setup`.
- *
- * Until first-run setup completes, every panel page redirects to the
- * standalone "setup in progress" screen. The owner account is created from the
- * CLI (gymie:create-owner) and setup is finished with gymie:complete-setup,
- * so this command just makes those two steps explicit.
- */
 class SetupGuidance extends Command
 {
-    /**
-     * @var string
-     */
+    
+
     protected $signature = 'gymie:setup-guidance';
 
-    /**
-     * @var string
-     */
+    
+
     protected $description = 'Print the first-run setup next steps';
 
     public function handle(): int

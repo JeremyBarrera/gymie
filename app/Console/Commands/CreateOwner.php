@@ -10,24 +10,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
-/**
- * Bootstraps the top-level owner account that provisions locations.
- *
- * The owner role bypasses every permission and every location scope, and is
- * the only role that can operate across all locations. All other accounts are
- * scoped through their location-based roles and `user_locations`. This command
- * only needs to run once.
- */
 class CreateOwner extends Command
 {
-    /**
-     * @var string
-     */
+    
+
     protected $signature = 'gymie:create-owner {email : Owner account email} {--name= : Owner display name} {--password= : Owner password (random when omitted)}';
 
-    /**
-     * @var string
-     */
+    
+
     protected $description = 'Create the top-level owner role and its first account';
 
     public function handle(): int

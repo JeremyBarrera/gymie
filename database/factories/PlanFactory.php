@@ -5,16 +5,10 @@ namespace Database\Factories;
 use App\Models\Plan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Plan>
- */
 class PlanFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    
+
     public function definition(): array
     {
         return [
@@ -29,9 +23,8 @@ class PlanFactory extends Factory
         ];
     }
 
-    /**
-     * Plan that tracks a limited number of uses.
-     */
+    
+
     public function withUseLimit(int $limit = 10): static
     {
         return $this->state(fn (): array => [

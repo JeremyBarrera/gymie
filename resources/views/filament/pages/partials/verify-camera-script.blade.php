@@ -1,11 +1,4 @@
-{{-- Sign-up photo capture: webcam (getUserMedia) with upload fallback.
-     Included by the Reception page and the global live-signup popup — every
-     inclusion gets its own copy, scoped to its own Livewire component root.
-     Camera state is tracked per overlay element in a shared registry, and
-     capture/retake/upload resolve the overlay from the element they were
-     clicked in, so two overlays on the same page can never cross-talk or
-     bind the photo to the wrong component. The getUserMedia/playing/canvas
-     mechanics come from the shared GymieCameraCapture bundle. --}}
+
 <script>
     (function () {
         const script = document.currentScript;
@@ -158,8 +151,8 @@
             Livewire.on('verify-photo-step', () => startCamera());
         });
 
-        // Stop any camera whose overlay or video element left the DOM — covers
-        // overlay close and going back to step 1, regardless of event ordering.
+        
+        
         const stopOrphaned = () => {
             for (const [root, stream] of state.streams) {
                 if (!document.contains(root) || !root.querySelector('#verify-camera')) {

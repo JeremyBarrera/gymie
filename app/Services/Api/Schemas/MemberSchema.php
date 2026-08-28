@@ -10,30 +10,17 @@ use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
-/**
- * Single source of truth for Member API validation and serialization.
- *
- * Keep this explicit (not auto-reflecting DB schema) so API contracts remain stable.
- */
 final class MemberSchema
 {
     private function __construct() {}
 
-    /**
-     * @return array{
-     *   searchable: array<int|string, string>,
-     *   sortable: list<string>,
-     *   default_sort: string,
-     *   status_column: string|null,
-     *   includes: list<string>,
-     *   filters: array<string, array{type: string, column: string}>
-     * }
-     */
+    
+
     public static function queryRules(): array
     {
         return [
-            // `government_id` is encrypted at rest and matched through its
-            // blind index, so it searches as exact `hmac`, not `like`.
+            
+            
             'searchable' => ['code', 'name', 'email', 'government_id' => 'hmac', 'contact'],
             'sortable' => ['id', 'created_at', 'name'],
             'default_sort' => '-id',
@@ -48,9 +35,8 @@ final class MemberSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function storeRules(): array
     {
         return [
@@ -75,9 +61,8 @@ final class MemberSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function updateRules(int|string $memberId): array
     {
         return [
@@ -102,12 +87,11 @@ final class MemberSchema
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     public static function resource(Member $member): array
     {
-        /** @var FilesystemAdapter $disk */
+        
         $disk = Storage::disk('public');
 
         return [

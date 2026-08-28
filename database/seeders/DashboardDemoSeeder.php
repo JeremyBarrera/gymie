@@ -18,16 +18,8 @@ use Illuminate\Support\Collection;
 
 class DashboardDemoSeeder extends Seeder
 {
-    /**
-     * Seed a realistic dataset for the dashboard (dev only).
-     *
-     * This intentionally creates enough records for charts/tables to look real:
-     * - Members: 200+
-     * - Subscriptions: ~220 (includes renewals)
-     * - Invoices: one per subscription
-     * - Invoice transactions: multiple payments + some refunds
-     * - Expenses: 150+
-     */
+    
+
     public function run(): void
     {
         $timezone = config('app.timezone');
@@ -56,14 +48,8 @@ class DashboardDemoSeeder extends Seeder
         $this->ensureMinimumCount(Expense::class, 150, fn (int $count): Collection => Expense::factory()->count($count)->create());
     }
 
-    /**
-     * Ensure a model has at least the given number of rows.
-     *
-     * @template TModel of \Illuminate\Database\Eloquent\Model
-     *
-     * @param  class-string<TModel>  $modelClass
-     * @param  callable(int):Collection<int,TModel>  $factory
-     */
+    
+
     private function ensureMinimumCount(string $modelClass, int $minimum, callable $factory): void
     {
         $current = $modelClass::query()->count();
@@ -75,12 +61,8 @@ class DashboardDemoSeeder extends Seeder
         $factory($minimum - $current);
     }
 
-    /**
-     * Create subscriptions across different date buckets so dashboard widgets have variety.
-     *
-     * @param  Collection<int, Member>  $members
-     * @param  Collection<int, Plan>  $plans
-     */
+    
+
     private function seedSubscriptionsForMembers(Collection $members, Collection $plans): void
     {
         $timezone = config('app.timezone');
@@ -133,11 +115,8 @@ class DashboardDemoSeeder extends Seeder
         $this->seedRenewals($today, $plans);
     }
 
-    /**
-     * Create renewal subscriptions for a subset of expired subscriptions.
-     *
-     * @param  Collection<int, Plan>  $plans
-     */
+    
+
     private function seedRenewals(CarbonImmutable $today, Collection $plans): void
     {
         $expiringEnd = $today->addDays(Helpers::getSubscriptionExpiringDays());
@@ -165,9 +144,8 @@ class DashboardDemoSeeder extends Seeder
         }
     }
 
-    /**
-     * Determine a subscription status based on dates (keeps status consistent with the UI).
-     */
+    
+
     private function statusForSubscriptionDates(
         CarbonImmutable $start,
         CarbonImmutable $end,
@@ -189,13 +167,8 @@ class DashboardDemoSeeder extends Seeder
         return 'ongoing';
     }
 
-    /**
-     * Subscriptions which don't yet have an invoice.
-     *
-     * Note: invoice is unique per subscription.
-     *
-     * @return Collection<int, Subscription>
-     */
+    
+
     private function subscriptionsNeedingInvoices(): Collection
     {
         return Subscription::query()
@@ -204,12 +177,8 @@ class DashboardDemoSeeder extends Seeder
             ->get();
     }
 
-    /**
-     * Create one invoice per subscription, plus ledger transactions spread across time.
-     *
-     * @param  Collection<int, Subscription>  $subscriptions
-     * @param  Collection<int, Plan>  $plans
-     */
+    
+
     private function seedInvoicesForSubscriptions(Collection $subscriptions, Collection $plans): void
     {
         $timezone = config('app.timezone');
@@ -251,9 +220,8 @@ class DashboardDemoSeeder extends Seeder
         }
     }
 
-    /**
-     * Get a stable invoice prefix for demo seeding.
-     */
+    
+
     private function demoInvoicePrefix(): string
     {
         $rawPrefix = (string) data_get(Helpers::getSettings(), 'invoice.prefix', '');
@@ -262,9 +230,8 @@ class DashboardDemoSeeder extends Seeder
         return filled($prefix) ? $prefix : 'GY';
     }
 
-    /**
-     * Determine the next numeric suffix to use for demo invoices.
-     */
+    
+
     private function nextDemoInvoiceSequenceNumber(): int
     {
         $max = Invoice::withTrashed()
@@ -281,9 +248,8 @@ class DashboardDemoSeeder extends Seeder
         return ((int) $max) + 1;
     }
 
-    /**
-     * Seed payment/refund transactions for an invoice so trends look realistic.
-     */
+    
+
     private function seedTransactionsForInvoice(Invoice $invoice, CarbonImmutable $invoiceDate, ?int $staffUserId): void
     {
         $faker = fake();
@@ -376,9 +342,8 @@ class DashboardDemoSeeder extends Seeder
         $invoice->syncFromTransactions();
     }
 
-    /**
-     * Disable invoice-related email notifications while demo data is generated.
-     */
+    
+
     private function withoutInvoiceEmails(callable $callback): void
     {
         $settingsRepository = app(SettingsRepository::class);

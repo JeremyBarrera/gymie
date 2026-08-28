@@ -305,8 +305,8 @@ class CheckInApiTest extends TestCase
 
     public function test_rate_limiting_on_checkin_lookup(): void
     {
-        // Rate limiting is configured in AppServiceProvider (30/min for api-checkin)
-        // This test verifies the middleware is applied
+        
+        
         $this->assertTrue(true);
     }
 

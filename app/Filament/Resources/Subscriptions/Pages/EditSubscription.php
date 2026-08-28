@@ -11,9 +11,6 @@ use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
-/**
- * @property-read Subscription $record
- */
 class EditSubscription extends EditRecord
 {
     protected static string $resource = SubscriptionResource::class;

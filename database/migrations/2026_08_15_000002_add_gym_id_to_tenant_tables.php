@@ -7,15 +7,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Tables that hold business data owned by a gym (tenant).
-     *
-     * Pivot tables (`user_locations`, `plan_locations`, `service_locations`) are
-     * intentionally excluded: reads on them are already restricted by the
-     * `locations.gym_id` global scope on the joined model, and every write path
-     * is validated against the editor's accessible locations, so a pivot row
-     * can never reference a location from another gym.
-     */
+    
+
     private const TENANT_TABLES = [
         'locations',
         'users',
@@ -48,8 +41,8 @@ return new class extends Migration
             });
         }
 
-        // Create the default gym and claim every existing row for it, so
-        // single-tenant installations keep working untouched.
+        
+        
         $defaultGymId = DB::table('gyms')->insertGetId([
             'name' => 'Default Gym',
             'slug' => 'default',

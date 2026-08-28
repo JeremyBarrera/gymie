@@ -33,16 +33,14 @@
 
                 <div class="space-y-6">
                     @foreach (['checkin', 'signup'] as $kind)
-                        @php
-                            $token = $location->tokens->firstWhere('kind', $kind);
+                        @php $token = $location->tokens->firstWhere('kind', $kind);
                             $isCheckin = $kind === 'checkin';
                             $typeLabel = $isCheckin
                                 ? __('app.reception.qr_type_checkin')
                                 : __('app.reception.qr_type_signup');
                             $typeIcon = $isCheckin
                                 ? 'heroicon-m-clipboard-document-check'
-                                : 'heroicon-m-user-plus';
-                        @endphp
+                                : 'heroicon-m-user-plus'; @endphp
 
                         <div class="flex items-center justify-between gap-4 py-3">
                             <div class="flex items-center gap-3">

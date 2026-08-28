@@ -8,9 +8,6 @@ use App\Models\Invoice;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
-/**
- * @property-read Invoice $record
- */
 class ViewInvoice extends ViewRecord
 {
     protected static string $resource = InvoiceResource::class;

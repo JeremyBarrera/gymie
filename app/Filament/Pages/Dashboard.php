@@ -21,12 +21,6 @@ use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Main application dashboard.
- *
- * This dashboard hosts business analytics widgets (collected-based) and provides
- * a time-range filter that widgets can read via `InteractsWithPageFilters`.
- */
 class Dashboard extends \Filament\Pages\Dashboard
 {
     use HasFilters;
@@ -35,39 +29,29 @@ class Dashboard extends \Filament\Pages\Dashboard
 
     protected static ?string $title = null;
 
-    /**
-     * Get the dashboard page title.
-     */
+    
+
     public function getTitle(): string
     {
         return __('app.dashboard.title');
     }
 
-    /**
-     * Get the dashboard navigation label.
-     */
+    
+
     public static function getNavigationLabel(): string
     {
         return __('app.navigation.dashboard');
     }
 
-    /**
-     * Render a custom header that includes a real select field for the date range.
-     *
-     * For a select-style control in the top-right, we render a custom header view
-     * that binds directly to this Livewire component.
-     */
+    
+
     public function getHeader(): ?View
     {
         return view('filament.pages.dashboard-header');
     }
 
-    /**
-     * Dashboard header form schema (date range controls).
-     *
-     * We use Filament form components (non-native select) instead of raw HTML so
-     * the control feels consistent with the rest of the admin UI.
-     */
+    
+
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -133,9 +117,8 @@ class Dashboard extends \Filament\Pages\Dashboard
             ]);
     }
 
-    /**
-     * Get the responsive dashboard column layout.
-     */
+    
+
     public function getColumns(): int|array
     {
         return [
@@ -144,12 +127,8 @@ class Dashboard extends \Filament\Pages\Dashboard
         ];
     }
 
-    /**
-     * Render dashboard widgets in grouped layout blocks.
-     *
-     * We group Financial + Spending Overview together so the two cards always
-     * sit side-by-side on larger screens.
-     */
+    
+
     public function getWidgetsContentComponent(): Component
     {
         $columns = $this->getColumns();
@@ -180,9 +159,8 @@ class Dashboard extends \Filament\Pages\Dashboard
         ]);
     }
 
-    /**
-     * Initialize dashboard state and filters on component mount.
-     */
+    
+
     public function mount(): void
     {
         if (method_exists(parent::class, 'mount')) {
@@ -208,9 +186,8 @@ class Dashboard extends \Filament\Pages\Dashboard
         }
     }
 
-    /**
-     * Initialize the filters for visits where there is no persisted state.
-     */
+    
+
     public function ensureDefaultFilters(): void
     {
         if (! is_array($this->filters) || ! isset($this->filters['period']) || $this->filters['period'] === '') {
@@ -221,11 +198,8 @@ class Dashboard extends \Filament\Pages\Dashboard
         }
     }
 
-    /**
-     * Handle selecting a period from the dashboard header select.
-     *
-     * @param  '7days'|'30days'|'month'|'quarter'|'year'|'custom'  $period
-     */
+    
+
     public function setPeriod(string $period): void
     {
         if ($period === 'custom') {
@@ -248,9 +222,8 @@ class Dashboard extends \Filament\Pages\Dashboard
         $this->applyPresetRange($period);
     }
 
-    /**
-     * Apply the currently selected custom range (start & end dates).
-     */
+    
+
     public function applyCustomRangeFromFilters(): void
     {
         $startDate = is_string($this->filters['startDate'] ?? null) ? $this->filters['startDate'] : '';
@@ -263,11 +236,8 @@ class Dashboard extends \Filament\Pages\Dashboard
         $this->applyCustomRange($startDate, $endDate);
     }
 
-    /**
-     * Apply a preset range to the dashboard filters.
-     *
-     * @param  '7days'|'30days'|'month'|'quarter'|'year'  $preset
-     */
+    
+
     private function applyPresetRange(string $preset): void
     {
         $today = CarbonImmutable::today(AppConfig::timezone());
@@ -295,9 +265,8 @@ class Dashboard extends \Filament\Pages\Dashboard
         $this->updatedFilters();
     }
 
-    /**
-     * Apply a custom range to the dashboard filters.
-     */
+    
+
     private function applyCustomRange(string $startDate, string $endDate): void
     {
         $timezone = AppConfig::timezone();
@@ -319,11 +288,8 @@ class Dashboard extends \Filament\Pages\Dashboard
         $this->updatedFilters();
     }
 
-    /**
-     * Default location selection: all accessible locations.
-     *
-     * @return list<int>
-     */
+    
+
     private function defaultLocationFilterIds(): array
     {
         return array_map(

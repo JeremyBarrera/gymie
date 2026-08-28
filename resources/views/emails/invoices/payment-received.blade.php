@@ -1,7 +1,4 @@
-@php
-    /** @var \App\Models\Invoice $invoice */
-    /** @var \App\Models\InvoiceTransaction $transaction */
-@endphp
+@php @endphp
 
 @extends('emails.invoices.layout')
 

@@ -1,7 +1,5 @@
-@php
-    $avatarSizeClass = $sizeClass ?? 'h-16 w-16';
-    $iconSize = str_contains($avatarSizeClass, 'h-64') || str_contains($avatarSizeClass, 'h-52') ? 'h-8 w-8' : 'h-5 w-5';
-@endphp
+@php $avatarSizeClass = $sizeClass ?? 'h-16 w-16';
+    $iconSize = str_contains($avatarSizeClass, 'h-64') || str_contains($avatarSizeClass, 'h-52') ? 'h-8 w-8' : 'h-5 w-5'; @endphp
 @if($member?->photo)
     <div class="group relative {{ $avatarSizeClass }} shrink-0 overflow-hidden rounded-lg">
         <img

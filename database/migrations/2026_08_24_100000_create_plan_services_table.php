@@ -18,9 +18,9 @@ return new class extends Migration
             $table->unique(['plan_id', 'service_id']);
         });
 
-        // Snapshot before dropping the column: drivers that rebuild the
-        // table to drop a column (SQLite) fire the parent-table DELETE,
-        // which would cascade-empty a pre-filled pivot.
+        
+        
+        
         $links = DB::table('plans')
             ->whereNotNull('service_id')
             ->orderBy('id')
@@ -44,8 +44,8 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Snapshot before altering: rebuilding the plans table (SQLite)
-        // drops its old parent table, which would cascade-empty the pivot.
+        
+        
         $links = DB::table('plan_services')
             ->selectRaw('plan_id, MIN(service_id) as service_id')
             ->groupBy('plan_id')

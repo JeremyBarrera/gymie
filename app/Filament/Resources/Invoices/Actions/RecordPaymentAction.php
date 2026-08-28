@@ -14,11 +14,6 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 
-/**
- * Record a payment against an invoice as an InvoiceTransaction ledger row.
- * paid_amount, due_amount and status are derived by the model's transaction
- * sync — never write them directly.
- */
 class RecordPaymentAction
 {
     public static function make(): Action
@@ -74,8 +69,8 @@ class RecordPaymentAction
                     return;
                 }
 
-                // The picker speaks the viewing device's wall clock.
-                // Parse in device timezone, then store as UTC (MySQL TIMESTAMP handles this).
+                
+                
                 $occurredAt = filled($data['occurred_at'] ?? null)
                     ? Carbon::parse((string) $data['occurred_at'], DeviceDateFormat::timezone())->utc()
                     : now()->utc();

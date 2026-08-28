@@ -167,8 +167,8 @@ it('excludes subscriptions for plans that are unavailable at the check-in locati
 
     $service = app(PlanCheckInService::class);
 
-    // The plan is only available at location A, so it only shows up in the
-    // eligibility set when the check-in happens at location A.
+    
+    
     LocationTenantContext::setLocationId((int) $locationA->id);
 
     $eligibleA = $service->eligibleSubscriptions($memberA);

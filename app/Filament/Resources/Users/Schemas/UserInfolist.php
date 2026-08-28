@@ -16,9 +16,8 @@ use Illuminate\Support\Str;
 
 class UserInfolist
 {
-    /**
-     * Configure the user "view" infolist schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

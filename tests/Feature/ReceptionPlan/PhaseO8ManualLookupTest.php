@@ -1,15 +1,5 @@
 <?php
 
-// ============================================================================
-// PHASE O8 — Manual Lookup Check-In
-//
-// Regression lock for the wire-path drift bug: reception.blade.php called
-// openManualCheckInForResult() while the component exposed
-// openManualCheckInForMember(), which 500s at runtime with
-// Livewire\Exceptions\MethodNotFoundException. These tests click the same
-// paths a staff member would, so a renamed/missing method fails CI.
-// ============================================================================
-
 use App\Enums\Status;
 use App\Filament\Pages\Reception;
 use App\Models\Location;
@@ -30,7 +20,7 @@ beforeEach(function (): void {
 });
 
 it('opens the shared check-in overlay when a search result is selected', function (): void {
-    // The factory randomizes status; only an active member may check in.
+    
     $member = Member::factory()->create(['name' => 'Otelia Rand', 'status' => Status::Active]);
 
     Livewire::actingAs(User::factory()->create()->assignRole('owner'))
@@ -64,11 +54,11 @@ it('clears results when the search term is emptied', function (): void {
 });
 
 it('lists location-scoped services for the owner walk-up and records the check-in there', function (): void {
-    // Regression lock for the live bug: the owner's TenantContext resolves to
-    // null ("unscoped"), which `serviceStatesForMember(null)` reads as
-    // "cross-location services only" — a location-scoped single-location
-    // install rendered an empty service list ("No eligible subscription —
-    // sell a plan first") before `checkInLocation()` was introduced.
+    
+    
+    
+    
+    
     $location = Location::factory()->create(['name' => 'TORO GYM']);
     $service = Service::factory()->create(['location_id' => $location->id, 'name' => 'GYM']);
     $plan = Plan::factory()->create([

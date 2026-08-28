@@ -15,11 +15,8 @@ use Endroid\QrCode\Writer\SvgWriter;
 
 class QrCodeService
 {
-    /**
-     * The URL a phone lands on when scanning this token's QR code. QR_BASE_URL
-     * wins when configured (phones scan from a different device than the
-     * server, so APP_URL is often unreachable); blank falls back to APP_URL.
-     */
+    
+
     public function scanUrl(LocationToken $token): string
     {
         $path = $token->kind === 'signup'
@@ -40,9 +37,8 @@ class QrCodeService
             ->first();
     }
 
-    /**
-     * @return array{content: string, filename: string, mimeType: string, format: string}
-     */
+    
+
     public function build(LocationToken $token, string $format = 'png', int $size = 300): array
     {
         $resolvedFormat = $format === 'svg' ? 'svg' : 'png';

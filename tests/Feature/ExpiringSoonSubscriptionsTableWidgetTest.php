@@ -66,7 +66,7 @@ it('lists only subscriptions that are ending within the expiring window', functi
     $method = new ReflectionMethod($widget, 'getActiveTabQuery');
     $method->setAccessible(true);
 
-    /** @var Builder $query */
+    
     $query = $method->invoke($widget);
 
     $ids = $query->pluck('id')->all();
@@ -117,7 +117,7 @@ it('lists only subscriptions that have already ended in the expired tab', functi
     $method = new ReflectionMethod($widget, 'getActiveTabQuery');
     $method->setAccessible(true);
 
-    /** @var Builder $query */
+    
     $query = $method->invoke($widget);
 
     $ids = $query->pluck('id')->all();

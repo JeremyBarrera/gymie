@@ -47,7 +47,7 @@ class ExpenseResource extends Resource
 
     public static function getGlobalSearchResultDetails(Model $record): array
     {
-        /** @var Expense $record */
+        
         return [
             __('app.fields.date') => $record->date->toDateString(),
             __('app.fields.status') => GlobalSearchBadge::status($record->status),

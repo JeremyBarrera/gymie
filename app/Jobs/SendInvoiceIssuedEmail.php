@@ -12,26 +12,21 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-/**
- * Send the "invoice issued" email (queued).
- */
 class SendInvoiceIssuedEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Number of times the job may be attempted.
-     */
+    
+
     public int $tries = 3;
 
     public int $timeout = 60;
 
-    /** @var list<int> */
+    
     public array $backoff = [10, 60, 300];
 
-    /**
-     * Create a new job instance.
-     */
+    
+
     public function __construct(
         public readonly int $invoiceId,
         public readonly string $toEmail,
@@ -39,9 +34,8 @@ class SendInvoiceIssuedEmail implements ShouldQueue
         public readonly ?int $actorId = null,
     ) {}
 
-    /**
-     * Execute the job.
-     */
+    
+
     public function handle(InvoiceEmailService $service): void
     {
         try {

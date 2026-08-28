@@ -20,7 +20,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-/** @extends resource<Member> */
 class MemberResource extends Resource
 {
     protected static ?string $model = Member::class;
@@ -55,7 +54,7 @@ class MemberResource extends Resource
 
     public static function getGlobalSearchResultDetails(Model $record): array
     {
-        /** @var Member $record */
+        
         $details = [];
 
         if (filled($record->code)) {
@@ -77,25 +76,22 @@ class MemberResource extends Resource
         return $details;
     }
 
-    /**
-     * Define the form schema for the resource.
-     */
+    
+
     public static function form(Schema $schema): Schema
     {
         return MemberForm::configure($schema);
     }
 
-    /**
-     * Get the Filament table columns for the members list view.
-     */
+    
+
     public static function table(Table $table): Table
     {
         return MemberTable::configure($table);
     }
 
-    /**
-     * Add infolist to the resource.
-     */
+    
+
     public static function infolist(Schema $schema): Schema
     {
         return MemberInfolist::configure($schema);
@@ -119,9 +115,8 @@ class MemberResource extends Resource
         ];
     }
 
-    /**
-     * @return Builder<Member>
-     */
+    
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()

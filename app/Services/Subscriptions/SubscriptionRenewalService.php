@@ -10,41 +10,13 @@ use App\Support\AppConfig;
 use App\Support\Data;
 use Carbon\Carbon;
 
-/**
- * Subscription renewal domain service.
- *
- * This is extracted from Filament-only flows so the same logic can be reused by
- * the JSON API and other integrations without depending on UI classes.
- */
 class SubscriptionRenewalService
 {
-    /**
-     * Renew a subscription and generate an associated invoice.
-     *
-     * The created invoice is always issued. If the chosen payment method is
-     * online, we force `paid_amount=0` and rely on the payment ledger / webhooks
-     * to update invoice status.
-     *
-     * @param  array{
-     *   plan_id:int,
-     *   start_date:string,
-     *   end_date?:string|null,
-     *   invoice?:array{
-     *     number?:string|null,
-     *     date?:string|null,
-     *     due_date?:string|null,
-     *     payment_method?:string|null,
-     *     discount?:int|float|string|null,
-     *     discount_amount?:float|int|string|null,
-     *     discount_note?:string|null,
-     *     paid_amount?:float|int|string|null
-     *   }
-     * }  $data
-     * @return array{subscription: Subscription, invoice: Invoice}
-     */
+    
+
     public function renew(Subscription $record, array $data): array
     {
-        /** @var array{subscription: Subscription, invoice: Invoice} $result */
+        
         $result = Subscription::query()->getConnection()->transaction(function () use ($record, $data): array {
             $timezone = AppConfig::timezone();
             $today = Carbon::today($timezone);
@@ -52,7 +24,7 @@ class SubscriptionRenewalService
             $plan = Plan::findOrFail(Data::int($data['plan_id']));
 
             $startDate = Carbon::parse(Data::string($data['start_date']))->toDateString();
-            // Evergreen plans (no day count) have no end date at all.
+            
             $endDate = filled($data['end_date'] ?? null)
                 ? Carbon::parse(Data::string($data['end_date']))->toDateString()
                 : ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id)));

@@ -13,16 +13,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-/**
- * Enquiries CRUD endpoints.
- */
 class EnquiriesController extends ApiController
 {
     private const RESOURCE_KEY = 'enquiries';
 
-    /**
-     * Display a listing of enquiries.
-     */
+    
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->requirePermission($request, 'ViewAny:Enquiry');
@@ -36,9 +32,8 @@ class EnquiriesController extends ApiController
         return EnquiryResource::collection($query->paginate($perPage));
     }
 
-    /**
-     * Store a newly created enquiry.
-     */
+    
+
     public function store(EnquiryStoreRequest $request): EnquiryResource
     {
         $this->requirePermission($request, 'Create:Enquiry');
@@ -65,9 +60,8 @@ class EnquiriesController extends ApiController
         return new EnquiryResource($enquiry->refresh());
     }
 
-    /**
-     * Display an enquiry.
-     */
+    
+
     public function show(Request $request, Enquiry $enquiry): EnquiryResource
     {
         $this->requirePermission($request, 'View:Enquiry');
@@ -75,9 +69,8 @@ class EnquiriesController extends ApiController
         return new EnquiryResource($enquiry);
     }
 
-    /**
-     * Update an enquiry.
-     */
+    
+
     public function update(EnquiryUpdateRequest $request, Enquiry $enquiry): EnquiryResource
     {
         $this->requirePermission($request, 'Update:Enquiry');
@@ -87,17 +80,15 @@ class EnquiriesController extends ApiController
         return new EnquiryResource($enquiry->refresh());
     }
 
-    /**
-     * Soft delete an enquiry.
-     */
+    
+
     public function destroy(Request $request, Enquiry $enquiry): JsonResponse
     {
         return $this->deleteModel($request, 'Delete:Enquiry', $enquiry);
     }
 
-    /**
-     * Restore a soft deleted enquiry.
-     */
+    
+
     public function restore(Request $request, int $enquiry): EnquiryResource
     {
         $record = $this->restoreSoftDeleted($request, 'RestoreAny:Enquiry', Enquiry::class, $enquiry);
@@ -105,9 +96,8 @@ class EnquiriesController extends ApiController
         return new EnquiryResource($record->refresh());
     }
 
-    /**
-     * Permanently delete an enquiry.
-     */
+    
+
     public function forceDelete(Request $request, int $enquiry): JsonResponse
     {
         $this->forceDeleteSoftDeleted($request, 'ForceDeleteAny:Enquiry', Enquiry::class, $enquiry);

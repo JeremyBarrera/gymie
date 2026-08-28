@@ -10,28 +10,12 @@ use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
-/**
- * Small, reusable query filter helpers for API index endpoints.
- *
- * This intentionally stays "thin" so each controller can decide:
- * - which columns are searchable
- * - which sort keys are allowed
- * - whether a model supports soft deletes
- */
 final class QueryFilters
 {
-    /**
-     * Apply all common index filters for a resource using allowlisted rules.
-     *
-     * This consolidates controller boilerplate while keeping query rules explicit
-     * (see {@see ResourceQueryRules}).
-     */
-    /**
-     * @template TModel of \Illuminate\Database\Eloquent\Model
-     *
-     * @param  Builder<TModel>  $query
-     * @return Builder<TModel>
-     */
+    
+
+    
+
     public static function applyIndexFilters(Builder $query, Request $request, string $resourceKey): Builder
     {
         self::validateIndexQueryParameters($request, $resourceKey);
@@ -129,16 +113,8 @@ final class QueryFilters
         }
     }
 
-    /**
-     * Apply allowlisted filtering / includes / sorting using spatie/laravel-query-builder.
-     *
-     * @template TModel of \Illuminate\Database\Eloquent\Model
-     *
-     * @param  Builder<TModel>  $query
-     * @param  list<string>  $allowedIncludes
-     * @param  array<string, array{type: string, column?: string, relation?: string}>  $filterRules
-     * @param  list<string>  $allowedSorts
-     */
+    
+
     private static function applyQueryBuilderFilters(
         Builder $query,
         Request $request,
@@ -147,7 +123,7 @@ final class QueryFilters
         array $allowedSorts,
         string $defaultSort,
     ): void {
-        /** @var list<AllowedFilter> $allowedFilters */
+        
         $allowedFilters = [];
         foreach ($filterRules as $key => $rule) {
             $type = $rule['type'];
@@ -200,9 +176,8 @@ final class QueryFilters
         }
     }
 
-    /**
-     * @return int Per-page value clamped to a safe max.
-     */
+    
+
     public static function perPage(?string $value, int $default = 15, int $max = 100): int
     {
         $perPage = (int) ($value ?? $default);
@@ -214,19 +189,8 @@ final class QueryFilters
         return min($perPage, $max);
     }
 
-    /**
-     * Apply a simple multi-column "contains" search using `?q=...`.
-     *
-     * Columns may be declared as `column => mode` with mode `like`
-     * (default) or `hmac` for encrypted columns matched via their blind
-     * index hash.
-     *
-     * @template TModel of \Illuminate\Database\Eloquent\Model
-     *
-     * @param  Builder<TModel>  $query
-     * @param  array<int|string, string>  $columns
-     * @return Builder<TModel>
-     */
+    
+
     public static function applySearch(Builder $query, ?string $q, array $columns): Builder
     {
         $q = trim((string) $q);
@@ -248,15 +212,10 @@ final class QueryFilters
         });
     }
 
-    /**
-     * Apply a basic equality filter for `?status=...`.
-     */
-    /**
-     * @template TModel of \Illuminate\Database\Eloquent\Model
-     *
-     * @param  Builder<TModel>  $query
-     * @return Builder<TModel>
-     */
+    
+
+    
+
     public static function applyStatus(Builder $query, ?string $status, string $column = 'status'): Builder
     {
         $status = trim((string) $status);
@@ -268,15 +227,10 @@ final class QueryFilters
         return $query->where($column, $status);
     }
 
-    /**
-     * Apply soft-delete visibility filter using `?trashed=with|only`.
-     */
-    /**
-     * @template TModel of \Illuminate\Database\Eloquent\Model
-     *
-     * @param  Builder<TModel>  $query
-     * @return Builder<TModel>
-     */
+    
+
+    
+
     public static function applyTrashed(Builder $query, ?string $value): Builder
     {
         $value = trim((string) $value);
@@ -304,11 +258,8 @@ final class QueryFilters
         };
     }
 
-    /**
-     * @template TModel of \Illuminate\Database\Eloquent\Model
-     *
-     * @param  Builder<TModel>  $query
-     */
+    
+
     private static function applyRange(Builder $query, string $column, string $value): void
     {
         $range = self::parseRange($value);
@@ -323,9 +274,8 @@ final class QueryFilters
         $query->whereDate($column, $value);
     }
 
-    /**
-     * @return array{0: string, 1: string}|null
-     */
+    
+
     private static function parseRange(string $value): ?array
     {
         if (! str_contains($value, '..')) {

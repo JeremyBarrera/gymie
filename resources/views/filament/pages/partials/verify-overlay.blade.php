@@ -1,9 +1,7 @@
-@php
-    $verifyEntry = \App\Models\QueueEntry::find($selectedQueueEntryId);
+@php $verifyEntry = \App\Models\QueueEntry::find($selectedQueueEntryId);
     [$contactDial, $contactLocal] = $verifyEntry
         ? \App\Helpers\Helpers::parsePhoneField($verifyEntry->payload['contact'] ?? null)
-        : ['', ''];
-@endphp
+        : ['', '']; @endphp
 
 @if($verifyEntry)
     <div
@@ -313,10 +311,8 @@
                     </div>
                 </x-slot>
             @elseif($verifyStep === 4)
-                @php
-                    $verifyCheckInServices = $this->verifyCheckInServices;
-                    $verifyCheckInSelectedRow = collect($verifyCheckInServices)->firstWhere('id', $verifyCheckInServiceId);
-                @endphp
+                @php $verifyCheckInServices = $this->verifyCheckInServices;
+                    $verifyCheckInSelectedRow = collect($verifyCheckInServices)->firstWhere('id', $verifyCheckInServiceId); @endphp
 
                 <div class="space-y-4">
                     <div class="flex items-center gap-2">

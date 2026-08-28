@@ -7,12 +7,6 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
-/**
- * One follow-up alert escalation for exactly one recipient: the wire payload
- * mirrors the frozen alert contract plus the notification id. The database
- * row stays the source of truth — listeners re-fetch instead of applying the
- * payload as a client-side delta.
- */
 class FollowUpEscalated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets;
@@ -29,9 +23,8 @@ class FollowUpEscalated implements ShouldBroadcast
         public string $occurred_at,
     ) {}
 
-    /**
-     * The recipient's own authorized channel only.
-     */
+    
+
     public function broadcastOn(): array
     {
         return [
@@ -39,9 +32,8 @@ class FollowUpEscalated implements ShouldBroadcast
         ];
     }
 
-    /**
-     * Wire payload = the alert payload contract + notification id.
-     */
+    
+
     public function broadcastWith(): array
     {
         return [

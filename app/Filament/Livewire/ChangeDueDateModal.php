@@ -14,13 +14,6 @@ use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-/**
- * Past-due "Change payment due date" popup: edits only the blocking
- * invoice's due date — a valid picked date unlocks the confirm button and
- * reveals the shared optional alert input, then the write runs in a
- * transaction and the host completes an override-semantics check-in plus a
- * `due_date_changed` follow-up alert.
- */
 class ChangeDueDateModal extends Component
 {
     public ?int $memberId = null;
@@ -29,7 +22,7 @@ class ChangeDueDateModal extends Component
 
     public ?int $serviceId = null;
 
-    /** Staff-picked new due date — never defaulted to today. */
+    
     public ?string $newDueDate = null;
 
     public string $reason = '';
@@ -62,9 +55,8 @@ class ChangeDueDateModal extends Component
         return $this->invoiceId !== null ? Invoice::find($this->invoiceId) : null;
     }
 
-    /**
-     * Confirm unlocks only once a valid (future) due date is picked.
-     */
+    
+
     public function getCanConfirmProperty(): bool
     {
         if (blank($this->newDueDate)) {

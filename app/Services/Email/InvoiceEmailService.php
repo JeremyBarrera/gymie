@@ -20,15 +20,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
-/**
- * Invoice email service.
- *
- * This service is responsible for:
- * - building invoice/payment email payloads
- * - rendering PDF attachments
- * - configuring Reply-To from gym settings
- * - rendering safe, token-based subject templates
- */
 final class InvoiceEmailService
 {
     public function __construct(
@@ -36,9 +27,8 @@ final class InvoiceEmailService
         private readonly SettingsRepository $settingsRepository,
     ) {}
 
-    /**
-     * Queue an "invoice issued" email.
-     */
+    
+
     public function queueInvoiceIssuedEmail(int $invoiceId, string $toEmail, ?string $note = null, ?int $actorId = null): void
     {
         SendInvoiceIssuedEmail::dispatch(
@@ -49,9 +39,8 @@ final class InvoiceEmailService
         )->afterCommit();
     }
 
-    /**
-     * Queue a "payment received" receipt email.
-     */
+    
+
     public function queuePaymentReceiptEmail(int $invoiceId, int $transactionId, string $toEmail, ?string $note = null, ?int $actorId = null): void
     {
         SendInvoicePaymentReceiptEmail::dispatch(
@@ -63,9 +52,8 @@ final class InvoiceEmailService
         )->afterCommit();
     }
 
-    /**
-     * Send an "invoice issued" email with PDF attached.
-     */
+    
+
     public function sendInvoiceIssuedEmail(int $invoiceId, string $toEmail, ?string $note = null): void
     {
         $invoice = InvoiceDocument::loadForRendering(Invoice::query()->findOrFail($invoiceId));
@@ -114,9 +102,8 @@ final class InvoiceEmailService
         });
     }
 
-    /**
-     * Send a payment receipt email with PDF attached.
-     */
+    
+
     public function sendPaymentReceiptEmail(int $invoiceId, int $transactionId, string $toEmail, ?string $note = null): void
     {
         $invoice = InvoiceDocument::loadForRendering(Invoice::query()->findOrFail($invoiceId));
@@ -175,15 +162,8 @@ final class InvoiceEmailService
         });
     }
 
-    /**
-     * Temporarily set the app locale from settings for rendering PDFs and email views.
-     *
-     * @template T
-     *
-     * @param  array<string, mixed>  $settings
-     * @param  callable(): T  $callback
-     * @return T
-     */
+    
+
     private function withLocaleFromSettings(array $settings, callable $callback): mixed
     {
         $originalLocale = app()->getLocale();
@@ -203,11 +183,8 @@ final class InvoiceEmailService
         }
     }
 
-    /**
-     * Validate an email address and log a warning when invalid.
-     *
-     * @param  array<string, mixed>  $context
-     */
+    
+
     private function isValidRecipientEmail(string $toEmail, array $context): bool
     {
         if (filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
@@ -222,13 +199,8 @@ final class InvoiceEmailService
         return false;
     }
 
-    /**
-     * Derive the invoice's location identity, falling back to the legacy
-     * settings template.
-     *
-     * @param  array<string, mixed>  $settings
-     * @return array{name: string, email: string, contact: string}
-     */
+    
+
     private function locationIdentity(Invoice $invoice, array $settings): array
     {
         $location = filled($invoice->location_id)
@@ -242,11 +214,8 @@ final class InvoiceEmailService
         ];
     }
 
-    /**
-     * Build the common subject tokens used by invoice + receipt emails.
-     *
-     * @return array<string, string>
-     */
+    
+
     private function invoiceSubjectTokens(Invoice $invoice, string $gymName, string $memberName): array
     {
         return [
@@ -260,14 +229,8 @@ final class InvoiceEmailService
         ];
     }
 
-    /**
-     * Render a subject template using a small, safe token set.
-     *
-     * Allowed tokens are the keys of the `$tokens` array and must be used as
-     * `{token_name}`. Unknown tokens are preserved unchanged.
-     *
-     * @param  array<string, string>  $tokens
-     */
+    
+
     private function renderSubjectTemplate(string $template, array $tokens): string
     {
         $rendered = preg_replace_callback('/\{([a-z_]+)\}/i', function (array $matches) use ($tokens): string {

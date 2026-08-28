@@ -9,9 +9,6 @@ use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
-/**
- * @property-read Member $record
- */
 class EditMember extends EditRecord
 {
     protected static string $resource = MemberResource::class;

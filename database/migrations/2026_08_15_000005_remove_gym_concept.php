@@ -6,9 +6,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Tables that had the `gym_id` column added by the tenancy migration.
-     */
+    
+
     private const GYM_ID_TABLES = [
         'locations',
         'users',

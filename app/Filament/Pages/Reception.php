@@ -51,18 +51,13 @@ class Reception extends Page
 
     public string $denyReason = '';
 
-    /** @var array<int> Sign-up entries that arrived while another modal was open. */
+    
     public array $checkinEntries = [];
 
     public array $signupEntries = [];
 
-    /**
-     * Live walk-up search rows (minimal identity fields only: id, code,
-     * name, contact). Refreshed on every debounced search-term update; the
-     * overlay owns everything beyond identity.
-     *
-     * @var array<int, array{id: int, code: string, name: string, contact: string|null}>
-     */
+    
+
     public array $manualSearchResults = [];
 
     protected $listeners = [
@@ -82,11 +77,8 @@ class Reception extends Page
         return __('app.reception.title');
     }
 
-    /**
-     * Debounced live lookup across name, member code, contact and
-     * government ID. Runs through `Member::searchByIdentifier()`, whose
-     * global location scope keeps results inside the accessible locations.
-     */
+    
+
     public function updatedManualCheckInSearch(string $value): void
     {
         $term = trim($value);
@@ -107,12 +99,8 @@ class Reception extends Page
             ->all();
     }
 
-    /**
-     * Funnel a live-result selection into the shared manual check-in flow:
-     * the picked member's unique code becomes the search term, then the
-     * existing entry point resolves services and opens the standard
-     * check-in overlay (candidate picker included for multi-match).
-     */
+    
+
     public function openManualCheckInForMember(int $memberId): void
     {
         if (! collect($this->manualSearchResults)
@@ -160,10 +148,8 @@ class Reception extends Page
         $this->closeStaleOverlays();
     }
 
-    /**
-     * Close an open overlay whose entry is no longer pending — covers missed
-     * broadcast events (e.g. the entry was handled in another tab).
-     */
+    
+
     private function closeStaleOverlays(): void
     {
         $hasSignupOverlay = $this->selectedQueueEntryId && ($this->showVerifyOverlay || $this->showConfirmOverlay);
@@ -266,10 +252,8 @@ class Reception extends Page
         $this->closeOverlayIfStale($entry->id, false);
     }
 
-    /**
-     * Close the open overlay when the entry it shows was handled or expired
-     * by another tab / device, so every tab stays in sync.
-     */
+    
+
     private function closeOverlayIfStale(int $queueEntryId, bool $notifyHandledElsewhere): void
     {
         $isConfirm = $this->showConfirmOverlay && (int) $this->selectedQueueEntryId === $queueEntryId;
@@ -369,8 +353,8 @@ class Reception extends Page
     {
         $this->activeTab = $tab;
 
-        // Any open overlay must be closed through Filament's modal manager
-        // before this state teardown morphs it out of the DOM (Modals-1).
+        
+        
         if ($this->showConfirmOverlay) {
             $this->dispatch('close-modal', id: 'confirm-overlay');
         }
@@ -471,9 +455,9 @@ class Reception extends Page
 
     public function closeConfirmOverlay(): void
     {
-        // Close through Filament's modal manager BEFORE the state clear can
-        // morph the modal out of the DOM — an unmount while open leaves a
-        // stuck semi-transparent window stacked on top of the next modal.
+        
+        
+        
         $this->dispatch('close-modal', id: 'confirm-overlay');
 
         $this->showConfirmOverlay = false;

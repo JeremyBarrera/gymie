@@ -8,18 +8,12 @@ use App\Models\Invoice;
 use App\Support\Data;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Invoice observer.
- *
- * Responsible for triggering invoice-related side effects (emails).
- */
 class InvoiceObserver
 {
     public function __construct(private readonly SettingsRepository $settingsRepository) {}
 
-    /**
-     * Handle the Invoice "created" event.
-     */
+    
+
     public function created(Invoice $invoice): void
     {
         $settings = $this->settingsRepository->get();
@@ -52,5 +46,5 @@ class InvoiceObserver
         )->afterCommit();
     }
 
-    // Other lifecycle events intentionally left unhandled for v1.
+    
 }

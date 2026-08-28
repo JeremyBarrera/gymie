@@ -15,11 +15,6 @@ use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
-/**
- * Persist a follow-up alert for a recipient exactly the way the database
- * notification channel does, with a known UUID so same-second inserts never
- * make row retrieval ambiguous.
- */
 function o6Send(User $recipient, array $payloadOverrides = []): DatabaseNotification
 {
     $notification = new DatabaseNotification;
@@ -34,9 +29,6 @@ function o6Send(User $recipient, array $payloadOverrides = []): DatabaseNotifica
     return $notification;
 }
 
-/**
- * @return array<string, mixed> The shared alert payload contract.
- */
 function o6Payload(array $overrides = []): array
 {
     return array_merge([
@@ -102,7 +94,7 @@ it('opens one modal through the filament modal manager and closes it before clea
         ->assertDispatched('close-modal', id: 'notification-bell-modal')
         ->assertSet('notifications', []);
 
-    // A second close (e.g. the client-side `modal-closed` echo) is a no-op.
+    
     $component->call('closeBell')->assertNotDispatched('close-modal');
 });
 
@@ -128,7 +120,7 @@ it('lists active alerts with payload context and device-formatted occurred_at', 
         ->assertSee('Toro')
         ->assertSee('GY-42');
 
-    /** @var array<string, mixed> $row */
+    
     $row = $component->instance()->notifications[0];
 
     expect($row['unread'])->toBeTrue()
@@ -204,7 +196,7 @@ it('archives from the active tab and unarchives back from the archive tab', func
     expect(DB::table('notifications')
         ->where('id', (string) $notification->getKey())
         ->value('archived_at'))->not->toBeNull()
-        // Other alerts stay untouched.
+        
         ->and(DB::table('notifications')
             ->where('id', (string) $other->getKey())
             ->value('archived_at'))->toBeNull()
@@ -253,8 +245,8 @@ it('re-fetches from the database when the escalation handler fires', function ()
 
     $component = o6Bell($owner)->call('openBell');
 
-    // Another tab archives the row after this component mounted; the event
-    // payload must never be trusted — the handler re-queries the database.
+    
+    
     DB::table('notifications')
         ->where('id', (string) $alert->getKey())
         ->update(['archived_at' => now()]);
@@ -320,7 +312,7 @@ it('lists every user notification without per-row queries', function (): void {
 
     $component = o6Bell($owner);
 
-    // Warm relation caches so both measurements see identical conditions.
+    
     $component->instance()->loadNotifications();
 
     DB::connection()->enableQueryLog();
@@ -339,8 +331,8 @@ it('lists every user notification without per-row queries', function (): void {
     DB::flushQueryLog();
     DB::connection()->disableQueryLog();
 
-    // All display context rides in the JSON payload — doubling the row count
-    // must not add a single query.
+    
+    
     expect($grownQueries)->toBe($baselineQueries);
 });
 
@@ -351,7 +343,7 @@ it('removes the legacy dedicated notification center artifacts', function (): vo
         ->and(file_exists(resource_path('views/filament/pages/notifications.blade.php')))->toBeFalse()
         ->and(file_exists(resource_path('views/filament/pages/partials/notification-item.blade.php')))->toBeFalse()
         ->and(file_exists(resource_path('views/filament/pages/partials/user-channel-listener.blade.php')))->toBeFalse()
-        // Deleting the page class removes its route with it.
+        
         ->and($this->actingAs($owner)->get('/notifications')->status())->toBe(404);
 });
 

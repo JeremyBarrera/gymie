@@ -43,9 +43,8 @@ class FollowUpResource extends Resource
         ];
     }
 
-    /**
-     * @param  Builder<FollowUp>  $query
-     */
+    
+
     public static function modifyGlobalSearchQuery(Builder $query, string $search): void
     {
         $query->with(['enquiry', 'user']);
@@ -87,25 +86,22 @@ class FollowUpResource extends Resource
         return $details;
     }
 
-    /**
-     * Define the form schema for the resource.
-     */
+    
+
     public static function form(Schema $schema): Schema
     {
         return FollowUpForm::configure($schema);
     }
 
-    /**
-     * Get the Filament table configuration for the list view.
-     */
+    
+
     public static function table(Table $table): Table
     {
         return FollowUpTable::configure($table);
     }
 
-    /**
-     * Add infolist to the resource.
-     */
+    
+
     public static function infolist(Schema $schema): Schema
     {
         return FollowUpInfolist::configure($schema);

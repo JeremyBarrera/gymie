@@ -12,16 +12,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-/**
- * Members CRUD endpoints.
- */
 class MembersController extends ApiController
 {
     private const RESOURCE_KEY = 'members';
 
-    /**
-     * Display a listing of the resource.
-     */
+    
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->requirePermission($request, 'ViewAny:Member');
@@ -35,9 +31,8 @@ class MembersController extends ApiController
         return MemberResource::collection($query->paginate($perPage));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
+
     public function store(MemberStoreRequest $request): MemberResource
     {
         $this->requirePermission($request, 'Create:Member');
@@ -53,9 +48,8 @@ class MembersController extends ApiController
         return new MemberResource($member->refresh());
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
+
     public function show(Request $request, Member $member): MemberResource
     {
         $this->requirePermission($request, 'View:Member');
@@ -63,9 +57,8 @@ class MembersController extends ApiController
         return new MemberResource($member);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    
+
     public function update(MemberUpdateRequest $request, Member $member): MemberResource
     {
         $this->requirePermission($request, 'Update:Member');
@@ -87,17 +80,15 @@ class MembersController extends ApiController
         return new MemberResource($member->refresh());
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
+
     public function destroy(Request $request, Member $member): JsonResponse
     {
         return $this->deleteModel($request, 'Delete:Member', $member);
     }
 
-    /**
-     * Restore a soft deleted member.
-     */
+    
+
     public function restore(Request $request, int $member): MemberResource
     {
         $record = $this->restoreSoftDeleted($request, 'RestoreAny:Member', Member::class, $member);
@@ -105,9 +96,8 @@ class MembersController extends ApiController
         return new MemberResource($record->refresh());
     }
 
-    /**
-     * Permanently delete a member.
-     */
+    
+
     public function forceDelete(Request $request, int $member): JsonResponse
     {
         $this->forceDeleteSoftDeleted($request, 'ForceDeleteAny:Member', Member::class, $member);

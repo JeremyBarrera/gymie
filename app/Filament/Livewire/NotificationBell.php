@@ -9,23 +9,9 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Carbon;
 use Livewire\Component;
 
-/**
- * Topbar notification bell: one modal holding every notification of the
- * signed-in user across two tabs — Active (archived_at null) and Archive.
- *
- * Every display field (member, actor, action, occurred_at) lives inside the
- * notification's JSON payload, so listing never queries related rows — no
- * N+1 as alert volume grows. The private `user.{id}` Echo subscription lives
- * inside the component view; its handlers treat events as refresh signals
- * and re-query from the database, and socket reconnects resync the same way.
- *
- * Pagination choice: load-latest-N with a "load more" control. Inside a
- * modal, offset pagination links are clunky and lose scroll context; a
- * limit+1 fetch computes hasMore without an extra count query.
- */
 class NotificationBell extends Component
 {
-    /** Contractual follow-up actions carrying an `app.follow_up.alert_*` label. */
+    
     private const ALERT_ACTIONS = [
         'override_checkin',
         'new_subscription',
@@ -38,14 +24,14 @@ class NotificationBell extends Component
 
     public const UNREAD_BADGE_CAP = 9;
 
-    /** @var list<string> Tabs of the bell modal. */
+    
     public const TABS = ['active', 'archived'];
 
     public string $activeTab = 'active';
 
     public bool $modalOpen = false;
 
-    /** @var list<array<string, mixed>> Display rows of the current tab. */
+    
     public array $notifications = [];
 
     public bool $hasMore = false;
@@ -54,10 +40,8 @@ class NotificationBell extends Component
         'followUpEscalated' => 'onFollowUpEscalated',
     ];
 
-    /**
-     * Unread, non-archived notifications behind the topbar badge — archived
-     * rows are deliberately filed away and no longer demand attention.
-     */
+    
+
     public function getUnreadCountProperty(): int
     {
         return auth()->user()->notifications()
@@ -66,9 +50,8 @@ class NotificationBell extends Component
             ->count();
     }
 
-    /**
-     * Badge label capped at UNREAD_BADGE_CAP ("9+"), null when nothing to show.
-     */
+    
+
     public function getUnreadBadgeProperty(): ?string
     {
         $count = $this->unreadCount;
@@ -82,10 +65,8 @@ class NotificationBell extends Component
             : (string) $count;
     }
 
-    /**
-     * Opens the single notification modal through Filament's modal manager,
-     * resetting any previous tab/limit state first.
-     */
+    
+
     public function openBell(): void
     {
         $this->activeTab = 'active';
@@ -96,20 +77,17 @@ class NotificationBell extends Component
         $this->dispatch('open-modal', id: 'notification-bell-modal');
     }
 
-    /**
-     * Idempotent close: reachable both from this component and from the
-     * client closing the modal directly (X button, escape, click-away),
-     * whose `modal-closed` echo must not loop into another dispatch.
-     */
+    
+
     public function closeBell(): void
     {
         if (! $this->modalOpen) {
             return;
         }
 
-        // Close through Filament's modal manager BEFORE the state clear can
-        // morph the modal out of the DOM — an unmount while open leaves a
-        // stuck semi-transparent window stacked on top of the next modal.
+        
+        
+        
         $this->dispatch('close-modal', id: 'notification-bell-modal');
 
         $this->modalOpen = false;
@@ -127,10 +105,8 @@ class NotificationBell extends Component
         $this->loadNotifications();
     }
 
-    /**
-     * Loads the latest PER_LOAD rows of the current tab; also bound to Echo
-     * reconnects so events missed while disconnected resync from the database.
-     */
+    
+
     public function loadNotifications(): void
     {
         [$rows, $hasMore] = $this->fetchNotifications();
@@ -139,10 +115,8 @@ class NotificationBell extends Component
         $this->hasMore = $hasMore;
     }
 
-    /**
-     * Extends the current tab by the next PER_LOAD rows — a fresh fetch that
-     * replaces the list rather than a client-side delta merge.
-     */
+    
+
     public function loadMore(): void
     {
         [$rows, $hasMore] = $this->fetchNotifications(count($this->notifications) + self::PER_LOAD);
@@ -151,10 +125,8 @@ class NotificationBell extends Component
         $this->hasMore = $hasMore;
     }
 
-    /**
-     * Refresh signal only — the database row stays the source of truth, so
-     * re-fetch instead of applying the payload as a client-side delta.
-     */
+    
+
     public function onFollowUpEscalated(array $payload = []): void
     {
         $this->loadNotifications();
@@ -181,7 +153,7 @@ class NotificationBell extends Component
             return;
         }
 
-        // forceFill bypasses DatabaseNotification's mass-assignment guards.
+        
         $notification->forceFill(['archived_at' => now()])->save();
 
         $this->loadNotifications();
@@ -205,12 +177,8 @@ class NotificationBell extends Component
         return view('livewire.notification-bell');
     }
 
-    /**
-     * Fetches up to `$limit + 1` display rows of the current tab; the extra
-     * row only answers "is there more?" without a second count query.
-     *
-     * @return array{0: list<array<string, mixed>>, 1: bool}
-     */
+    
+
     private function fetchNotifications(?int $limit = null): array
     {
         $limit ??= self::PER_LOAD;
@@ -234,7 +202,7 @@ class NotificationBell extends Component
 
     private function findNotification(string $notificationId): ?DatabaseNotification
     {
-        /** @var DatabaseNotification|null $notification */
+        
         $notification = auth()->user()->notifications()
             ->whereKey($notificationId)
             ->first();
@@ -242,10 +210,8 @@ class NotificationBell extends Component
         return $notification;
     }
 
-    /**
-     * @return array<string, mixed> Display-ready row built from the stored
-     *                              payload — no related-row lookups.
-     */
+    
+
     private function displayRow(DatabaseNotification $notification): array
     {
         $data = is_array($notification->data) ? $notification->data : [];

@@ -50,9 +50,8 @@ class SubscriptionResource extends Resource
         ];
     }
 
-    /**
-     * @param  Builder<Subscription>  $query
-     */
+    
+
     public static function modifyGlobalSearchQuery(Builder $query, string $search): void
     {
         $query->with(['member', 'plan']);
@@ -89,33 +88,29 @@ class SubscriptionResource extends Resource
         return $details;
     }
 
-    /**
-     * Define the form schema for the resource.
-     */
+    
+
     public static function form(Schema $schema): Schema
     {
         return SubscriptionForm::configure($schema);
     }
 
-    /**
-     * Define the table for listing records in the resource.
-     */
+    
+
     public static function table(Table $table): Table
     {
         return SubscriptionTable::configure($table);
     }
 
-    /**
-     * Define the infolist schema for the resource.
-     */
+    
+
     public static function infolist(Schema $schema): Schema
     {
         return SubscriptionInfolist::configure($schema);
     }
 
-    /**
-     * Get the list of relations for this resource.
-     */
+    
+
     public static function getRelations(): array
     {
         return [
@@ -123,9 +118,8 @@ class SubscriptionResource extends Resource
         ];
     }
 
-    /**
-     * Get the list of pages for this resource.
-     */
+    
+
     public static function getPages(): array
     {
         return [
@@ -136,13 +130,12 @@ class SubscriptionResource extends Resource
         ];
     }
 
-    /**
-     * @return Builder<Subscription>
-     */
+    
+
     public static function getEloquentQuery(): Builder
     {
-        // The member's own location scope restricts visibility to the
-        // account's accessible locations (derived from the member's plans).
+        
+        
         return parent::getEloquentQuery()->whereHas('member');
     }
 }

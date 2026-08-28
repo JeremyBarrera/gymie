@@ -26,9 +26,8 @@ use Illuminate\Support\Str;
 
 class UserTable
 {
-    /**
-     * Configure the user table schema.
-     */
+    
+
     public static function configure(Table $table): Table
     {
         return $table

@@ -116,7 +116,7 @@ it('returns approved with checkedIn true for a signup that auto-checked in', fun
     $plan = statusLimitedPlan($svc);
     $staff = statusStaff();
     
-    // Member must have same contact as signup entry payload
+    
     $member = Member::factory()->create([
         'status' => Status::Active->value,
         'contact' => '+15551234567',
@@ -141,7 +141,7 @@ it('returns approved with checkedIn true for a signup that auto-checked in', fun
     $entry = statusSignupEntry($loc);
     $entry->update(['status' => 'approved']);
     
-    // Create a PlanCheckIn for the member at this location
+    
     PlanCheckIn::create([
         'member_id' => $member->id,
         'subscription_id' => $sub->id,

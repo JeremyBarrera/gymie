@@ -22,34 +22,28 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
-/**
- * Shared sign-up verification flow used by the Reception page and the
- * global LiveSignupPopup component.
- *
- * Hosts must declare the public `$selectedQueueEntryId` property.
- */
 trait HandlesSignupVerification
 {
     public bool $showVerifyOverlay = false;
 
     public int $verifyStep = 1;
 
-    /** @var array<string, mixed> */
+    
     public array $verifyForm = [];
 
     public ?string $verifyPhoto = null;
 
-    /** @var array<int> Sign-up entries that arrived while the overlay was already open. */
+    
     public array $popupQueue = [];
 
     public bool $verifyCheckIn = false;
 
     public ?int $verifyCheckInServiceId = null;
 
-    /** Temporary hold for the member created during confirmSignup — used by step 4. */
+    
     public ?Member $verifyCreatedMember = null;
 
-    /** When signup is verified with check-in, hold the signup queue id until the manual check-in resolves so waiting can show the correct success copy. */
+    
     public ?int $pendingSignupCheckInQueueId = null;
 
     public function getVerifyPlansProperty(): array
@@ -68,12 +62,8 @@ trait HandlesSignupVerification
         return PaymentMethod::options();
     }
 
-    /**
-     * Per-service states for the just-created member (step 4).
-     * Every service of the sold plan shows `access` — others show `no_access`.
-     *
-     * @return array<int, array{id: int, name: string, state: string, subscription_id: int|null, warning: string|null}>
-     */
+    
+
     public function getVerifyCheckInServicesProperty(): array
     {
         if (! $this->verifyCreatedMember) {
@@ -132,10 +122,8 @@ trait HandlesSignupVerification
             ->all();
     }
 
-    /**
-     * Open the verify overlay for a live sign-up entry, or queue it when the
-     * overlay is already showing another entry.
-     */
+    
+
     public function queueOrOpenSignup(QueueEntry $entry): void
     {
         if (! in_array($entry->status, ['waiting', 'attending'], true)) {
@@ -170,7 +158,7 @@ trait HandlesSignupVerification
         ]));
         $this->verifyForm['sale'] = $this->defaultSale();
 
-        // Pre-select the first available plan so the dropdown is never empty.
+        
         $plans = $this->verifyPlans;
         if (! empty($plans)) {
             $firstPlanId = array_key_first($plans);
@@ -185,9 +173,9 @@ trait HandlesSignupVerification
                 [$dialCode, $local] = Helpers::parsePhoneField($raw);
                 $this->verifyForm[$phoneField] = $local;
 
-                // Only prefixed values carry a real dial code; for unprefixed
-                // (legacy) data the placeholder is a display default, not a
-                // stored prefix, so it must not be re-combined on save.
+                
+                
+                
                 if (str_starts_with(trim((string) $raw), '+')) {
                     $this->verifyForm[$phoneField.'_dial_code'] = $dialCode;
                 }
@@ -205,8 +193,8 @@ trait HandlesSignupVerification
         $this->resetVerifyOverlay();
         $this->openNextFromPopupQueue();
 
-        // Step 4 only renders after the member was persisted, so closing
-        // there resolves the sign-up instead of leaving it in the queue.
+        
+        
         if ($memberCreated && $closedId > 0) {
             $this->removeApprovedSignupFromView($closedId);
         }
@@ -214,9 +202,9 @@ trait HandlesSignupVerification
 
     private function resetVerifyOverlay(): void
     {
-        // Close through Filament's modal manager BEFORE the state clear can
-        // morph the modal out of the DOM — an unmount while open leaves a
-        // stuck semi-transparent window stacked on top of the next modal.
+        
+        
+        
         $this->dispatch('close-modal', id: 'verify-overlay');
 
         $closedId = (int) $this->selectedQueueEntryId;
@@ -244,9 +232,8 @@ trait HandlesSignupVerification
         }
     }
 
-    /**
-     * Hook for hosts that track sign-ups closed without being attended.
-     */
+    
+
     protected function verifyOverlayClosed(int $queueEntryId): void {}
 
     protected function finalizePendingSignupCheckIn(bool $checkedIn): void
@@ -306,9 +293,8 @@ trait HandlesSignupVerification
         $this->dispatch('verify-overlay-closed');
     }
 
-    /**
-     * Recompute the step-3 sale summary whenever a sale field changes.
-     */
+    
+
     public function updatedVerifyForm(mixed $value, string $key): void
     {
         if (str_starts_with($key, 'sale.')) {
@@ -316,9 +302,8 @@ trait HandlesSignupVerification
         }
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     private function defaultSale(): array
     {
         return [
@@ -459,9 +444,8 @@ trait HandlesSignupVerification
         $this->removeApprovedSignupFromView($entry->id);
     }
 
-    /**
-     * Execute the optional post-signup check-in (step 4).
-     */
+    
+
     public function confirmVerifyCheckIn(): void
     {
         if (! $this->verifyCreatedMember || ! $this->verifyCheckInServiceId) {
@@ -536,13 +520,8 @@ trait HandlesSignupVerification
         }
     }
 
-    /**
-     * Build the mandatory first-sale payload from the step-3 fields. The
-     * invoice date/due date default to today; the invoice number is
-     * generated by the Invoice model on save.
-     *
-     * @return array<string, mixed>
-     */
+    
+
     private function buildSale(): array
     {
         $sale = $this->verifyForm['sale'] ?? [];
@@ -570,15 +549,12 @@ trait HandlesSignupVerification
         ];
     }
 
-    /**
-     * Hook for hosts that render a sign-up queue (e.g. the Reception page).
-     */
+    
+
     protected function removeApprovedSignupFromView(int $queueEntryId): void {}
 
-    /**
-     * Close the verify overlay when the entry it shows was handled or expired
-     * by another tab / device, so every tab stays in sync.
-     */
+    
+
     public function closeVerifyIfStale(int $queueEntryId, bool $notifyHandledElsewhere): void
     {
         if (! $this->showVerifyOverlay || (int) $this->selectedQueueEntryId !== $queueEntryId) {

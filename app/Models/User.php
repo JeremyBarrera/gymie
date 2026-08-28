@@ -21,14 +21,11 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, HasAvatar
 {
-    /** @use HasFactory<UserFactory> */
+    
     use HasApiTokens, HasFactory, HasRoles, Notifiable, ScopedByLocation, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    
+
     protected $fillable = [
         'photo',
         'name',
@@ -46,21 +43,15 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         'sound_alerts',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+    
+
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    
+
     protected function casts(): array
     {
         return [
@@ -74,56 +65,44 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
 
     protected $dates = ['deleted_at'];
 
-    /**
-     * Get the followUps for the user.
-     */
+    
+
     public function followUps(): HasMany
     {
         return $this->hasMany(FollowUp::class);
     }
 
-    /**
-     * Get the enquiries for the user.
-     */
+    
+
     public function enquiries(): HasMany
     {
         return $this->hasMany(Enquiry::class);
     }
 
-    /**
-     * Get the URL for the user's Filament avatar.
-     *
-     * @return string|null The URL of the user's avatar or null if not set.
-     */
+    
+
     public function getFilamentAvatarUrl(): ?string
     {
         return $this->photo ? Helpers::photoUrl($this->photo) : null;
     }
 
-    /**
-     * Get the locations this user has access to.
-     */
+    
+
     public function locations(): BelongsToMany
     {
         return $this->belongsToMany(Location::class, 'user_locations')
             ->withTimestamps();
     }
 
-    /**
-     * Whether the user is the top-level owner that provisions locations and
-     * may access data across every location.
-     */
+    
+
     public function isOwner(): bool
     {
         return $this->hasRole(PermissionFeatureFlags::OWNER_ROLE);
     }
 
-    /**
-     * Determine if the user can access the Filament panel.
-     *
-     * @param  Panel  $panel  The Filament panel instance.
-     * @return bool True if the user can access the panel, false otherwise.
-     */
+    
+
     public function canAccessPanel(Panel $panel): bool
     {
         return true;

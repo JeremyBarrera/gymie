@@ -19,10 +19,8 @@ return new class extends Migration
         self::rename(self::NEW_NAME, self::OLD_NAME);
     }
 
-    /**
-     * Rename a permission row, carrying role and direct-model assignments
-     * over to the (possibly already existing) new name. Safe to re-run.
-     */
+    
+
     private static function rename(string $from, string $to): void
     {
         $guard = 'web';

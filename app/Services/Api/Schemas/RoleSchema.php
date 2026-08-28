@@ -4,16 +4,12 @@ namespace App\Services\Api\Schemas;
 
 use Spatie\Permission\Models\Role;
 
-/**
- * Single source of truth for Role API serialization.
- */
 final class RoleSchema
 {
     private function __construct() {}
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     public static function resource(Role $role): array
     {
         return [

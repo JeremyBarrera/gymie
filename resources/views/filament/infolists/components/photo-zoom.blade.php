@@ -1,12 +1,10 @@
 <div>
-    @php
-        $photo = $getState();
+    @php $photo = $getState();
         $name = $record->name ?? '';
         $src = $photo ? asset('storage/'.$photo) : null;
         $defaultUrl = 'https://ui-avatars.com/api/?background=000&color=fff&name='.urlencode($name);
         $displaySrc = $src ?? $defaultUrl;
-        $isZoomable = filled($photo);
-    @endphp
+        $isZoomable = filled($photo); @endphp
     @if($isZoomable)
         <div class="group relative inline-flex h-[180px] w-[180px] shrink-0 overflow-hidden rounded-full">
             <img

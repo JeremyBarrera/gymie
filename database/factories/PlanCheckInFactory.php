@@ -9,9 +9,6 @@ use App\Models\Service;
 use App\Models\Subscription;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<PlanCheckIn>
- */
 class PlanCheckInFactory extends Factory
 {
     public function definition(): array

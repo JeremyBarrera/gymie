@@ -49,7 +49,7 @@ class LocationResource extends Resource
 
     public static function getGlobalSearchResultDetails(Model $record): array
     {
-        /** @var Location $record */
+        
         $details = [];
 
         if (filled($record->address)) {
@@ -100,19 +100,17 @@ class LocationResource extends Resource
         ];
     }
 
-    /**
-     * @return Builder<Location>
-     */
+    
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->withCount('members');
     }
 
-    /**
-     * @param  Builder<Location>  $query
-     */
+    
+
     public static function modifyGlobalSearchQuery(Builder $query, string $search): void
     {
-        // No extra eager loads required for searchable columns on the model.
+        
     }
 }

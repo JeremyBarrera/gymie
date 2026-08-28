@@ -11,12 +11,8 @@ use Filament\Support\Enums\TextSize;
 
 class InvoiceSummaryRows
 {
-    /**
-     * The shared fee → tax → discount → total → paid → due summary rows.
-     *
-     * @param  callable(mixed): ?object  $amountsFor
-     * @return non-empty-list<Flex>
-     */
+    
+
     public static function rows(callable $amountsFor): array
     {
         $amount = static fn (string $key): Closure => static fn ($record): string => Helpers::formatCurrency($amountsFor($record)?->{$key});
@@ -44,14 +40,8 @@ class InvoiceSummaryRows
         ];
     }
 
-    /**
-     * The canonical label → value money row: muted single-line label on the
-     * start edge, medium-weight amount on the end edge. The value side is the
-     * only shrinkable column and truncates when space runs out, so extreme
-     * amounts can never push the row wider than its container.
-     *
-     * @param  string|callable(mixed): string  $label
-     */
+    
+
     public static function row(string|callable $label, string $key, Closure $amount, ?Closure $hidden = null): Flex
     {
         $row = Flex::make([

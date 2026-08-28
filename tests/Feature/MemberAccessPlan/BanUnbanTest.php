@@ -105,14 +105,14 @@ it('hides the ban action from staff without the permission and refuses crafted c
 
     $component = Livewire::test(ListMembers::class);
 
-    // The standard call path refuses hidden actions outright...
+    
     try {
         $component->callAction(TestAction::make('ban')->table($member));
         $this->fail('Expected the hidden action call to be refused.');
     } catch (Throwable) {
     }
 
-    // ...and the in-closure authorization backs the crafted-request path.
+    
     try {
         $action->call([]);
         $this->fail('Expected the crafted ban call to be refused.');

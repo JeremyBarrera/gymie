@@ -9,9 +9,8 @@ it('persists the selected locale in settings', function (): void {
 
     $repository = new class implements SettingsRepository
     {
-        /**
-         * @var array<string, mixed>
-         */
+        
+
         public array $lastPut = [];
 
         public function get(): array

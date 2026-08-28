@@ -44,9 +44,8 @@ class PlanResource extends Resource
         ];
     }
 
-    /**
-     * @param  Builder<Plan>  $query
-     */
+    
+
     public static function modifyGlobalSearchQuery(Builder $query, string $search): void
     {
         $query->with(['services']);
@@ -54,7 +53,7 @@ class PlanResource extends Resource
 
     public static function getGlobalSearchResultDetails(Model $record): array
     {
-        /** @var Plan $record */
+        
         $details = [];
 
         if (filled($record->code)) {
@@ -76,25 +75,22 @@ class PlanResource extends Resource
         return $details;
     }
 
-    /**
-     * Define the form schema for the resource.
-     */
+    
+
     public static function form(Schema $schema): Schema
     {
         return PlanForm::configure($schema);
     }
 
-    /**
-     * Get the Filament table configuration for the list view.
-     */
+    
+
     public static function table(Table $table): Table
     {
         return PlanTable::configure($table);
     }
 
-    /**
-     * Add infolist to the resource.
-     */
+    
+
     public static function infolist(Schema $schema): Schema
     {
         return PlanInfolist::configure($schema);

@@ -20,9 +20,8 @@ use Illuminate\Support\Facades\Blade;
 
 class EnquiryForm
 {
-    /**
-     * Configure the enquiry form schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

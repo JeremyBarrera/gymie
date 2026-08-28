@@ -452,12 +452,10 @@
         let checkinFirstFailAt = 0;
         const CHECKIN_FAIL_WINDOW_MS = 30000;
 
-        @php
-            $scanMessages = [
+        @php $scanMessages = [
                 'no_member_found' => __('app.scan.no_member_found'),
                 'something_went_wrong' => __('app.scan.something_went_wrong'),
-            ];
-        @endphp
+            ]; @endphp
         const messages = @json($scanMessages);
 
         document.getElementById('locale-switcher').addEventListener('change', (e) => {
@@ -471,13 +469,11 @@
         const valueTextField = document.getElementById('value-text');
         const valuePhoneField = document.getElementById('value-phone-field');
         if (identifierType && valueInput) {
-            @php
-                $scanPlaceholders = [
+            @php $scanPlaceholders = [
                     'contact' => \App\Helpers\Helpers::getPhoneLocalPlaceholder(),
                     'code' => __('app.placeholders.member_code'),
                     'government_id' => __('app.placeholders.government_id'),
-                ];
-            @endphp
+                ]; @endphp
             const placeholders = @json($scanPlaceholders);
 
             const icons = {
@@ -503,10 +499,6 @@
             };
             identifierType.addEventListener('change', syncInputMode);
             syncInputMode();
-
-            // Navigating back (e.g. from an expired queue) restores the last
-            // selected identifier type without firing `change`, so the input
-            // mode must be re-synced every time the page is shown.
             window.addEventListener('pageshow', syncInputMode);
         }
 

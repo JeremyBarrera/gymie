@@ -12,16 +12,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Plans CRUD endpoints.
- */
 class PlansController extends ApiController
 {
     private const RESOURCE_KEY = 'plans';
 
-    /**
-     * Display a listing of the resource.
-     */
+    
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->requirePermission($request, 'ViewAny:Plan');
@@ -35,9 +31,8 @@ class PlansController extends ApiController
         return PlanResource::collection($query->paginate($perPage));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
+
     public function store(PlanStoreRequest $request): PlanResource
     {
         $this->requirePermission($request, 'Create:Plan');
@@ -56,9 +51,8 @@ class PlansController extends ApiController
         return new PlanResource($plan);
     }
 
-    /**
-     * Display the specified resource.
-     */
+    
+
     public function show(Request $request, Plan $plan): PlanResource
     {
         $this->requirePermission($request, 'View:Plan');
@@ -68,9 +62,8 @@ class PlansController extends ApiController
         return new PlanResource($plan);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+    
+
     public function update(PlanUpdateRequest $request, Plan $plan): PlanResource
     {
         $this->requirePermission($request, 'Update:Plan');
@@ -90,17 +83,15 @@ class PlansController extends ApiController
         return new PlanResource($plan);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    
+
     public function destroy(Request $request, Plan $plan): JsonResponse
     {
         return $this->deleteModel($request, 'Delete:Plan', $plan);
     }
 
-    /**
-     * Restore a soft deleted plan.
-     */
+    
+
     public function restore(Request $request, int $plan): PlanResource
     {
         $record = $this->restoreSoftDeleted($request, 'RestoreAny:Plan', Plan::class, $plan);
@@ -109,9 +100,8 @@ class PlansController extends ApiController
         return new PlanResource($record->refresh());
     }
 
-    /**
-     * Permanently delete a plan.
-     */
+    
+
     public function forceDelete(Request $request, int $plan): JsonResponse
     {
         $this->forceDeleteSoftDeleted($request, 'ForceDeleteAny:Plan', Plan::class, $plan);
@@ -119,12 +109,8 @@ class PlansController extends ApiController
         return $this->noContent();
     }
 
-    /**
-     * Separate the plan attributes from the service pivot ids.
-     *
-     * @param  array<string, mixed>  $validated
-     * @return array{data: array<string, mixed>, service_ids: list<int>|null}
-     */
+    
+
     private static function splitPayload(array $validated): array
     {
         $serviceIds = isset($validated['service_ids']) && is_array($validated['service_ids'])

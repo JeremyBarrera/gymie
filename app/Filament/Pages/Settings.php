@@ -27,28 +27,24 @@ use Illuminate\Database\QueryException;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
-/**
- * @property-read Schema $form
- */
 class Settings extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    /** @var string|null Page title */
+    
     protected static ?string $title = null;
 
-    /** @var string View file for the settings page */
+    
     protected string $view = 'filament.pages.settings';
 
-    /** @var array<string, mixed>|null Stores the settings data */
+    
     public ?array $data = [];
 
-    /** @var string|null Stores the uploaded settings file */
+    
     public ?string $settings_file = null;
 
-    /**
-     * Mount the page and load settings from the storage.
-     */
+    
+
     public function mount(): void
     {
         $settings = Helpers::getSettings();
@@ -67,11 +63,8 @@ class Settings extends Page implements HasForms
         return __('app.settings.title');
     }
 
-    /**
-     * Defines the form schema with multiple tabs.
-     *
-     * @return array<int, Component>
-     */
+    
+
     protected function getFormSchema(): array
     {
         return [
@@ -88,9 +81,8 @@ class Settings extends Page implements HasForms
         ];
     }
 
-    /**
-     * Invoice Tab Schema.
-     */
+    
+
     private function invoiceTab(): Tab
     {
         return
@@ -144,25 +136,23 @@ class Settings extends Page implements HasForms
                 ]);
     }
 
-    /**
-     * Member Tab Schema.
-     */
+    
+
     private function memberTab(): Tab
     {
         return
             Tab::make(__('app.settings.tabs.member'))->icon('heroicon-m-user-group')
                 ->schema([
-                    // Numbering always starts at 1 and self-heals from the
-                    // database — no manual sequence input exists.
+                    
+                    
                     TextInput::make('member.prefix')
                         ->placeholder(__('app.settings.placeholders.prefix'))
                         ->label(__('app.settings.fields.prefix')),
                 ]);
     }
 
-    /**
-     * Charges Tab Schema.
-     */
+    
+
     private function chargesTab(): Tab
     {
         return
@@ -188,9 +178,8 @@ class Settings extends Page implements HasForms
                 ]);
     }
 
-    /**
-     * Expenses Tab Schema.
-     */
+    
+
     private function expensesTab(): Tab
     {
         return
@@ -204,9 +193,8 @@ class Settings extends Page implements HasForms
                 ]);
     }
 
-    /**
-     * Subscriptions Tab Schema.
-     */
+    
+
     private function subscriptionsTab(): Tab
     {
         return
@@ -222,9 +210,8 @@ class Settings extends Page implements HasForms
                 ]);
     }
 
-    /**
-     * Permissions Tab Schema.
-     */
+    
+
     private function permissionsTab(): Tab
     {
         return
@@ -253,9 +240,8 @@ class Settings extends Page implements HasForms
                 ]);
     }
 
-    /**
-     * Notifications Tab Schema.
-     */
+    
+
     private function notificationsTab(): Tab
     {
         return Tab::make(__('app.settings.tabs.notifications'))->icon('heroicon-m-bell-alert')
@@ -303,12 +289,8 @@ class Settings extends Page implements HasForms
             ]);
     }
 
-    /**
-     * Configures a form instance by setting its schema and state path.
-     *
-     * @param  Schema  $schema  The form instance to configure.
-     * @return Schema The configured form instance.
-     */
+    
+
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -316,9 +298,8 @@ class Settings extends Page implements HasForms
             ->statePath('data');
     }
 
-    /**
-     * Persist the current settings.
-     */
+    
+
     public function save(): void
     {
         $settings = $this->data ?? [];

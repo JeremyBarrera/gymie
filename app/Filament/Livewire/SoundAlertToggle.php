@@ -8,13 +8,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
-/**
- * Per-user sound-alerts toggle for the panel topbar.
- *
- * The preference lives on the user record. The acting tab flips instantly
- * via the "sound-alerts-updated" Livewire event; every other open tab of
- * the same user follows over the private "user.{id}" websocket channel.
- */
 class SoundAlertToggle extends Component
 {
     public bool $soundAlerts = false;
@@ -24,13 +17,8 @@ class SoundAlertToggle extends Component
         $this->soundAlerts = (bool) Auth::user()?->sound_alerts;
     }
 
-    /**
-     * Listen for the same user's toggle broadcast on the public
-     * `user.{id}` channel so every other open tab re-renders its icon to
-     * match, exactly like the theme switcher live-syncs across tabs via
-     * `admin.theme`. Public channel (like the theme) avoids private-auth
-     * handshake failures while staying scoped by the known GYMIE_USER_ID.
-     */
+    
+
     protected function getListeners(): array
     {
         $userId = Auth::id();
@@ -56,12 +44,12 @@ class SoundAlertToggle extends Component
         $this->soundAlerts = ! $this->soundAlerts;
         $user->update(['sound_alerts' => $this->soundAlerts]);
 
-        // Fast path for the acting tab; the websocket copy (below) keeps
-        // every other open tab of this user in sync live.
+        
+        
         $this->dispatch('sound-alerts-updated', enabled: $this->soundAlerts);
 
-        // Cross-tab sync is best-effort: a down websocket server must never
-        // break the toggle itself (the acting tab already flipped above).
+        
+        
         try {
             broadcast(new SoundAlertsToggled($user->id, $this->soundAlerts));
         } catch (\Throwable $exception) {

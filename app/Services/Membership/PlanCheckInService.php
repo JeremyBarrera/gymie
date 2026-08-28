@@ -24,23 +24,20 @@ use Illuminate\Support\Facades\DB;
 
 class PlanCheckInService
 {
-    /**
-     * Subscriptions the member may check in against today.
-     *
-     * @return Collection<int, Subscription>
-     */
+    
+
     public function eligibleSubscriptions(Member $member): Collection
     {
-        // Banned is the only member-level hard gate; lifecycle statuses
-        // (inactive/pending) check in like anyone else.
+        
+        
         if ($member->checkInBlocker() !== null) {
             return new Collection;
         }
 
         $today = Carbon::today(AppConfig::timezone())->toDateString();
 
-        // The plan must be available at the location where the check-in
-        // happens (the tenant context), not at a stored member location.
+        
+        
         $locationId = app(TenantContext::class)->locationId();
 
         return $member->subscriptions()
@@ -59,9 +56,8 @@ class PlanCheckInService
             ->values();
     }
 
-    /**
-     * Number of check-ins counted against the subscription's date window.
-     */
+    
+
     public function usedCount(Subscription $subscription): int
     {
         $start = $subscription->start_date?->copy()->startOfDay();
@@ -71,7 +67,7 @@ class PlanCheckInService
             return 0;
         }
 
-        // Evergreen subscriptions (no end date) count every use since start.
+        
         return PlanCheckIn::query()
             ->where('subscription_id', $subscription->id)
             ->where('override', false)
@@ -80,9 +76,8 @@ class PlanCheckInService
             ->count();
     }
 
-    /**
-     * Remaining uses for the subscription, or null when unlimited.
-     */
+    
+
     public function remainingUses(Subscription $subscription): ?int
     {
         $subscription->loadMissing('plan');
@@ -97,9 +92,8 @@ class PlanCheckInService
         return max($limit - $this->usedCount($subscription), 0);
     }
 
-    /**
-     * Whether the member already checked in today for this subscription.
-     */
+    
+
     public function hasCheckedInToday(Subscription $subscription): bool
     {
         $timezone = AppConfig::timezone();
@@ -112,22 +106,15 @@ class PlanCheckInService
             ->exists();
     }
 
-    /**
-     * Whether the member has an overdue invoice (issued/partial with money
-     * due and a due date before today, per `Invoice::effectiveStatus()`).
-     *
-     * This is a hard gate — overrides bypass *eligibility* only, never money
-     * owed. Resolution is editing the invoice due date or recording a
-     * payment.
-     */
+    
+
     public function hasOverdueInvoice(Member $member): bool
     {
         return $this->overdueInvoice($member) !== null;
     }
 
-    /**
-     * The member's most urgent overdue invoice (earliest due date), or null.
-     */
+    
+
     public function overdueInvoice(Member $member): ?Invoice
     {
         return Invoice::query()
@@ -138,30 +125,8 @@ class PlanCheckInService
             ->first();
     }
 
-    /**
-     * Per-service check-in availability for the member at a location.
-     *
-     * Rows cover every service of the location (plus location-less services,
-     * which belong to all locations). Each row carries the member's state:
-     *
-     *  - `access`:    an eligible, fully paid subscription grants the service;
-     *                 a normal check-in is allowed.
-     *  - `unpaid`:    an eligible subscription exists but its latest invoice
-     *                 is not paid in full yet (due date in the future).
-     *  - `overdue`:   the member has money overdue (member-global hard gate),
-     *                 or this service's invoice is past due.
-     *  - `expired`:   the member had a subscription for this service but none
-     *                 is eligible anymore.
-     *  - `uses_exhausted`: the eligible subscription is date-valid and paid,
-     *                 but its plan tracked every allowed use already. Staff
-     *                 resolve it through renewal or an audited override.
-     *  - `no_access`: no eligible subscription for this service.
-     *
-     * Non-access rows carry a translated `warning` and the subscription the
-     * member would check in against, when one exists.
-     *
-     * @return array<int, array{id: int, name: string, state: string, subscription_id: int|null, warning: string|null}>
-     */
+    
+
     public function serviceStatesForMember(Member $member, ?int $locationId = null): array
     {
         $locationId ??= app(TenantContext::class)->locationId();
@@ -251,9 +216,9 @@ class PlanCheckInService
                 continue;
             }
 
-            // Date-valid and paid, but the plan's use quota is spent. Renewal
-            // resolves it like an expiry; an override records an audited,
-            // quota-free check-in.
+            
+            
+            
             if ($this->remainingUses($best) === 0) {
                 $states[] = [
                     'id' => (int) $service->id,
@@ -268,9 +233,9 @@ class PlanCheckInService
                 continue;
             }
 
-            // Same-day duplicate on a limited plan: already checked in today
-            // in the gym's local timezone (PlanCheckIn rows only, not pending
-            // QueueEntry). Must be staff-confirmed with explicit no-count.
+            
+            
+            
             if ($this->hasCheckedInToday($best) && $this->remainingUses($best) !== null) {
                 $states[] = [
                     'id' => (int) $service->id,
@@ -297,19 +262,8 @@ class PlanCheckInService
         return $states;
     }
 
-    /**
-     * Record a check-in for the member against an eligible subscription.
-     *
-     * `$locationId` defaults to the TenantContext location, which callers
-     * that resolve the physical desk explicitly (the Reception overlay)
-     * override so the recorded row matches where the check-in happened.
-     *
-     * @throws MemberInactiveException
-     * @throws OverdueInvoiceException
-     * @throws SubscriptionNotEligibleException
-     * @throws UsesExceededException
-     * @throws DuplicateCheckInRequiresConfirmationException
-     */
+    
+
     public function checkIn(
         Member $member,
         Subscription $subscription,
@@ -368,17 +322,8 @@ class PlanCheckInService
         });
     }
 
-    /**
-     * Record a staff override check-in for the member against a subscription,
-     * bypassing the eligibility, quota, and duplicate checks.
-     *
-     * `$locationId` defaults to the TenantContext location, which callers
-     * that resolve the physical desk explicitly (the Reception overlay)
-     * override so the recorded row matches where the check-in happened.
-     *
-     * @throws MemberInactiveException
-     * @throws OverdueInvoiceException
-     */
+    
+
     public function checkInOverride(
         Member $member,
         ?Subscription $subscription,
@@ -425,9 +370,8 @@ class PlanCheckInService
         });
     }
 
-    /**
-     * Human-readable label for a subscription option on the check-in form.
-     */
+    
+
     public function subscriptionOptionLabel(Subscription $subscription): string
     {
         $subscription->loadMissing(['plan.services']);

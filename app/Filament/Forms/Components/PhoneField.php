@@ -7,12 +7,6 @@ use Filament\Forms\Components\Field;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 
-/**
- * A phone input with a separate dial-code select. The dial code is kept in a
- * virtual `{field}_dial_code` state key next to the field's own state; this
- * component owns the split (hydrate) and combine (dehydrate) logic, so pages
- * never need to touch dial codes themselves.
- */
 class PhoneField extends Field
 {
     protected string $view = 'filament.forms.components.phone-field';

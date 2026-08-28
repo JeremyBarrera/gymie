@@ -10,16 +10,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Expense extends Model
 {
-    /** @use HasFactory<ExpenseFactory> */
+    
     use HasFactory, ScopedByLocation;
 
     protected $attributes = [
         'status' => 'pending',
     ];
 
-    /**
-     * @var list<string>
-     */
+    
+
     protected $fillable = [
         'location_id',
         'name',

@@ -10,14 +10,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-/**
- * Read-only analytics endpoints for dashboards / reports.
- */
 class AnalyticsController extends ApiController
 {
-    /**
-     * Get financial KPIs for a range.
-     */
+    
+
     public function financial(Request $request): JsonResponse
     {
         $range = AnalyticsDateRange::fromFilters($request->all());
@@ -34,9 +30,8 @@ class AnalyticsController extends ApiController
         ]);
     }
 
-    /**
-     * Get membership KPIs for a range.
-     */
+    
+
     public function membership(Request $request): JsonResponse
     {
         $range = AnalyticsDateRange::fromFilters($request->all());
@@ -53,9 +48,8 @@ class AnalyticsController extends ApiController
         ]);
     }
 
-    /**
-     * Cashflow trend (collected vs expenses).
-     */
+    
+
     public function cashflowTrend(Request $request): JsonResponse
     {
         $range = AnalyticsDateRange::fromFilters($request->all());
@@ -99,9 +93,8 @@ class AnalyticsController extends ApiController
         ]);
     }
 
-    /**
-     * Expense breakdown by category for a range.
-     */
+    
+
     public function expenseCategories(Request $request): JsonResponse
     {
         $range = AnalyticsDateRange::fromFilters($request->all());
@@ -112,9 +105,8 @@ class AnalyticsController extends ApiController
         ]);
     }
 
-    /**
-     * Top plans by collected amount.
-     */
+    
+
     public function topPlans(Request $request): JsonResponse
     {
         $range = AnalyticsDateRange::fromFilters($request->all());
@@ -125,9 +117,8 @@ class AnalyticsController extends ApiController
         ]);
     }
 
-    /**
-     * Recent invoice transactions (payments/refunds).
-     */
+    
+
     public function recentTransactions(Request $request): AnonymousResourceCollection
     {
         $limit = (int) $request->query('limit', 5);

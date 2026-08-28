@@ -9,9 +9,6 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
-/**
- * @property-read Member $record
- */
 class ViewMember extends ViewRecord
 {
     protected static string $resource = MemberResource::class;

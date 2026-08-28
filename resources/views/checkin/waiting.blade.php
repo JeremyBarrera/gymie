@@ -104,7 +104,7 @@
             color: var(--c-on-base);
         }
 
-        /* Full-page result overlay */
+        
         .result-overlay {
             position: fixed;
             inset: 0;
@@ -237,8 +237,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const uuid = "{{ $uuid }}";
             const kind = "{{ $kind }}";
-            @php
-                $scanMessages = [
+            @php $scanMessages = [
                     'complete_checkin' => __('app.scan.complete_checkin'),
                     'complete_signup' => __('app.scan.complete_signup'),
                     'complete_signup_checked_in' => __('app.scan.complete_signup_checked_in'),
@@ -250,8 +249,7 @@
                     'denied_generic' => __('app.scan.denied_generic'),
                     'expired' => __('app.scan.expired'),
                     'status_claiming' => __('app.scan.status_claiming'),
-                ];
-            @endphp
+                ]; @endphp
             const messages = @json($scanMessages);
 
             const statusText = document.getElementById('status-text');

@@ -5,8 +5,8 @@ function applyLocale(locale) {
         return;
     }
 
-    // SetAppLocale honours the ?locale= query on every route, so a single
-    // reload mechanism serves both the admin panel and the public pages.
+    
+    
     const url = new URL(window.location.href);
     url.searchParams.set('locale', locale);
     window.location.replace(url.toString());

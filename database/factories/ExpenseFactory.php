@@ -8,16 +8,10 @@ use App\Models\Expense;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
-/**
- * @extends Factory<Expense>
- */
 class ExpenseFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    
+
     public function definition(): array
     {
         $date = Carbon::instance($this->faker->dateTimeBetween('-6 months', 'now'))->startOfDay();

@@ -1,15 +1,4 @@
-/**
- * Live theme sync:
- *  - Visitor screens: `start(tokens)` subscribes to the public
- *    `location.theme.{token}` channels and applies the derived `--c-*`
- *    palette (and the mobile `theme-color` meta) when a location's colors
- *    change.
- *  - Admin panel (auto-detected via the `fi-body` class): subscribes to the
- *    public `admin.theme` channel and live-syncs Filament's light/dark theme
- *    preset between open admin tabs. The user-menu switcher already fires
- *    `theme-changed` with the chosen preset; that change is forwarded to the
- *    server (POST /admin/theme) which broadcasts it to every other tab.
- */
+
 
 const kebab = (key) => key.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 
@@ -44,7 +33,7 @@ const startAdminThemeSync = () => {
                 try {
                     window.Alpine.$data(switcher).theme = e.preset;
                 } catch (err) {
-                    // Switcher not initialised yet — it picks up the stored preset on mount.
+                    
                 }
             }
 

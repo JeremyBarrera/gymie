@@ -11,9 +11,9 @@ return new class extends Migration
         Schema::create('location_tokens', function (Blueprint $table) {
             $table->id();
             $table->string('token', 64)->unique();
-            $table->string('tokenable_type'); // Location::class | Service::class
+            $table->string('tokenable_type'); 
             $table->unsignedBigInteger('tokenable_id');
-            $table->string('kind'); // checkin | signup
+            $table->string('kind'); 
             $table->timestamps();
 
             $table->index(['tokenable_type', 'tokenable_id']);

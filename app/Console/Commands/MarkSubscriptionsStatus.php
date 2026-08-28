@@ -14,25 +14,18 @@ use Illuminate\Database\Eloquent\Collection;
 
 class MarkSubscriptionsStatus extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+    
+
     protected $signature = 'gymie:subscriptions
                             {--mark-expired : Mark expired subscriptions}
                             {--mark-expiring : Mark subscriptions expiring within the configured window}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+    
+
     protected $description = 'Mark subscriptions as expiring or expired';
 
-    /**
-     * Execute the console command.
-     */
+    
+
     public function handle(): int
     {
         $timezone = AppConfig::timezone();
@@ -129,9 +122,8 @@ class MarkSubscriptionsStatus extends Command
         return self::SUCCESS;
     }
 
-    /**
-     * @param  Builder<Subscription>  $query
-     */
+    
+
     private function updateStatusInChunks(Builder $query, string $status): int
     {
         $updatedCount = 0;
@@ -141,7 +133,7 @@ class MarkSubscriptionsStatus extends Command
             ->select($model->getQualifiedKeyName())
             ->chunkById(
                 500,
-                /** @param Collection<int, Subscription> $subscriptions */
+                
                 function (Collection $subscriptions) use (&$updatedCount, $status): void {
                     $updatedCount += Subscription::query()
                         ->whereKey($subscriptions->modelKeys())

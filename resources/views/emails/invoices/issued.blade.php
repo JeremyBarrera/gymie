@@ -1,9 +1,6 @@
-@php
-    /** @var \App\Models\Invoice $invoice */
-    $statusLabel = method_exists($invoice, 'getDisplayStatusLabel')
+@php $statusLabel = method_exists($invoice, 'getDisplayStatusLabel')
         ? $invoice->getDisplayStatusLabel()
-        : (string) ($invoice->status?->value ?? $invoice->status ?? __('app.status.issued'));
-@endphp
+        : (string) ($invoice->status?->value ?? $invoice->status ?? __('app.status.issued')); @endphp
 
 @extends('emails.invoices.layout')
 

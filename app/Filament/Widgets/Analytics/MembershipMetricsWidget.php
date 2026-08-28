@@ -10,9 +10,6 @@ use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
-/**
- * Membership insights widget.
- */
 class MembershipMetricsWidget extends StatsOverviewWidget
 {
     use InteractsWithPageFilters;
@@ -22,14 +19,12 @@ class MembershipMetricsWidget extends StatsOverviewWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    /**
-     * @var int | array<string, ?int> | null
-     */
+    
+
     protected int|array|null $columns = 4;
 
-    /**
-     * @return array<int, Stat>
-     */
+    
+
     protected function getStats(): array
     {
         $range = AnalyticsDateRange::fromFilters($this->pageFilters);

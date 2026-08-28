@@ -18,13 +18,6 @@ use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-/**
- * Expired-path renewal popup: opened on top of the check-in overlay for a
- * service row in the `expired` state, sells a new subscription through
- * SubscriptionRenewalService::renew() (never a hand-rolled
- * Subscription::create), then hands back to the host so the normal check-in
- * runs and overlay + popup close together.
- */
 class ExpiredSubscriptionModal extends Component
 {
     public ?int $memberId = null;
@@ -37,7 +30,7 @@ class ExpiredSubscriptionModal extends Component
 
     public string $paymentMethod = 'cash';
 
-    /** Staff-picked dates — never defaulted to today. */
+    
     public ?string $startDate = null;
 
     public ?string $endDate = null;
@@ -62,8 +55,8 @@ class ExpiredSubscriptionModal extends Component
         $this->serviceId = (int) $serviceId;
         $this->previousSubscriptionId = (int) $previous->id;
 
-        // UI-9 default: the expired subscription's own plan, falling back to
-        // the first active plan of the service when that plan is gone.
+        
+        
         $defaultPlan = Plan::withTrashed()->find($previous->plan_id);
         $available = $this->planOptions;
 
@@ -80,11 +73,8 @@ class ExpiredSubscriptionModal extends Component
         $this->dispatch('open-modal', id: 'expired-subscription-modal');
     }
 
-    /**
-     * Active plans of the service available at the current tenant location.
-     *
-     * @return array<int, string>
-     */
+    
+
     public function getPlanOptionsProperty(): array
     {
         if ($this->serviceId === null) {
@@ -151,10 +141,10 @@ class ExpiredSubscriptionModal extends Component
         }
 
         try {
-            // Lock + re-check inside a transaction so a double submit can't
-            // chain two renewals off the same expired subscription; renew()
-            // runs its own transaction for the multi-table write itself.
-            /** @var array{subscription: Subscription, invoice: Invoice} $result */
+            
+            
+            
+            
             $result = DB::transaction(function () use ($previous, $member): array {
                 $freshPrevious = Subscription::query()
                     ->whereKey($previous->id)

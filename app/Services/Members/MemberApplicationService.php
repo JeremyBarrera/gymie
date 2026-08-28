@@ -15,20 +15,10 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
-/**
- * Approves a sign-up application: validates the submitted details, photo and
- * mandatory first sale (plan + invoice), then creates the member (active),
- * its subscription, its invoice and the application record inside a single
- * transaction.
- *
- * This service is shared by the reception live flow and any future admin or
- * API approval entry point, so sign-up handling stays consistent.
- */
 class MemberApplicationService
 {
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     public function signupRules(): array
     {
         return [
@@ -44,12 +34,8 @@ class MemberApplicationService
         ];
     }
 
-    /**
-     * Validation rules for the mandatory first sale (plan + invoice) that
-     * must accompany every member creation.
-     *
-     * @return array<string, mixed>
-     */
+    
+
     public function saleRules(): array
     {
         return [
@@ -66,31 +52,15 @@ class MemberApplicationService
         ];
     }
 
-    /**
-     * Validate the mandatory first-sale fields.
-     *
-     * @param  array<string, mixed>  $sale
-     * @return array<string, mixed> Validated sale fields.
-     *
-     * @throws ValidationException
-     */
+    
+
     public function validateSale(array $sale): array
     {
         return validator($sale, $this->saleRules())->validate();
     }
 
-    /**
-     * Approve a sign-up queue entry and create the member with its
-     * mandatory first subscription and invoice.
-     *
-     * @param  array<string, mixed>  $data  Raw (unvalidated) sign-up fields.
-     * @param  string|null  $photoDataUrl  Base64 data URL from webcam capture or upload.
-     * @param  array<string, mixed>  $sale  Plan + invoice fields (see saleRules()).
-     * @param  User|null  $staff  The staff member approving the application.
-     *
-     * @throws ValidationException When the details or photo are invalid.
-     * @throws InvalidArgumentException When a member already exists with the identifier.
-     */
+    
+
     public function approveSignup(QueueEntry $entry, array $data, ?string $photoDataUrl, array $sale, ?User $staff = null): Member
     {
         $validated = $this->validateSignup($data, $photoDataUrl);
@@ -147,22 +117,16 @@ class MemberApplicationService
                 'created_member_id' => $member->id,
             ]);
 
-            // Mandatory first sale: subscription + invoice, inside the same
-            // transaction — a member is never created without a plan.
+            
+            
             MemberOnboardingStep2::createSale($member, $sale);
 
             return $member;
         });
     }
 
-    /**
-     * Validate and normalize sign-up details.
-     *
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed> Validated, normalized fields.
-     *
-     * @throws ValidationException
-     */
+    
+
     public function validateSignup(array $data, ?string $photoDataUrl): array
     {
         $validated = validator($data, $this->signupRules())->validate();
@@ -192,13 +156,8 @@ class MemberApplicationService
         return $validated;
     }
 
-    /**
-     * Re-check uniqueness inside the approval transaction so a member created
-     * after validation (e.g. by a concurrent tab processing the same sign-up)
-     * is still caught before the insert.
-     *
-     * @param  array<string, mixed>  $validated
-     */
+    
+
     private function duplicateExists(array $validated): bool
     {
         return Member::findDuplicateByIdentifiers([
@@ -208,11 +167,8 @@ class MemberApplicationService
         ]) !== null;
     }
 
-    /**
-     * Decode a base64 image data URL and store it on the public disk.
-     *
-     * @throws InvalidArgumentException When the data URL is not a supported image or is too large.
-     */
+    
+
     public function storePhoto(string $dataUrl): string
     {
         return Helpers::storePhotoDataUrl($dataUrl);

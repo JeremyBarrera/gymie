@@ -20,36 +20,25 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
 
-/**
- * Dashboard widget to monitor memberships that need attention.
- *
- * This widget is date-driven (not status-driven) so it stays accurate even if
- * the scheduled status-sync command hasn't run yet.
- */
 class MembershipOverviewSubscriptionsTableWidget extends TableWidget
 {
     use InteractsWithPageFilters;
 
     protected static ?int $sort = -39;
 
-    /**
-     * @var int | string | array<string, int | null>
-     */
+    
+
     protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 2,
     ];
 
-    /**
-     * Active tab key.
-     *
-     * @var 'expiring'|'expired'
-     */
+    
+
     public string $activeTab = 'expiring';
 
-    /**
-     * Reset pagination whenever the active tab changes.
-     */
+    
+
     public function updatedActiveTab(string $activeTab): void
     {
         if (! in_array($activeTab, ['expiring', 'expired'], true)) {
@@ -61,9 +50,8 @@ class MembershipOverviewSubscriptionsTableWidget extends TableWidget
         $this->resetPage();
     }
 
-    /**
-     * Render the table header including expiring/expired toggles.
-     */
+    
+
     private function tableHeader(): HtmlString
     {
         return new HtmlString(Blade::render(
@@ -107,11 +95,8 @@ BLADE,
         ));
     }
 
-    /**
-     * Build the query for the currently selected tab.
-     *
-     * @return Builder<Subscription>
-     */
+    
+
     protected function getActiveTabQuery(): Builder
     {
         return match ($this->activeTab) {
@@ -120,11 +105,8 @@ BLADE,
         };
     }
 
-    /**
-     * Query memberships that are expiring within the configured window.
-     *
-     * @return Builder<Subscription>
-     */
+    
+
     protected function getExpiringSoonQuery(): Builder
     {
         $today = CarbonImmutable::today(AppConfig::timezone());
@@ -146,11 +128,8 @@ BLADE,
             ->orderBy('end_date');
     }
 
-    /**
-     * Query memberships that are already expired.
-     *
-     * @return Builder<Subscription>
-     */
+    
+
     protected function getExpiredQuery(): Builder
     {
         $today = CarbonImmutable::today(AppConfig::timezone());

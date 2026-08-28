@@ -7,9 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 trait ResolvesRouteKey
 {
-    /**
-     * Resolve a route parameter to its model key (if it is a model).
-     */
+    
+
     protected function routeKey(string $parameter): int|string
     {
         $value = $this->route($parameter);

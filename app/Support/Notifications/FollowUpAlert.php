@@ -9,22 +9,12 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Notifications\FollowUpAlertNotification;
 
-/**
- * Entry point for follow-up alerts.
- *
- * Resolves recipients from the settings scope `follow_up`, persists one
- * contract-payload notification per recipient and escalates each over its
- * private `user.{id}` channel. Call sites never change.
- */
 final class FollowUpAlert
 {
     private function __construct() {}
 
-    /**
-     * Persist a follow-up alert for every resolved recipient.
-     *
-     * @param  string  $action  One of: override_checkin|new_subscription|payment_added|due_date_changed.
-     */
+    
+
     public static function send(
         string $action,
         Member $member,

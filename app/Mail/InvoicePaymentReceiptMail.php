@@ -12,18 +12,12 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-/**
- * Invoice payment receipt email (member-facing).
- *
- * Confirms a payment was received and attaches the updated invoice PDF.
- */
 class InvoicePaymentReceiptMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    /**
-     * @param  non-empty-string  $gymName
-     */
+    
+
     public function __construct(
         public readonly Invoice $invoice,
         public readonly InvoiceTransaction $transaction,
@@ -36,9 +30,8 @@ class InvoicePaymentReceiptMail extends Mailable
         public readonly string $pdfBytes,
     ) {}
 
-    /**
-     * Get the message envelope.
-     */
+    
+
     public function envelope(): Envelope
     {
         return new Envelope(
@@ -46,9 +39,8 @@ class InvoicePaymentReceiptMail extends Mailable
         );
     }
 
-    /**
-     * Get the message content definition.
-     */
+    
+
     public function content(): Content
     {
         return new Content(
@@ -65,11 +57,8 @@ class InvoicePaymentReceiptMail extends Mailable
         );
     }
 
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, Attachment>
-     */
+    
+
     public function attachments(): array
     {
         return [

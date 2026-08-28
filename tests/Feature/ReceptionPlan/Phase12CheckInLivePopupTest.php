@@ -616,8 +616,8 @@ it('blocks the approve for an unpaid invoice and routes staff to the payment / d
         ->call('approveCheckIn')
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', true)
-        // The generic override is gone for past-due states (O5): the footer
-        // offers the payment / due-date modals and the action refuses.
+        
+        
         ->call('openCheckInOverrideFor', $plan->primaryService()->id)
         ->assertSet('checkInOverrideStep', false)
         ->call('openAddPaymentModal', $plan->primaryService()->id)
@@ -927,7 +927,7 @@ it('paints the photo border from applicable statuses only, not every picker row'
     liveCheckInSubscription($member, $entitled, ['end_date' => now()->addDays(60)->toDateString()]);
     $entry = liveCheckInEntry($location, ['candidate_member_ids' => [$member->id]]);
 
-    // Pin the expiring window so the far-out end date reads as valid green.
+    
     Helpers::setTestSettingsOverride([
         'subscriptions' => ['expiring_days' => 7],
     ]);
@@ -937,13 +937,13 @@ it('paints the photo border from applicable statuses only, not every picker row'
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
         ->set('checkInServiceId', $entitled->primaryService()->id);
 
-    // Valid member checking into their access row: the unrelated service
-    // they are NOT entitled to must not paint the whole card red.
+    
+    
     expect($component->html())->toContain('var(--success-500)')
         ->not->toContain('var(--danger-500)');
 
-    // Deliberately picking the non-access row IS decision-relevant: the
-    // border flips to danger and matches that row's badge.
+    
+    
     $component->set('checkInServiceId', $unrelated->primaryService()->id);
 
     expect($component->html())->toContain('var(--danger-500)');

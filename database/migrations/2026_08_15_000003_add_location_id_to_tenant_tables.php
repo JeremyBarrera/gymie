@@ -9,13 +9,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Tables that hold business data owned by a location (tenant).
-     *
-     * `members`, `queue_entries`, and `plan_check_ins` already carry a
-     * `location_id`; `users` and the pivot tables stay location-scoped through
-     * `user_locations`.
-     */
+    
+
     private const LOCATION_TABLES = [
         'services',
         'plans',
@@ -43,10 +38,10 @@ return new class extends Migration
             });
         }
 
-        // Location-scoped tokens resolve their location from the tokenable
-        // (a location directly, or the location a service belongs to).
-        // Updated row-by-row so the backfill also runs on SQLite, where the
-        // equivalent UPDATE ... JOIN syntax is not supported.
+        
+        
+        
+        
         DB::table('location_tokens as lt')
             ->join('locations as l', 'l.id', '=', 'lt.tokenable_id')
             ->where('lt.tokenable_type', Location::class)
@@ -69,8 +64,8 @@ return new class extends Migration
                     ->update(['location_id' => $locationId]);
             });
 
-        // Everything else is claimed by the first location of the row's own
-        // gym, so existing tenant data lands on the correct location.
+        
+        
         foreach (self::LOCATION_TABLES as $table) {
             DB::table($table)
                 ->whereNull('location_id')

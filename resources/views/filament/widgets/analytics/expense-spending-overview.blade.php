@@ -1,10 +1,4 @@
-@php
-/** @var string $heading */
-/** @var string $totalExpense */
-/** @var \Illuminate\Support\Collection<int, array{label: string, total: float, color: string, flex: float}> $segments */
-
-    $filters = $this->getFilters();
-    @endphp
+@php $filters = $this->getFilters(); @endphp
 
     <x-filament-widgets::widget>
         <x-filament::section :heading="$heading" class="fi-wi-chart h-full">

@@ -14,9 +14,8 @@ use Illuminate\Support\HtmlString;
 
 class EnquiryInfolist
 {
-    /**
-     * Configure the enquiry infolist schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

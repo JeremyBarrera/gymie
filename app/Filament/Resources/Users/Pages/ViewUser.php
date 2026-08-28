@@ -8,9 +8,6 @@ use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
-/**
- * @property-read User $record
- */
 class ViewUser extends ViewRecord
 {
     protected static string $resource = UserResource::class;

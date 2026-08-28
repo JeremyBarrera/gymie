@@ -13,19 +13,10 @@ use App\Services\Api\Schemas\SubscriptionSchema;
 use App\Services\Api\Schemas\UserSchema;
 use InvalidArgumentException;
 
-/**
- * Central, allowlisted query rules for API index endpoints.
- *
- * This is intentionally explicit (not "dynamic") so we can:
- * - avoid accidental exposure of sensitive columns via search/sort
- * - keep behavior consistent across controllers
- * - reduce duplication and make future package extraction easier
- */
 final class ResourceQueryRules
 {
-    /**
-     * @var array<string, class-string>
-     */
+    
+
     private const SCHEMAS = [
         'members' => MemberSchema::class,
         'users' => UserSchema::class,
@@ -38,17 +29,15 @@ final class ResourceQueryRules
         'follow-ups' => FollowUpSchema::class,
     ];
 
-    /**
-     * @return array<int|string, string>
-     */
+    
+
     public static function searchable(string $resourceKey): array
     {
         return self::rules($resourceKey)['searchable'];
     }
 
-    /**
-     * @return list<string>
-     */
+    
+
     public static function sortable(string $resourceKey): array
     {
         return self::rules($resourceKey)['sortable'];
@@ -64,32 +53,22 @@ final class ResourceQueryRules
         return self::rules($resourceKey)['status_column'];
     }
 
-    /**
-     * @return list<string>
-     */
+    
+
     public static function includes(string $resourceKey): array
     {
         return self::rules($resourceKey)['includes'];
     }
 
-    /**
-     * @return array<string, array{type: string, column: string}>
-     */
+    
+
     public static function filters(string $resourceKey): array
     {
         return self::rules($resourceKey)['filters'];
     }
 
-    /**
-     * @return array{
-     *   searchable: array<int|string, string>,
-     *   sortable: list<string>,
-     *   default_sort: string,
-     *   status_column: string|null,
-     *   includes: list<string>,
-     *   filters: array<string, array{type: string, column: string}>
-     * }
-     */
+    
+
     private static function rules(string $resourceKey): array
     {
         if (! array_key_exists($resourceKey, self::SCHEMAS)) {
@@ -102,15 +81,8 @@ final class ResourceQueryRules
             throw new InvalidArgumentException("API schema [{$schema}] must define a static queryRules() method.");
         }
 
-        /** @var array{
-         *   searchable: array<int|string, string>,
-         *   sortable: list<string>,
-         *   default_sort: string,
-         *   status_column: string|null,
-         *   includes: list<string>,
-         *   filters: array<string, array{type: string, column: string}>
-         * } $rules
-         */
+        
+
         $rules = $schema::queryRules();
 
         foreach (['searchable', 'sortable', 'default_sort', 'status_column', 'includes', 'filters'] as $key) {

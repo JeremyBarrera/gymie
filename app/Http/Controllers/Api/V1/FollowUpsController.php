@@ -12,16 +12,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-/**
- * Follow-ups CRUD endpoints.
- */
 class FollowUpsController extends ApiController
 {
     private const RESOURCE_KEY = 'follow-ups';
 
-    /**
-     * Display a listing of follow-ups.
-     */
+    
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->requirePermission($request, 'ViewAny:FollowUp');
@@ -35,9 +31,8 @@ class FollowUpsController extends ApiController
         return FollowUpResource::collection($query->paginate($perPage));
     }
 
-    /**
-     * Store a newly created follow-up.
-     */
+    
+
     public function store(FollowUpStoreRequest $request): FollowUpResource
     {
         $this->requirePermission($request, 'Create:FollowUp');
@@ -50,9 +45,8 @@ class FollowUpsController extends ApiController
         return new FollowUpResource($followUp->refresh());
     }
 
-    /**
-     * Display a follow-up.
-     */
+    
+
     public function show(Request $request, FollowUp $followUp): FollowUpResource
     {
         $this->requirePermission($request, 'View:FollowUp');
@@ -60,9 +54,8 @@ class FollowUpsController extends ApiController
         return new FollowUpResource($followUp);
     }
 
-    /**
-     * Update a follow-up.
-     */
+    
+
     public function update(FollowUpUpdateRequest $request, FollowUp $followUp): FollowUpResource
     {
         $this->requirePermission($request, 'Update:FollowUp');
@@ -72,17 +65,15 @@ class FollowUpsController extends ApiController
         return new FollowUpResource($followUp->refresh());
     }
 
-    /**
-     * Soft delete a follow-up.
-     */
+    
+
     public function destroy(Request $request, FollowUp $followUp): JsonResponse
     {
         return $this->deleteModel($request, 'Delete:FollowUp', $followUp);
     }
 
-    /**
-     * Restore a soft deleted follow-up.
-     */
+    
+
     public function restore(Request $request, int $followUp): FollowUpResource
     {
         $record = $this->restoreSoftDeleted($request, 'RestoreAny:FollowUp', FollowUp::class, $followUp);
@@ -90,9 +81,8 @@ class FollowUpsController extends ApiController
         return new FollowUpResource($record->refresh());
     }
 
-    /**
-     * Permanently delete a follow-up.
-     */
+    
+
     public function forceDelete(Request $request, int $followUp): JsonResponse
     {
         $this->forceDeleteSoftDeleted($request, 'ForceDeleteAny:FollowUp', FollowUp::class, $followUp);

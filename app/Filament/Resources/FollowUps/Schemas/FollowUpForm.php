@@ -9,9 +9,8 @@ use Filament\Schemas\Schema;
 
 class FollowUpForm
 {
-    /**
-     * Configure the follow-up form schema.
-     */
+    
+
     public static function configure(Schema $schema): Schema
     {
         return $schema

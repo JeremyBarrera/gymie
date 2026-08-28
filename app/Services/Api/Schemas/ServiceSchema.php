@@ -5,23 +5,12 @@ namespace App\Services\Api\Schemas;
 use App\Models\Service;
 use Illuminate\Contracts\Validation\ValidationRule;
 
-/**
- * Single source of truth for Service API validation and serialization.
- */
 final class ServiceSchema
 {
     private function __construct() {}
 
-    /**
-     * @return array{
-     *   searchable: list<string>,
-     *   sortable: list<string>,
-     *   default_sort: string,
-     *   status_column: string|null,
-     *   includes: list<string>,
-     *   filters: array<string, array{type: string, column: string}>
-     * }
-     */
+    
+
     public static function queryRules(): array
     {
         return [
@@ -36,9 +25,8 @@ final class ServiceSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function storeRules(): array
     {
         return [
@@ -47,9 +35,8 @@ final class ServiceSchema
         ];
     }
 
-    /**
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    
+
     public static function updateRules(): array
     {
         return [
@@ -58,9 +45,8 @@ final class ServiceSchema
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    
+
     public static function resource(Service $service): array
     {
         return [

@@ -12,13 +12,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Dedicated QR preview page: renders the QR image for a chosen location and
- * type, and links to the server-side download route that streams the file.
- *
- * Reached from the reception QR modal or the QR codes page with query string
- * parameters (`location_id`, `type`, `format`, `size`).
- */
 class QrCodePreview extends Page
 {
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-qr-code';

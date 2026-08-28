@@ -31,15 +31,8 @@ class QueueEntryResolved implements ShouldBroadcast
         ];
     }
 
-    /**
-     * Both channels get the same payload, and `queue.{uuid}` is public —
-     * any visitor who knows the uuid can subscribe. The queue entry payload
-     * carries applicant PII (name, contact, government ID), so only the
-     * fields the waiting page actually renders may leave; staff listeners
-     * re-fetch the record from the database.
-     *
-     * @return array<string, mixed>
-     */
+    
+
     public function broadcastWith(): array
     {
         return [

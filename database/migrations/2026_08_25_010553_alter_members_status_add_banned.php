@@ -7,14 +7,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Widen the member status enum to its real domain — `pending` (the
-     * onboarding state MemberOnboardingStep2 reads) was missing from the
-     * original two-value enum and only inserted cleanly on sqlite because
-     * an earlier table rebuild had dropped the CHECK constraint — and add
-     * `banned` plus the optional ban reason. Existing rows keep their
-     * value; the default stays `active`.
-     */
+    
+
     public function up(): void
     {
         Schema::table('members', function (Blueprint $table): void {
@@ -23,12 +17,8 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Shrink the enum back. Refuses to run while members hold a status the
-     * original two-value enum cannot represent — reverting would corrupt
-     * their rows (AGENTS.md rule 8: migrations must be safe against real
-     * data). Resolve banned and pending members first.
-     */
+    
+
     public function down(): void
     {
         $irreversible = DB::table('members')

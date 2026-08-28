@@ -6,24 +6,18 @@ use App\Models\Member;
 use Database\Factories\Concerns\WithSynchronizedLocation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Member>
- */
 class MemberFactory extends Factory
 {
     use WithSynchronizedLocation;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    
+
     public function definition(): array
     {
         $location = $this->synchronizedLocation();
 
         return [
-            // Leave `photo` null so the UI/Table falls back to the default image URL
+            
             'photo' => null,
             'code' => $this->faker->unique()->bothify('MEM###'),
             'government_id' => $this->faker->unique()->bothify('ID-########'),

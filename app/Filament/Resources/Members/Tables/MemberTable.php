@@ -37,12 +37,8 @@ use Throwable;
 
 class MemberTable
 {
-    /**
-     * Ban / unban toggles shared by the row dropdown, the member-view
-     * header and the bulk action. Custom abilities get no default policy
-     * authorization, so 'Ban:Member' is checked for rendering AND enforced
-     * again inside the action itself.
-     */
+    
+
     public static function banAction(): Action
     {
         return Action::make('ban')
@@ -119,9 +115,8 @@ class MemberTable
             ->visible(fn (Member $record): bool => $record->status?->value === 'banned');
     }
 
-    /**
-     * Configure the member table schema.
-     */
+    
+
     public static function configure(Table $table): Table
     {
         return $table

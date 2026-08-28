@@ -34,14 +34,8 @@ use Illuminate\Support\Facades\Blade;
 
 class FollowUpTable
 {
-    /**
-     * Get the follow-up table column definitions.
-     *
-     * This is used by both the Follow Ups index table and any relation managers
-     * that want to reuse the same column set.
-     *
-     * @return array<int, Column>
-     */
+    
+
     public static function getColumns(): array
     {
         return [
@@ -84,9 +78,8 @@ class FollowUpTable
         ];
     }
 
-    /**
-     * Configure the follow-up table schema.
-     */
+    
+
     public static function configure(Table $table): Table
     {
         return $table
@@ -95,7 +88,7 @@ class FollowUpTable
                 ! Enquiry::exists() ? 'heroicon-o-phone' : 'heroicon-o-arrow-path-rounded-square'
             )
             ->emptyStateHeading(function ($livewire): string {
-                // If no enquiry exist
+                
                 if (! Enquiry::exists()) {
                     return __('app.empty.no_records', ['records' => __('app.resources.enquiries.plural')]);
                 }
@@ -121,7 +114,7 @@ class FollowUpTable
                     : __('app.empty.no_status_records', ['status' => $status, 'records' => $records]);
             })
             ->emptyStateDescription(function ($livewire): string {
-                // If no enquiries exist
+                
                 if (! Enquiry::exists()) {
                     return __('app.empty.create_to_get_started', ['resource' => __('app.resources.enquiries.singular')]);
                 }
@@ -175,11 +168,8 @@ class FollowUpTable
             ]);
     }
 
-    /**
-     * Get table filter definitions.
-     *
-     * @return array<int, Filter|TrashedFilter>
-     */
+    
+
     public static function getTableFilters(): array
     {
         return [
@@ -203,11 +193,8 @@ class FollowUpTable
         ];
     }
 
-    /**
-     * Get table action definitions.
-     *
-     * @return array<int, ActionGroup>
-     */
+    
+
     public static function getTableActions(): array
     {
         return [

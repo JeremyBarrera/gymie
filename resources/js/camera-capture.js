@@ -1,9 +1,4 @@
-/**
- * Shared webcam/photo mechanics for the reception verify overlay and the
- * member photo field. Pure mechanics only — DOM scoping, state binding and
- * event wiring live in the consuming scripts, which call the exposed
- * `window.GymieCameraCapture` global.
- */
+
 
 const waitForMetadata = (video) => {
     if (video.readyState >= 1) {
@@ -45,12 +40,6 @@ const waitForPlaying = (video) => new Promise((resolve) => {
     video.play().catch(() => done(false));
 });
 
-/**
- * Open the webcam and start rendering into `video`. Resolves with the stream
- * once frames are actually rendering, or null when unavailable or failed;
- * `onReady`/`onNoCamera` fire at the same points for callers that only need
- * side effects.
- */
 async function start(video, { onReady = () => {}, onNoCamera = () => {} } = {}) {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         onNoCamera();
@@ -79,10 +68,6 @@ async function start(video, { onReady = () => {}, onNoCamera = () => {} } = {}) 
     }
 }
 
-/**
- * Grab the current frame as a JPEG data URL, or null when the video is not
- * rendering.
- */
 function capture(video) {
     if (!video || !video.videoWidth) {
         return null;
@@ -96,7 +81,6 @@ function capture(video) {
     return canvas.toDataURL('image/jpeg', 0.85);
 }
 
-/** Stop and detach the stream currently attached to `video`. */
 function stop(video) {
     if (!video) {
         return;
@@ -109,7 +93,6 @@ function stop(video) {
     video.srcObject = null;
 }
 
-/** Read an image file as a data URL. */
 function fileToDataUrl(file, onDataUrl) {
     if (!file) {
         return;

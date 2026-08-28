@@ -2,21 +2,10 @@
 
 namespace App\Support\Billing;
 
-/**
- * Payment method normalization + display helpers.
- *
- * The app stores payment method values as strings on invoices/transactions.
- * For dashboards and tables, we intentionally group them as:
- * - Online (gateway / link based)
- * - Offline (cash / UPI / cheque, etc.)
- *
- * This keeps UI consistent while still allowing the raw stored value to evolve.
- */
 final class PaymentMethod
 {
-    /**
-     * Normalize a raw payment method value to a canonical string.
-     */
+    
+
     public static function normalize(?string $value): string
     {
         $value = strtolower(trim((string) $value));
@@ -24,9 +13,8 @@ final class PaymentMethod
         return $value;
     }
 
-    /**
-     * Determine whether a stored payment method represents an online payment flow.
-     */
+    
+
     public static function isOnline(?string $value): bool
     {
         $value = self::normalize($value);
@@ -34,9 +22,8 @@ final class PaymentMethod
         return in_array($value, ['online', 'stripe'], true);
     }
 
-    /**
-     * Human-friendly channel label for a stored payment method value.
-     */
+    
+
     public static function channelLabel(?string $value): string
     {
         $method = self::normalize($value);
@@ -48,11 +35,8 @@ final class PaymentMethod
         return self::options()[$method] ?? ucfirst($method);
     }
 
-    /**
-     * Default Filament options for selecting a payment method.
-     *
-     * @return array<string, string>
-     */
+    
+
     public static function options(): array
     {
         return [

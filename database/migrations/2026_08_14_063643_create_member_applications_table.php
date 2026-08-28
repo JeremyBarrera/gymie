@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('member_applications', function (Blueprint $table) {
             $table->id();
-            $table->string('identifier_type'); // contact | government_id | code
+            $table->string('identifier_type'); 
             $table->string('identifier_value');
             $table->json('payload');
-            $table->string('status')->default('pending'); // pending | approved | rejected
+            $table->string('status')->default('pending'); 
             $table->foreignId('created_member_id')->nullable()->constrained('members')->nullOnDelete();
             $table->timestamps();
 

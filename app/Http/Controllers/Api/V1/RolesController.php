@@ -7,14 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Spatie\Permission\Models\Role;
 
-/**
- * Read-only roles listing (for permissions UI).
- */
 class RolesController extends ApiController
 {
-    /**
-     * List roles (requires `ViewAny:Role`).
-     */
+    
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $this->requirePermission($request, 'ViewAny:Role');

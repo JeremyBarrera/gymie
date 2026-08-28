@@ -110,10 +110,6 @@ function m5ConfigureRecipients(User $pinned): void
     ]);
 }
 
-// ---------------------------------------------------------------------------
-// State machine: exhausted is its own state, expired still wins
-// ---------------------------------------------------------------------------
-
 it('reports uses_exhausted instead of access when the plan quota is spent', function (): void {
     $plan = m5LimitedPlan(2);
     $member = m5Member();
@@ -165,10 +161,6 @@ it('resolves expired before uses exhausted when both apply', function (): void {
 
     expect(collect($states)->firstWhere('id', (int) $plan->primaryService()->id)['state'])->toBe('expired');
 });
-
-// ---------------------------------------------------------------------------
-// Reception overlay: renew + override paths
-// ---------------------------------------------------------------------------
 
 it('opens the renewal popup for a uses-exhausted service', function (): void {
     $location = Location::factory()->create();
@@ -232,7 +224,7 @@ it('overrides a uses-exhausted service with a system reason and fires the dedica
 
     $checkIn = PlanCheckIn::query()->where('override', true)->first();
 
-    /** @var array<string, mixed> $payload */
+    
     $payload = $pinned->unreadNotifications()->first()->data;
 
     expect($checkIn)->not->toBeNull()
@@ -267,10 +259,6 @@ it('keeps the override step exclusive to no-access and uses-exhausted rows', fun
     expect(PlanCheckIn::count())->toBe(0);
 });
 
-// ---------------------------------------------------------------------------
-// Public surfaces: one neutral refusal, no membership status
-// ---------------------------------------------------------------------------
-
 it('answers every public check-in refusal with the identical neutral body', function (): void {
     $location = Location::factory()->create();
     LocationToken::factory()->create([
@@ -282,7 +270,7 @@ it('answers every public check-in refusal with the identical neutral body', func
     $token = $location->tokens()->where('kind', 'checkin')->value('token');
 
     m5Member(['status' => Status::Inactive, 'contact' => '5551112222']);
-    // Active member without any subscription: eligible lookup comes back empty.
+    
     m5Member(['contact' => '5554445555']);
 
     $responses = collect([
