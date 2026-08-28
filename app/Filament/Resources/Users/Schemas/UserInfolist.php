@@ -47,7 +47,7 @@ class UserInfolist
                             ->columnSpan(1)
                             ->extraAttributes(fn (User $record): array => $record->photo ? [
                                 'class' => '[&_img]:cursor-pointer',
-                                'onclick' => "event.preventDefault(); event.stopPropagation(); window.dispatchEvent(new CustomEvent('open-photo-zoom', { detail: { src: '".addslashes(asset('storage/'.$record->photo))."', alt: '".addslashes($record->name)."' } }))",
+                                'onclick' => "event.preventDefault(); event.stopPropagation(); const z=document.getElementById('photo-zoom-img'); if(z){z.src='".addslashes(asset('storage/'.$record->photo))."'; z.alt='".addslashes($record->name)."';} window.dispatchEvent(new CustomEvent('open-modal', {detail:{id:'photo-zoom'}}))",
                             ] : []),
                         Group::make()
                             ->schema([
