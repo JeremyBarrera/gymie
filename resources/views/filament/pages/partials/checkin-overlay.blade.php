@@ -203,6 +203,60 @@
                         <p class="text-2xl font-bold tracking-tight text-danger-600 dark:text-danger-400">{{ __('app.members.banned') }}</p>
                         <p class="fi-text-muted mt-2 text-sm">{{ $checkInMember->ban_reason ?: __('app.reception.check_in_member_banned') }}</p>
                     </div>
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
+                        <div class="relative shrink-0">
+                            @if($checkInMember->photo)
+                                <div class="group relative h-64 w-52 overflow-hidden rounded-xl" style="box-shadow: 0 0 0 3px {{ $cardRingVar }};">
+                                    <img
+                                        src="{{ asset('storage/'.$checkInMember->photo) }}"
+                                        data-zoom-src="{{ asset('storage/'.$checkInMember->photo) }}"
+                                        data-zoom-alt="{{ $checkInMember->name }}"
+                                        class="h-full w-full object-cover cursor-pointer"
+                                        alt="{{ $checkInMember->name }}"
+                                        x-on:click.prevent.stop="window.dispatchEvent(new CustomEvent('open-photo-zoom', { detail: { src: $el.dataset.zoomSrc, alt: $el.dataset.zoomAlt } }))"
+                                    >
+                                    <div class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                        <x-filament::icon icon="heroicon-o-magnifying-glass-plus" class="h-8 w-8 text-white" />
+                                    </div>
+                                </div>
+                            @else
+                                <div class="flex h-64 w-52 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-(--gray-300)"
+                                    style="box-shadow: 0 0 0 3px {{ $cardRingVar }};"
+                                >
+                                    <x-filament::icon icon="heroicon-o-user" class="h-8 w-8" />
+                                    <span class="fi-text-muted px-4 text-center text-sm">
+                                        {{ __('app.reception.unknown_member') }}
+                                    </span>
+                                </div>
+                            @endif
+                            <span
+                                class="absolute -top-2 -end-2 z-10 flex h-7 w-7 items-center justify-center rounded-full"
+                                style="background: {{ $cardRingVar }};"
+                                role="img"
+                                aria-label="{{ $cardTitle }}"
+                                title="{{ $cardTitle }}"
+                            >
+                                <x-filament::icon icon="{{ $cardIcon }}" class="h-4 w-4 text-white" />
+                            </span>
+                        </div>
+                        <div class="flex-1 min-w-0 space-y-5">
+                            <h3 class="fi-text text-4xl font-bold leading-tight tracking-tight">{{ $checkInMember->name }}</h3>
+                            <div class="grid gap-x-8 sm:grid-cols-2">
+                                @foreach([$memberDetailsLeft, $memberDetailsRight] as $memberDetailsColumn)
+                                    <div class="space-y-4">
+                                        @foreach($memberDetailsColumn as $detail)
+                                            @if(filled($detail['value']))
+                                                <div class="space-y-1">
+                                                    <span class="fi-text-muted text-xs font-medium uppercase tracking-wide">{{ $detail['label'] }}</span>
+                                                    <p class="fi-text text-base font-medium {{ ($detail['break'] ?? false) ? 'break-all' : '' }}">{{ $detail['value'] }}</p>
+                                                </div>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
                 @elseif(! $checkInMember && $checkInCandidates->isNotEmpty())
                     <div class="flex items-center gap-2">
                         <span class="checkin-flash-chip">
