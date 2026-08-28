@@ -6,6 +6,7 @@ use App\Enums\Status;
 use App\Models\User;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -39,18 +40,10 @@ class UserInfolist
                         return new HtmlString(e(__('app.ui.details')).' '.$html);
                     })
                     ->schema([
-                        ImageEntry::make('photo')
+                        ViewEntry::make('photo')
                             ->hiddenLabel()
-                            ->defaultImageUrl(fn (User $record): string => 'https://ui-avatars.com/api/?background=000&color=fff&name='.$record->name)
-                            ->size(180)
-                            ->circular()
-                            ->columnSpan(1)
-                            ->extraAttributes(fn (User $record): array => $record->photo ? [
-                                'class' => '[&_img]:cursor-pointer',
-                                'data-zoom-src' => asset('storage/'.$record->photo),
-                                'data-zoom-alt' => $record->name,
-                                'x-on:click.prevent.stop' => "window.dispatchEvent(new CustomEvent('open-photo-zoom', { detail: { src: \$el.dataset.zoomSrc, alt: \$el.dataset.zoomAlt } }))",
-                            ] : []),
+                            ->view('filament.infolists.components.photo-zoom')
+                            ->columnSpan(1),
                         Group::make()
                             ->schema([
                                 TextEntry::make('name')->label(__('app.fields.name')),

@@ -244,15 +244,19 @@
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
                         <div class="relative shrink-0">
                             @if($checkInMember->photo)
-                                <img
-                                    src="{{ asset('storage/'.$checkInMember->photo) }}"
-                                    data-zoom-src="{{ asset('storage/'.$checkInMember->photo) }}"
-                                    data-zoom-alt="{{ $checkInMember->name }}"
-                                    class="h-64 w-52 rounded-xl object-cover cursor-pointer"
-                                    style="box-shadow: 0 0 0 3px {{ $cardRingVar }};"
-                                    alt="{{ $checkInMember->name }}"
-                                    x-on:click.prevent.stop="window.dispatchEvent(new CustomEvent('open-photo-zoom', { detail: { src: $el.dataset.zoomSrc, alt: $el.dataset.zoomAlt } }))"
-                                >
+                                <div class="group relative h-64 w-52 overflow-hidden rounded-xl" style="box-shadow: 0 0 0 3px {{ $cardRingVar }};">
+                                    <img
+                                        src="{{ asset('storage/'.$checkInMember->photo) }}"
+                                        data-zoom-src="{{ asset('storage/'.$checkInMember->photo) }}"
+                                        data-zoom-alt="{{ $checkInMember->name }}"
+                                        class="h-full w-full object-cover cursor-pointer"
+                                        alt="{{ $checkInMember->name }}"
+                                        x-on:click.prevent.stop="window.dispatchEvent(new CustomEvent('open-photo-zoom', { detail: { src: $el.dataset.zoomSrc, alt: $el.dataset.zoomAlt } }))"
+                                    >
+                                    <div class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                        <x-filament::icon icon="heroicon-o-magnifying-glass-plus" class="h-8 w-8 text-white" />
+                                    </div>
+                                </div>
                             @else
                                 <div class="flex h-64 w-52 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-(--gray-300)"
                                     style="box-shadow: 0 0 0 3px {{ $cardRingVar }};"

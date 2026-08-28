@@ -17,6 +17,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -36,16 +37,9 @@ class UserTable
                     ->label(__('app.fields.id'))
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                ImageColumn::make('photo')
+                ViewColumn::make('photo')
                     ->label(__('app.fields.photo'))
-                    ->circular()
-                    ->defaultImageUrl(fn (User $record): string => 'https://ui-avatars.com/api/?background=000&color=fff&name='.$record->name)
-                    ->extraImgAttributes(fn (User $record): array => $record->photo ? [
-                        'class' => 'cursor-pointer',
-                        'data-zoom-src' => asset('storage/'.$record->photo),
-                        'data-zoom-alt' => $record->name,
-                        'x-on:click.prevent.stop' => "window.dispatchEvent(new CustomEvent('open-photo-zoom', { detail: { src: \$el.dataset.zoomSrc, alt: \$el.dataset.zoomAlt } }))",
-                    ] : []),
+                    ->view('filament.tables.columns.photo-zoom'),
                 TextColumn::make('name')
                     ->label(__('app.fields.name'))
                     ->sortable()

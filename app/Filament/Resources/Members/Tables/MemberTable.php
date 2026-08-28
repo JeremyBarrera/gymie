@@ -23,6 +23,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -129,15 +130,8 @@ class MemberTable
                     ->sortable()
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                ImageColumn::make('photo')
-                    ->circular()
-                    ->defaultImageUrl(fn (Member $record): string => 'https://ui-avatars.com/api/?background=000&color=fff&name='.$record->name)
-                    ->extraImgAttributes(fn (Member $record): array => $record->photo ? [
-                        'class' => 'cursor-pointer',
-                        'data-zoom-src' => asset('storage/'.$record->photo),
-                        'data-zoom-alt' => $record->name,
-                        'x-on:click.prevent.stop' => "window.dispatchEvent(new CustomEvent('open-photo-zoom', { detail: { src: \$el.dataset.zoomSrc, alt: \$el.dataset.zoomAlt } }))",
-                    ] : []),
+                ViewColumn::make('photo')
+                    ->view('filament.tables.columns.photo-zoom'),
                 TextColumn::make('code')
                     ->searchable(),
                 TextColumn::make('name')

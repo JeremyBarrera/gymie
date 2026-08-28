@@ -1,8 +1,3 @@
-@php
-// Global photo zoom modal - reusable across the app (AGENTS.md: Filament components, no hardcoded colors)
-// Custom overlay avoids nested Filament modal stacking issues; trigger via open-photo-zoom
-@endphp
-
 <div
     x-data="{ show: false, src: '', alt: '' }"
     x-cloak
