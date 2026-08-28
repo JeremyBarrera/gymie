@@ -281,6 +281,9 @@ return [
         'refundable_amount' => 'مبلغ قابل بازپرداخت: :amount',
         'phone_format' => 'کد کشور را وارد کنید. فقط ارقام، فاصله و علائم ()، -، + مجاز هستند.',
         'paid_at_device_time' => 'زمان پرداخت را به وقت محلی دستگاه خود انتخاب کنید. این زمان به صورت UTC ذخیره شده و برای دیگران به وقت محلی آن‌ها نمایش داده می‌شود.',
+        'end_date_derived' => 'Automatically calculated from the start date and plan duration.',
+        'due_date_after_today' => 'Date must be after today (e.g. :tomorrow or later). Today and earlier dates are not allowed.',
+        'next_due_date_required' => 'A next payment date is required while a balance remains. Must be after today.',
     ],
     'tooltips' => [
         'member_email_missing' => 'ایمیل عضو ثبت نشده است.',
@@ -807,6 +810,7 @@ return [
         'override_due_date_confirm' => 'تغییر تاریخ و نادیده گرفتن',
         'invoice_not_found' => 'فاکتور یافت نشد',
         'checkin_approved' => ':name وارد شد',
+        'approve_disabled_helper' => 'Select a service with "Access" status to enable Check In. Other states require Add Subscription, Override, or Payment.',
         'review' => 'بررسی',
         'back' => 'بازگشت',
         'verify_plan_hint' => 'هر عضو جدید با یک طرح عضویت و فاکتور ایجاد می‌شود.',

@@ -47,8 +47,10 @@
                             id="expired-end-date"
                             type="date"
                             wire:model="endDate"
+                            disabled
                         />
                     </x-filament::input.wrapper>
+                    <p class="fi-text fi-text-muted mt-1 text-xs">{{ __('app.help.end_date_derived') }}</p>
                     @error('endDate') <p class="fi-text mt-1 text-sm text-danger-500">{{ $message }}</p> @enderror
                 </div>
             </div>
@@ -112,7 +114,6 @@
             <x-filament::button
                 wire:key="expired-submit"
                 color="success"
-                icon="heroicon-m-plus-circle"
                 size="md"
                 class="w-full"
                 wire:click="submit"

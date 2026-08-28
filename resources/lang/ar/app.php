@@ -281,6 +281,9 @@ return [
         'refundable_amount' => 'قابل للاسترداد: :amount',
         'phone_format' => 'اكتب رمز الدولة. يسمح بالارقام والمسافات و + و - و ().',
         'paid_at_device_time' => 'حدد وقت الدفع بالتوقيت المحلي لجهازك. سيتم حفظه بالتوقيت العالمي (UTC) وعرضه للآخرين بالتوقيت المحلي لديهم.',
+        'end_date_derived' => 'Automatically calculated from the start date and plan duration.',
+        'due_date_after_today' => 'Date must be after today (e.g. :tomorrow or later). Today and earlier dates are not allowed.',
+        'next_due_date_required' => 'A next payment date is required while a balance remains. Must be after today.',
     ],
     'tooltips' => [
         'member_email_missing' => 'بريد العضو غير متوفر',
@@ -807,6 +810,7 @@ return [
         'override_due_date_confirm' => 'تغيير التاريخ والتجاوز',
         'invoice_not_found' => 'الفاتورة غير موجودة',
         'checkin_approved' => 'تم تسجيل دخول :name',
+        'approve_disabled_helper' => 'Select a service with "Access" status to enable Check In. Other states require Add Subscription, Override, or Payment.',
         'review' => 'مراجعة',
         'back' => 'رجوع',
         'verify_plan_hint' => 'يتم إنشاء كل عضو جديد مع خطة عضوية وفاتورة.',

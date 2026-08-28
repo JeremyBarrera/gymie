@@ -89,8 +89,14 @@ trait HandlesCheckInVerification
             ->values();
 
         if ($eligible->isEmpty()) {
-            
-            
+            $banned = $matches->first(fn (Member $member): bool => $member->checkInBlocker() === 'banned');
+
+            if ($banned) {
+                $this->beginManualCheckIn(collect([$banned]));
+
+                return;
+            }
+
             $this->dispatch('notify',
                 type: 'danger',
                 message: $matches->isNotEmpty()
@@ -631,6 +637,77 @@ trait HandlesCheckInVerification
         }
     }
 
+    public function confirmSameDayDuplicateCheckInAndCount(): void
+    {
+        if (! $this->selectedCheckInMemberId || ! $this->checkInServiceId) {
+            return;
+        }
+
+        $entry = $this->resolveCurrentCheckInEntry();
+
+        if ($entry !== null && ! in_array($entry->status, ['waiting', 'attending'], true)) {
+            $this->closeCheckInOverlay();
+
+            return;
+        }
+
+        $row = collect($this->checkInServices)->firstWhere('id', $this->checkInServiceId);
+        $member = Member::find($this->selectedCheckInMemberId);
+        $subscription = $row ? Subscription::find($row['subscription_id']) : null;
+
+        if (! $member || ($row['state'] ?? null) !== 'same_day_duplicate' || ! $subscription) {
+            $this->dispatch('notify',
+                type: 'danger',
+                message: __('app.notifications.check_in_failed'),
+            );
+
+            return;
+        }
+
+        try {
+            app(PlanCheckInService::class)->checkIn(
+                $member,
+                $subscription,
+                Auth::user(),
+                true,
+                $this->checkInLocation($entry),
+            );
+        } catch (\Throwable $exception) {
+            $this->dispatch('notify',
+                type: 'danger',
+                message: $exception->getMessage(),
+            );
+
+            return;
+        }
+
+        if ($entry !== null) {
+            $entry->update([
+                'status' => 'approved',
+                'override' => false,
+            ]);
+
+            $this->broadcastCheckInResolution($entry, true, null);
+        }
+
+        $wasManualPostSignup = $this->pendingSignupCheckInQueueId !== null && $entry === null;
+
+        $this->dispatch('notify',
+            type: 'success',
+            message: __('app.reception.checkin_approved', ['name' => $member->name]),
+        );
+
+        $this->resetCheckInOverlay();
+
+        if ($wasManualPostSignup) {
+            $this->finalizePendingSignupCheckIn(true);
+        }
+
+        if ($entry !== null) {
+            $this->removeCheckInFromView($entry->id);
+        }
+    }
+
     public function denySameDayDuplicateCheckIn(): void
     {
         $entry = $this->resolveCurrentCheckInEntry();
@@ -915,7 +992,7 @@ trait HandlesCheckInVerification
 
     
 
-    private function latestSubscriptionForService(Member $member, int $serviceId): ?Subscription
+    public function latestSubscriptionForService(Member $member, int $serviceId): ?Subscription
     {
         return $member->subscriptions()
             ->with('plan')
@@ -923,6 +1000,17 @@ trait HandlesCheckInVerification
             ->orderByDesc('end_date')
             ->orderByDesc('id')
             ->first();
+    }
+
+    public function hasRenewableSubscriptionForService(Member $member, int $serviceId): bool
+    {
+        $subscription = $this->latestSubscriptionForService($member, $serviceId);
+
+        if ($subscription === null) {
+            return false;
+        }
+
+        return in_array($subscription->status?->value, [Status::Ongoing->value, Status::Expiring->value], true);
     }
 
     

@@ -51,15 +51,21 @@
                         <label for="payment-next-due" class="fi-text text-base font-semibold">
                             {{ __('app.check_in.next_payment_due') }}
                         </label>
-                        <x-filament::input.wrapper class="mt-2">
+                        <x-filament::input.wrapper class="mt-2" :class="$errors->has('nextDueDate') ? 'fi-input-wrp--error' : ''">
                             <x-filament::input
                                 id="payment-next-due"
                                 type="date"
                                 wire:model="nextDueDate"
+                                :class="$errors->has('nextDueDate') ? 'fi-input--error' : ''"
                             />
                         </x-filament::input.wrapper>
-                        <p class="fi-text fi-text-muted mt-1 text-xs">{{ __('app.check_in.next_payment_due_required') }}</p>
+                        <p class="fi-text mt-1 text-xs {{ $errors->has('nextDueDate') ? 'text-danger-500' : 'fi-text-muted' }}">{{ $errors->has('nextDueDate') ? $errors->first('nextDueDate') : __('app.help.due_date_after_today', ['tomorrow' => now()->addDay()->format('Y-m-d')]) }}</p>
                         @error('nextDueDate') <p class="fi-text mt-1 text-sm text-danger-500">{{ $message }}</p> @enderror
+                        @if(! $this->nextDueDate)
+                            <p class="fi-text mt-1 text-xs text-danger-500">{{ __('app.help.next_due_date_required') }}</p>
+                        @elseif(strtotime($this->nextDueDate) <= strtotime(today()->toDateString()))
+                            <p class="fi-text mt-1 text-xs text-danger-500">{{ __('app.help.due_date_after_today', ['tomorrow' => now()->addDay()->format('Y-m-d')]) }}</p>
+                        @endif
                     </div>
 
                     <div>
@@ -82,11 +88,10 @@
 
         <x-slot name="footer">
             @if($this->projectedRemaining > 0)
-                
+                <p class="fi-text fi-text-muted mb-3 text-xs text-center">{{ __('app.help.next_due_date_required') }}</p>
                 <x-filament::button
                     wire:key="add-payment-partial-submit"
-                    color="info"
-                    icon="heroicon-m-wrench"
+                    color="warning"
                     size="md"
                     class="w-full"
                     wire:click="submit"
@@ -99,7 +104,6 @@
                 <x-filament::button
                     wire:key="add-payment-full-submit"
                     color="success"
-                    icon="heroicon-m-check-circle"
                     size="md"
                     class="w-full"
                     wire:click="submit"

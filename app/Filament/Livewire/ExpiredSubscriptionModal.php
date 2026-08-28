@@ -65,8 +65,9 @@ class ExpiredSubscriptionModal extends Component
             : (int) array_key_first($available);
 
         $this->paymentMethod = 'cash';
-        $this->startDate = null;
-        $this->endDate = null;
+        $this->startDate = now(\App\Support\AppConfig::timezone())->toDateString();
+        $defaultPlanForDates = Plan::find($this->planId);
+        $this->endDate = $defaultPlanForDates ? \App\Helpers\Helpers::calculateSubscriptionEndDate($this->startDate, (int) $defaultPlanForDates->id) : null;
         $this->discountAmount = null;
         $this->paidAmount = null;
 
@@ -74,6 +75,22 @@ class ExpiredSubscriptionModal extends Component
     }
 
     
+
+    public function updatedPlanId($value): void
+    {
+        $plan = Plan::find($value);
+        if ($plan && $this->startDate) {
+            $this->endDate = Helpers::calculateSubscriptionEndDate($this->startDate, (int) $plan->id);
+        }
+    }
+
+    public function updatedStartDate($value): void
+    {
+        $plan = Plan::find($this->planId);
+        if ($plan && $value) {
+            $this->endDate = Helpers::calculateSubscriptionEndDate($value, (int) $plan->id);
+        }
+    }
 
     public function getPlanOptionsProperty(): array
     {
