@@ -12,12 +12,20 @@
         class="grid gap-3"
     >
         <div>
-            <img
+            <div
                 x-show="photoUrl"
-                :src="photoUrl"
-                class="h-48 w-40 rounded-xl object-cover"
-                alt=""
+                class="group relative h-48 w-40 overflow-hidden rounded-xl"
             >
+                <img
+                    :src="photoUrl"
+                    class="h-full w-full object-cover cursor-pointer"
+                    alt=""
+                    x-on:click="window.dispatchEvent(new CustomEvent('open-photo-zoom', { detail: { src: photoUrl, alt: '' } }))"
+                >
+                <div class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    <x-filament::icon icon="heroicon-o-magnifying-glass-plus" class="h-8 w-8 text-white" />
+                </div>
+            </div>
             <div
                 x-show="! photoUrl"
                 class="flex h-48 w-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-(--gray-300)"
