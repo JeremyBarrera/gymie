@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\Members\Pages;
 
-use App\Filament\Pages\MemberOnboardingStep2;
 use App\Filament\Resources\Members\MemberResource;
 use App\Models\Enquiry;
+use App\Services\Subscriptions\MemberSubscriptionService;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -46,34 +46,27 @@ class CreateMember extends CreateRecord
     protected function handleRecordCreation(array $data): Model
     {
         return DB::transaction(function () use ($data): Model {
-            if (blank($data['plan_id'] ?? null)) {
+            $sales = $data['sales'] ?? null;
+            if (is_array($sales) && count(array_filter($sales, fn ($s) => filled($s['plan_id'] ?? null))) > 0) {
+                $sales = array_values(array_filter($sales, fn ($s) => filled($s['plan_id'] ?? null)));
+            } elseif (filled($data['plan_id'] ?? null)) {
+                $sales = [[
+                    'plan_id' => $data['plan_id'],
+                    'quantity' => $data['quantity'] ?? 1,
+                    'start_date' => $data['start_date'] ?? now()->toDateString(),
+                    'end_date' => $data['end_date'] ?? null,
+                    'payment_method' => $data['payment_method'] ?? 'cash',
+                    'discount_amount' => $data['discount_amount'] ?? 0,
+                    'paid_amount' => $data['paid_amount'] ?? 0,
+                ]];
+            } else {
                 throw ValidationException::withMessages([
-                    'plan_id' => __('app.reception.verify_sale_required'),
+                    'sales.0.plan_id' => __('app.reception.verify_sale_required'),
                 ]);
             }
-
-            
-            
-            
-            $member = parent::handleRecordCreation($data);
-
-            $today = now()->toDateString();
-
-            MemberOnboardingStep2::createSale($member, [
-                'plan_id' => (int) $data['plan_id'],
-                'start_date' => (string) ($data['start_date'] ?? $today),
-                'end_date' => $data['end_date'] ?: null,
-                'invoices' => [[
-                    'date' => $today,
-                    'due_date' => $today,
-                    'payment_method' => (string) ($data['payment_method'] ?? 'cash'),
-                    'discount' => 0,
-                    'discount_amount' => (float) ($data['discount_amount'] ?? 0),
-                    'discount_note' => null,
-                    'paid_amount' => (float) ($data['paid_amount'] ?? 0),
-                ]],
-            ]);
-
+            $memberData = collect($data)->except(['sales', 'plan_id', 'quantity', 'start_date', 'end_date', 'payment_method', 'discount_amount', 'paid_amount'])->toArray();
+            $member = parent::handleRecordCreation($memberData);
+            MemberSubscriptionService::createForMember($member, $sales);
             return $member;
         });
     }

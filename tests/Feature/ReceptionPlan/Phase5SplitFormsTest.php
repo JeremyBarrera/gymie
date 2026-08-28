@@ -59,12 +59,19 @@ it('blocks creating a member without a subscription (no-member-without-subscript
             'gender' => 'male',
             'dob' => '1990-01-01',
             'photo' => 'data:image/png;base64,'.base64_encode('tiny-png-bytes'),
-            'start_date' => now()->toDateString(),
-            'payment_method' => 'cash',
-            'paid_amount' => 0,
+            'sales' => [
+                [
+                    'plan_id' => null,
+                    'quantity' => 1,
+                    'start_date' => now()->toDateString(),
+                    'payment_method' => 'cash',
+                    'discount_amount' => 0,
+                    'paid_amount' => 0,
+                ],
+            ],
         ])
         ->call('create')
-        ->assertHasFormErrors(['plan_id']);
+        ->assertHasFormErrors(['sales.0.plan_id']);
 
     expect(Member::query()->count())->toBe(0)
         ->and(Subscription::query()->count())->toBe(0)
@@ -86,10 +93,16 @@ it('creates the member together with its first subscription and invoice (no-memb
             'gender' => 'male',
             'dob' => '1990-01-01',
             'photo' => 'data:image/png;base64,'.base64_encode('tiny-png-bytes'),
-            'plan_id' => $plan->id,
-            'start_date' => now()->toDateString(),
-            'payment_method' => 'cash',
-            'paid_amount' => 100,
+            'sales' => [
+                [
+                    'plan_id' => $plan->id,
+                    'quantity' => 1,
+                    'start_date' => now()->toDateString(),
+                    'payment_method' => 'cash',
+                    'discount_amount' => 0,
+                    'paid_amount' => 100,
+                ],
+            ],
         ])
         ->call('create')
         ->assertHasNoFormErrors();
@@ -97,6 +110,56 @@ it('creates the member together with its first subscription and invoice (no-memb
     expect(Member::query()->count())->toBe(1)
         ->and(Subscription::query()->count())->toBe(1)
         ->and(Invoice::query()->count())->toBe(1);
+});
+
+it('creates a member with multiple subscriptions and respects quantity', function (): void {
+    Storage::fake('public');
+
+    $planA = Plan::factory()->create(['amount' => 100, 'days' => 30, 'status' => Status::Active]);
+    $planB = Plan::factory()->create(['amount' => 200, 'days' => 30, 'status' => Status::Active]);
+    $user = User::factory()->create()->assignRole('owner');
+
+    Livewire::actingAs($user)
+        ->test(CreateMember::class)
+        ->fillForm([
+            'name' => 'Multi Plan Member',
+            'government_id' => 'GOV-MULTI',
+            'contact' => '1599999997',
+            'gender' => 'male',
+            'dob' => '1990-01-01',
+            'photo' => 'data:image/png;base64,'.base64_encode('tiny-png-bytes'),
+            'sales' => [
+                [
+                    'plan_id' => $planA->id,
+                    'quantity' => 2,
+                    'start_date' => now()->toDateString(),
+                    'payment_method' => 'cash',
+                    'discount_amount' => 0,
+                    'paid_amount' => 200,
+                ],
+                [
+                    'plan_id' => $planB->id,
+                    'quantity' => 1,
+                    'start_date' => now()->toDateString(),
+                    'payment_method' => 'cash',
+                    'discount_amount' => 0,
+                    'paid_amount' => 200,
+                ],
+            ],
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(Member::query()->count())->toBe(1)
+        ->and(Subscription::query()->count())->toBe(2)
+        ->and(Invoice::query()->count())->toBe(2);
+
+    $subs = Subscription::query()->orderBy('plan_id')->get();
+    expect((int) $subs[0]->plan_id)->toBe($planA->id)
+        ->and((int) $subs[1]->plan_id)->toBe($planB->id);
+
+    $first = $subs->firstWhere('plan_id', $planA->id);
+    expect((float) $first->invoices()->first()->subscription_fee)->toBe(200.0);
 });
 
 it('restricts the first-subscription page to accounts allowed to create subscriptions', function (): void {

@@ -3,12 +3,12 @@
 namespace App\Services\Members;
 
 use App\Enums\Status;
-use App\Filament\Pages\MemberOnboardingStep2;
 use App\Helpers\Helpers;
 use App\Models\Member;
 use App\Models\MemberApplication;
 use App\Models\QueueEntry;
 use App\Models\User;
+use App\Services\Subscriptions\MemberSubscriptionService;
 use App\Support\Billing\PaymentMethod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -117,10 +117,7 @@ class MemberApplicationService
                 'created_member_id' => $member->id,
             ]);
 
-            
-            
-            MemberOnboardingStep2::createSale($member, $sale);
-
+            MemberSubscriptionService::createSingle($member, $sale);
             return $member;
         });
     }

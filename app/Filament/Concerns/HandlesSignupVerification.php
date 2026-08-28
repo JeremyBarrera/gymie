@@ -14,8 +14,8 @@ use App\Models\Service;
 use App\Models\Subscription;
 use App\Services\Members\MemberApplicationService;
 use App\Services\Membership\PlanCheckInService;
-use App\Support\Billing\InvoiceCalculator;
 use App\Support\Billing\PaymentMethod;
+use App\Support\Billing\SaleCalculator;
 use App\Support\Locations\LocationAccess;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -323,30 +323,7 @@ trait HandlesSignupVerification
 
     private function recalculateVerifySale(): void
     {
-        $sale = $this->verifyForm['sale'] ?? [];
-
-        $planId = is_numeric($sale['plan_id'] ?? null) ? (int) $sale['plan_id'] : null;
-        $startDate = (string) ($sale['start_date'] ?? '');
-        $quantity = max(1, (int) ($sale['quantity'] ?? 1));
-        $plan = $planId !== null ? Plan::find($planId) : null;
-
-        $fee = $plan ? (float) $plan->amount * $quantity : 0.0;
-        $endDate = ($plan && $startDate)
-            ? Helpers::calculateSubscriptionEndDate($startDate, $planId, $quantity)
-            : null;
-
-        $discount = min(max((float) ($sale['discount_amount'] ?? 0), 0), $fee);
-        $paid = (float) ($sale['paid_amount'] ?? 0);
-
-        $summary = InvoiceCalculator::summary($fee, Helpers::getTaxRate() ?: 0, $discount, $paid);
-
-        $this->verifyForm['sale'] = array_merge($sale, [
-            'end_date' => $endDate,
-            'fee' => $summary['fee'],
-            'tax' => $summary['tax'],
-            'total' => $summary['total'],
-            'due' => $summary['due'],
-        ]);
+        $this->verifyForm['sale'] = SaleCalculator::recalculate($this->verifyForm['sale'] ?? []);
     }
 
     public function confirmSignup(): void

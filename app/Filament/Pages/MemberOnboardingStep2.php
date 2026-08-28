@@ -8,11 +8,8 @@ use App\Helpers\Helpers;
 use App\Models\Invoice;
 use App\Models\Member;
 use App\Models\Plan;
-use App\Models\Subscription;
-use App\Support\AppConfig;
-use App\Support\Billing\InvoiceCalculator;
+use App\Services\Subscriptions\MemberSubscriptionService;
 use App\Support\Data;
-use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
@@ -373,66 +370,10 @@ class MemberOnboardingStep2 extends Page implements HasForms
     public static function createSale(Member $member, array $validated): array
     {
         return DB::transaction(function () use ($member, $validated): array {
-            $invoiceData = is_array($validated['invoices'] ?? null)
-                ? (reset($validated['invoices']) ?: [])
-                : [];
-
-            $plan = Plan::findOrFail(Data::int($validated['plan_id'] ?? null));
-            $quantity = max(1, Data::int($validated['quantity'] ?? 1));
-            $startDate = Carbon::parse(Data::string($validated['start_date'] ?? null))->toDateString();
-            
-            
-            $endDate = Data::string($validated['end_date'] ?? null)
-                ?: ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id), $quantity));
-
-            $status = Carbon::parse($startDate)->gt(Carbon::today(AppConfig::timezone()))
-                ? 'upcoming'
-                : 'ongoing';
-
-            $subscription = Subscription::create([
-                'member_id' => $member->id,
-                'plan_id' => $plan->id,
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'status' => $status,
-                'location_id' => $plan->location_id,
-            ]);
-
-            
-            $fee = round(Data::float($plan->amount) * $quantity);
-            $discountPct = max(Data::int($invoiceData['discount'] ?? 0), 0);
-            $discountAmount = Data::float($invoiceData['discount_amount'] ?? 0);
-            $discountAmount = min(max($discountAmount, 0), $fee);
-            if ($discountPct > 0 && $discountAmount <= 0) {
-                $discountAmount = Helpers::getDiscountAmount($discountPct, $fee);
+            [$subscription, $invoice] = MemberSubscriptionService::createSingle($member, $validated);
+            if ($member->status === \App\Enums\Status::Pending) {
+                $member->update(['status' => \App\Enums\Status::Active]);
             }
-
-            $paymentMethod = Data::nullableString($invoiceData['payment_method'] ?? null);
-            $paidAmount = max(Data::float($invoiceData['paid_amount'] ?? 0), 0);
-
-            $invoiceDate = Carbon::parse(Data::string($invoiceData['date'] ?? null))->toDateString();
-            $invoiceDueDate = Carbon::parse(Data::string($invoiceData['due_date'] ?? $invoiceDate))->toDateString();
-
-            $invoice = Invoice::create([
-                'number' => $invoiceData['invoice_number'] ?? null,
-                'subscription_id' => $subscription->id,
-                'date' => $invoiceDate,
-                'due_date' => $invoiceDueDate,
-                'payment_method' => $paymentMethod,
-                'discount' => $discountPct ?: null,
-                'discount_amount' => $discountAmount ?: null,
-                'discount_note' => $invoiceData['discount_note'] ?? null,
-                'paid_amount' => $paidAmount,
-                'subscription_fee' => $fee,
-                'status' => 'issued',
-                'location_id' => $plan->location_id,
-            ]);
-
-            
-            if ($member->status === Status::Pending) {
-                $member->update(['status' => Status::Active]);
-            }
-
             return [$subscription, $invoice];
         });
     }
