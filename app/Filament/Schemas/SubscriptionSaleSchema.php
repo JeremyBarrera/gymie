@@ -23,7 +23,8 @@ class SubscriptionSaleSchema
     {
         return [
             Grid::make()
-                ->columns(3)
+                ->columns(2)
+                ->extraAttributes(['class' => 'gap-4'])
                 ->schema([
                     Select::make('plan_id')
                         ->label(__('app.fields.plan'))
@@ -33,9 +34,7 @@ class SubscriptionSaleSchema
                         ->required()
                         ->afterStateUpdated(function (Get $get, Set $set): void {
                             self::recalculate($get, $set);
-                            $set('end_date', Helpers::calculateSubscriptionEndDate((string) $get('start_date'), (int) $get('plan_id'), max(1, (int) $get('quantity'))));
-                        })
-                        ->columnSpan(2),
+                        }),
                     TextInput::make('quantity')
                         ->label(__('app.fields.quantity'))
                         ->numeric()
@@ -46,26 +45,28 @@ class SubscriptionSaleSchema
                         ->extraAttributes(['class' => 'verify-money-input'])
                         ->afterStateUpdated(function (Get $get, Set $set): void {
                             self::recalculate($get, $set);
-                            $set('end_date', Helpers::calculateSubscriptionEndDate((string) $get('start_date'), (int) $get('plan_id'), max(1, (int) $get('quantity'))));
                         }),
                     DatePicker::make('start_date')
                         ->label(__('app.fields.start_date'))
                         ->live()
                         ->required()
                         ->default(fn (): string => now()->toDateString())
-                        ->afterStateUpdated(fn (Get $get, Set $set) => $set('end_date', Helpers::calculateSubscriptionEndDate((string) $get('start_date'), (int) $get('plan_id'), max(1, (int) $get('quantity'))))),
+                        ->afterStateUpdated(function (Get $get, Set $set): void {
+                            self::recalculate($get, $set);
+                        }),
                     DatePicker::make('end_date')
                         ->label(__('app.fields.end_date'))
                         ->disabled()
                         ->dehydrated()
-                        ->default(fn (Get $get): string => Helpers::calculateSubscriptionEndDate((string) $get('start_date'), (int) $get('plan_id'), max(1, (int) $get('quantity')))),
+                        ->placeholder('')
+                        ->default(null),
                     Radio::make('payment_method')
                         ->label(__('app.fields.payment_method'))
                         ->options(SubscriptionForm::paymentMethodOptions())
                         ->default('cash')
                         ->inline()
                         ->required()
-                        ->columnSpan(2),
+                        ->live(),
                     TextInput::make('discount_amount')
                         ->label(__('app.fields.discount_amount'))
                         ->numeric()
@@ -89,41 +90,47 @@ class SubscriptionSaleSchema
                         ->live(debounce: 300)
                         ->afterStateUpdated(fn (Get $get, Set $set) => self::recalculate($get, $set)),
                 ]),
-            Fieldset::make(__('app.titles.summary'))
-                ->columns(1)
+            Group::make()
+                ->columnSpanFull()
+                ->extraAttributes(['class' => 'mt-1 border-t border-gray-200 dark:border-gray-700 pt-3'])
                 ->schema([
-                    TextInput::make('fee')
-                        ->label(__('app.fields.fee'))
-                        ->numeric()
-                        ->disabled()
-                        ->dehydrated()
-                        ->default(0)
-                        ->prefix(Helpers::getCurrencySymbol())
-                        ->extraAttributes(['class' => 'verify-money-input']),
-                    TextInput::make('tax')
-                        ->label(fn (): string => __('app.fields.tax_with_rate', ['rate' => Helpers::getTaxRate()]))
-                        ->numeric()
-                        ->disabled()
-                        ->dehydrated()
-                        ->default(0)
-                        ->prefix(Helpers::getCurrencySymbol())
-                        ->extraAttributes(['class' => 'verify-money-input']),
-                    TextInput::make('total')
-                        ->label(__('app.fields.total'))
-                        ->numeric()
-                        ->disabled()
-                        ->dehydrated()
-                        ->default(0)
-                        ->prefix(Helpers::getCurrencySymbol())
-                        ->extraAttributes(['class' => 'verify-money-input']),
-                    TextInput::make('due')
-                        ->label(__('app.fields.due'))
-                        ->numeric()
-                        ->disabled()
-                        ->dehydrated()
-                        ->default(0)
-                        ->prefix(Helpers::getCurrencySymbol())
-                        ->extraAttributes(['class' => 'verify-money-input']),
+                    Grid::make()
+                        ->columns(4)
+                        ->extraAttributes(['class' => 'gap-3'])
+                        ->schema([
+                            TextInput::make('fee')
+                                ->label(__('app.fields.fee'))
+                                ->numeric()
+                                ->disabled()
+                                ->dehydrated()
+                                ->default(0)
+                                ->prefix(Helpers::getCurrencySymbol())
+                                ->extraAttributes(['class' => 'verify-money-input']),
+                            TextInput::make('tax')
+                                ->label(fn (): string => __('app.fields.tax_with_rate', ['rate' => Helpers::getTaxRate()]))
+                                ->numeric()
+                                ->disabled()
+                                ->dehydrated()
+                                ->default(0)
+                                ->prefix(Helpers::getCurrencySymbol())
+                                ->extraAttributes(['class' => 'verify-money-input']),
+                            TextInput::make('total')
+                                ->label(__('app.fields.total'))
+                                ->numeric()
+                                ->disabled()
+                                ->dehydrated()
+                                ->default(0)
+                                ->prefix(Helpers::getCurrencySymbol())
+                                ->extraAttributes(['class' => 'verify-money-input']),
+                            TextInput::make('due')
+                                ->label(__('app.fields.due'))
+                                ->numeric()
+                                ->disabled()
+                                ->dehydrated()
+                                ->default(0)
+                                ->prefix(Helpers::getCurrencySymbol())
+                                ->extraAttributes(['class' => 'verify-money-input']),
+                        ]),
                 ]),
         ];
     }
