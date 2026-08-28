@@ -69,26 +69,22 @@ function armGestureUnlock() {
 
 function ding(context) {
     const t = context.currentTime;
-
     [
-        [880.0, 0.0, 0.14],
-        [1318.5, 0.13, 0.30],
+        [659.3, 0.0, 0.12],
+        [880.0, 0.02, 0.22],
+        [1318.5, 0.10, 0.40],
     ].forEach(([frequency, start, end]) => {
         const osc = context.createOscillator();
         const gain = context.createGain();
-
         osc.type = 'sine';
         osc.frequency.value = frequency;
-
         gain.gain.setValueAtTime(0.0001, t + start);
-        gain.gain.exponentialRampToValueAtTime(0.7, t + start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(1.45, t + start + 0.015);
         gain.gain.exponentialRampToValueAtTime(0.0001, t + end);
-
         osc.connect(gain);
         gain.connect(context.destination);
-
         osc.start(t + start);
-        osc.stop(t + end + 0.05);
+        osc.stop(t + end + 0.06);
     });
 }
 

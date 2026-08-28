@@ -15,7 +15,7 @@
                             class="pending-fab-button pending-fab-flash"
                             aria-label="{{ __('app.reception.waiting_title') }}"
                         >
-                            <x-filament::icon icon="heroicon-m-clipboard-document-check" class="pending-fab-icon" />
+                            <x-filament::icon icon="heroicon-m-arrow-right-circle" class="pending-fab-icon" />
                             <span class="pending-fab-count">{{ count($pendingQueue) }}</span>
                         </button>
                     </x-slot>
