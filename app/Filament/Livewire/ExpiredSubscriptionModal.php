@@ -11,6 +11,11 @@ use App\Models\Subscription;
 use App\Services\Subscriptions\SubscriptionRenewalService;
 use App\Support\Billing\PaymentMethod;
 use App\Support\Notifications\FollowUpAlert;
+use App\Filament\Schemas\SubscriptionSaleSchema;
+use Filament\Forms\Components\Repeater;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Schemas\Schema;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,26 +23,17 @@ use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-class ExpiredSubscriptionModal extends Component
+class ExpiredSubscriptionModal extends Component implements HasSchemas
 {
+    use InteractsWithSchemas;
+
     public ?int $memberId = null;
 
     public ?int $serviceId = null;
 
     public ?int $previousSubscriptionId = null;
 
-    public ?int $planId = null;
-
-    public string $paymentMethod = 'cash';
-
-    
-    public ?string $startDate = null;
-
-    public ?string $endDate = null;
-
-    public ?float $discountAmount = null;
-
-    public ?float $paidAmount = null;
+    public array $sales = [];
 
     #[On('open-expired-subscription-modal')]
     public function open(int $memberId, int $serviceId, int $previousSubscriptionId): void
@@ -55,41 +51,48 @@ class ExpiredSubscriptionModal extends Component
         $this->serviceId = (int) $serviceId;
         $this->previousSubscriptionId = (int) $previous->id;
 
-        
-        
         $defaultPlan = Plan::withTrashed()->find($previous->plan_id);
         $available = $this->planOptions;
 
-        $this->planId = isset($available[$defaultPlan?->id])
+        $defaultPlanId = isset($available[$defaultPlan?->id])
             ? (int) $defaultPlan->id
             : (int) array_key_first($available);
 
-        $this->paymentMethod = 'cash';
-        $this->startDate = now(\App\Support\AppConfig::timezone())->toDateString();
-        $defaultPlanForDates = Plan::find($this->planId);
-        $this->endDate = $defaultPlanForDates ? \App\Helpers\Helpers::calculateSubscriptionEndDate($this->startDate, (int) $defaultPlanForDates->id) : null;
-        $this->discountAmount = null;
-        $this->paidAmount = null;
+        $defaultPlanForDates = Plan::find($defaultPlanId);
+        $startDate = now(\App\Support\AppConfig::timezone())->toDateString();
+        $endDate = $defaultPlanForDates ? \App\Helpers\Helpers::calculateSubscriptionEndDate($startDate, (int) $defaultPlanForDates->id) : null;
+
+        $this->sales = [[
+            'plan_id' => $defaultPlanId,
+            'quantity' => 1,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'payment_method' => 'cash',
+            'discount_amount' => 0,
+            'paid_amount' => 0,
+        ]];
 
         $this->dispatch('open-modal', id: 'expired-subscription-modal');
     }
 
     
 
-    public function updatedPlanId($value): void
+    public function form(Schema $schema): Schema
     {
-        $plan = Plan::find($value);
-        if ($plan && $this->startDate) {
-            $this->endDate = Helpers::calculateSubscriptionEndDate($this->startDate, (int) $plan->id);
-        }
-    }
-
-    public function updatedStartDate($value): void
-    {
-        $plan = Plan::find($this->planId);
-        if ($plan && $value) {
-            $this->endDate = Helpers::calculateSubscriptionEndDate($value, (int) $plan->id);
-        }
+        return $schema
+            ->components([
+                \Filament\Forms\Components\Repeater::make('sales')
+                    ->label(__('app.titles.membership_plan'))
+                    ->hiddenLabel()
+                    ->columnSpanFull()
+                    ->minItems(1)
+                    ->defaultItems(1)
+                    ->reorderable(false)
+                    ->collapsible()
+                    ->itemLabel(fn (array $state): ?string => isset($state['plan_id']) && is_numeric($state['plan_id']) ? (Plan::find((int) $state['plan_id'])?->name) : null)
+                    ->schema(\App\Filament\Schemas\SubscriptionSaleSchema::fields())
+                    ->columns(1),
+            ]);
     }
 
     public function getPlanOptionsProperty(): array
@@ -115,38 +118,35 @@ class ExpiredSubscriptionModal extends Component
     protected function rules(): array
     {
         return [
-            'planId' => ['required', 'integer', 'in:'.implode(',', array_keys($this->planOptions))],
-            'paymentMethod' => ['required', 'string', 'in:'.implode(',', array_keys(PaymentMethod::options()))],
-            'startDate' => ['required', 'date'],
-            'endDate' => ['nullable', 'date', 'after_or_equal:startDate'],
-            'discountAmount' => ['nullable', 'numeric', 'min:0'],
-            'paidAmount' => ['nullable', 'numeric', 'min:0'],
+            'sales' => ['required', 'array', 'min:1'],
+            'sales.*.plan_id' => ['required', 'integer', 'in:'.implode(',', array_keys($this->planOptions))],
+            'sales.*.quantity' => ['required', 'integer', 'min:1'],
+            'sales.*.start_date' => ['required', 'date'],
+            'sales.*.end_date' => ['nullable', 'date', 'after_or_equal:sales.*.start_date'],
+            'sales.*.payment_method' => ['required', 'string', 'in:'.implode(',', array_keys(PaymentMethod::options()))],
+            'sales.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'sales.*.paid_amount' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 
     protected function validationAttributes(): array
     {
         return [
-            'planId' => __('app.fields.plan'),
-            'paymentMethod' => __('app.fields.payment_method'),
-            'startDate' => __('app.fields.start_date'),
-            'endDate' => __('app.fields.end_date'),
-            'discountAmount' => __('app.fields.discount'),
-            'paidAmount' => __('app.fields.paid_amount'),
+            'sales.*.plan_id' => __('app.fields.plan'),
+            'sales.*.payment_method' => __('app.fields.payment_method'),
+            'sales.*.start_date' => __('app.fields.start_date'),
+            'sales.*.end_date' => __('app.fields.end_date'),
+            'sales.*.discount_amount' => __('app.fields.discount'),
+            'sales.*.paid_amount' => __('app.fields.paid_amount'),
         ];
     }
 
     public function submit(): void
     {
-        $this->handleSubmit(false);
+        $this->handleSubmit();
     }
 
-    public function submitAndAddAnother(): void
-    {
-        $this->handleSubmit(true);
-    }
-
-    private function handleSubmit(bool $addAnother): void
+    private function handleSubmit(): void
     {
         $actor = Auth::user();
 
@@ -168,7 +168,7 @@ class ExpiredSubscriptionModal extends Component
         }
 
         try {
-            $result = DB::transaction(function () use ($previous, $member): array {
+            $results = DB::transaction(function () use ($previous, $member): array {
                 $freshPrevious = Subscription::query()
                     ->whereKey($previous->id)
                     ->lockForUpdate()
@@ -182,21 +182,45 @@ class ExpiredSubscriptionModal extends Component
                     throw new \RuntimeException('subscription mismatch');
                 }
 
-                return app(SubscriptionRenewalService::class)->renew($freshPrevious, [
-                    'plan_id' => (int) $this->planId,
-                    'start_date' => (string) $this->startDate,
-                    'end_date' => filled($this->endDate) ? (string) $this->endDate : null,
-                    'invoice' => [
-                        'payment_method' => $this->paymentMethod,
-                        'discount_amount' => (float) ($this->discountAmount ?? 0),
-                        'paid_amount' => (float) ($this->paidAmount ?? 0),
-                        'date' => (string) $this->startDate,
-                    ],
-                ]);
+                $results = [];
+                $currentPrevious = $freshPrevious;
+
+                foreach ($this->sales as $sale) {
+                    $result = app(SubscriptionRenewalService::class)->renew($currentPrevious, [
+                        'plan_id' => (int) $sale['plan_id'],
+                        'quantity' => max(1, (int) ($sale['quantity'] ?? 1)),
+                        'start_date' => (string) $sale['start_date'],
+                        'end_date' => filled($sale['end_date'] ?? null) ? (string) $sale['end_date'] : null,
+                        'invoice' => [
+                            'payment_method' => $sale['payment_method'] ?? 'cash',
+                            'discount_amount' => (float) ($sale['discount_amount'] ?? 0),
+                            'paid_amount' => (float) ($sale['paid_amount'] ?? 0),
+                            'date' => (string) $sale['start_date'],
+                        ],
+                    ]);
+                    $results[] = $result;
+                    $currentPrevious = $result['subscription'];
+                }
+
+                return $results;
             });
 
-            $subscription = $result['subscription'];
-            $invoice = $result['invoice'];
+            $lastResult = end($results);
+            $subscription = $lastResult['subscription'];
+            $invoice = $lastResult['invoice'];
+
+            foreach ($results as $result) {
+                if ((float) $result['invoice']->due_amount > 0) {
+                    FollowUpAlert::send(
+                        action: 'new_subscription',
+                        member: $member,
+                        actor: $actor,
+                        reason: __('app.check_in.balance_remaining', ['amount' => Helpers::formatCurrency((float) $result['invoice']->due_amount)]),
+                        subscription: $result['subscription'],
+                        invoice: $result['invoice'],
+                    );
+                }
+            }
         } catch (\Throwable $exception) {
             Log::error('Expired-path renewal failed', [
                 'member_id' => $member->id,
@@ -205,32 +229,6 @@ class ExpiredSubscriptionModal extends Component
             ]);
 
             $this->notifyDanger(__('app.notifications.check_in_failed'));
-
-            return;
-        }
-
-        if ((float) $invoice->due_amount > 0) {
-            FollowUpAlert::send(
-                action: 'new_subscription',
-                member: $member,
-                actor: $actor,
-                reason: __('app.check_in.balance_remaining', ['amount' => Helpers::formatCurrency((float) $invoice->due_amount)]),
-                subscription: $subscription,
-                invoice: $invoice,
-            );
-        }
-
-        if ($addAnother) {
-            $this->dispatch('notify', type: 'success', message: __('app.notifications.subscription_created'));
-
-            $this->previousSubscriptionId = (int) $subscription->id;
-            $this->planId = (int) $subscription->plan_id;
-            $this->startDate = now(AppConfig::timezone())->toDateString();
-            $defaultPlan = Plan::find($this->planId);
-            $this->endDate = $defaultPlan ? Helpers::calculateSubscriptionEndDate($this->startDate, (int) $defaultPlan->id) : null;
-            $this->discountAmount = null;
-            $this->paidAmount = null;
-            $this->resetErrorBag();
 
             return;
         }
@@ -256,12 +254,7 @@ class ExpiredSubscriptionModal extends Component
         $this->memberId = null;
         $this->serviceId = null;
         $this->previousSubscriptionId = null;
-        $this->planId = null;
-        $this->paymentMethod = 'cash';
-        $this->startDate = null;
-        $this->endDate = null;
-        $this->discountAmount = null;
-        $this->paidAmount = null;
+        $this->sales = [];
 
         $this->resetErrorBag();
     }

@@ -104,7 +104,7 @@ class TestOverrideMembersSeeder extends Seeder
         };
 
         // 1. ACCESS
-        $m1 = $createMember('OVERRIDE-ACCESS', 'Override Access', 'ID-ACCESS-001', '+10000000001');
+        $m1 = $createMember('OVERRIDE-ACCESS', 'Alex Morgan', 'ID-ACCESS-001', '+10000000001');
         $sub1 = \App\Models\Subscription::create([
             'member_id' => $m1->id, 'plan_id' => $planToro->id, 'location_id' => $location->id,
             'start_date' => now()->subDays(5)->toDateString(), 'end_date' => now()->addDays(25)->toDateString(), 'status' => Status::Ongoing->value,
@@ -112,10 +112,10 @@ class TestOverrideMembersSeeder extends Seeder
         Invoice::create(['subscription_id' => $sub1->id, 'location_id' => $location->id, 'date' => now()->toDateString(), 'due_date' => now()->addDays(10)->toDateString(), 'subscription_fee' => 45000, 'paid_amount' => 45000, 'status' => Status::Paid->value]);
 
         // 2. NO_ACCESS
-        $createMember('OVERRIDE-NOACCESS', 'Override NoAccess', 'ID-NOACCESS-001', '+10000000002');
+        $createMember('OVERRIDE-NOACCESS', 'Jamie Smith', 'ID-NOACCESS-001', '+10000000002');
 
         // 3. USES_EXHAUSTED
-        $m3 = $createMember('OVERRIDE-EXHAUSTED', 'Override Exhausted', 'ID-EXHAUSTED-001', '+10000000003');
+        $m3 = $createMember('OVERRIDE-EXHAUSTED', 'Taylor Johnson', 'ID-EXHAUSTED-001', '+10000000003');
         $sub3 = \App\Models\Subscription::create([
             'member_id' => $m3->id, 'plan_id' => $planTest1->id, 'location_id' => $location->id,
             'start_date' => now()->subDays(1)->toDateString(), 'end_date' => now()->addDays(10)->toDateString(), 'status' => Status::Ongoing->value,
@@ -124,7 +124,7 @@ class TestOverrideMembersSeeder extends Seeder
         PlanCheckIn::create(['member_id' => $m3->id, 'subscription_id' => $sub3->id, 'plan_id' => $planTest1->id, 'service_id' => $testService->id, 'location_id' => $location->id, 'checked_in_by' => 1, 'checked_in_at' => now()->subHours(2), 'override' => false]);
 
         // 4. SAME_DAY
-        $m4 = $createMember('OVERRIDE-SAMEDAY', 'Override SameDay', 'ID-SAMEDAY-001', '+10000000004');
+        $m4 = $createMember('OVERRIDE-SAMEDAY', 'Jordan Lee', 'ID-SAMEDAY-001', '+10000000004');
         $sub4 = \App\Models\Subscription::create([
             'member_id' => $m4->id, 'plan_id' => $planSameDay->id, 'location_id' => $location->id,
             'start_date' => now()->subDays(1)->toDateString(), 'end_date' => now()->addDays(10)->toDateString(), 'status' => Status::Ongoing->value,
@@ -133,7 +133,7 @@ class TestOverrideMembersSeeder extends Seeder
         PlanCheckIn::create(['member_id' => $m4->id, 'subscription_id' => $sub4->id, 'plan_id' => $planSameDay->id, 'service_id' => $testService->id, 'location_id' => $location->id, 'checked_in_by' => 1, 'checked_in_at' => now(), 'override' => false]);
 
         // 5. UNPAID
-        $m5 = $createMember('OVERRIDE-UNPAID', 'Override Unpaid', 'ID-UNPAID-001', '+10000000005');
+        $m5 = $createMember('OVERRIDE-UNPAID', 'Casey Brown', 'ID-UNPAID-001', '+10000000005');
         $sub5 = \App\Models\Subscription::create([
             'member_id' => $m5->id, 'plan_id' => $planToro->id, 'location_id' => $location->id,
             'start_date' => now()->subDays(5)->toDateString(), 'end_date' => now()->addDays(25)->toDateString(), 'status' => Status::Ongoing->value,
@@ -141,7 +141,7 @@ class TestOverrideMembersSeeder extends Seeder
         Invoice::create(['subscription_id' => $sub5->id, 'location_id' => $location->id, 'date' => now()->toDateString(), 'due_date' => now()->addDays(5)->toDateString(), 'subscription_fee' => 45000, 'paid_amount' => 0, 'status' => Status::Issued->value]);
 
         // 6. OVERDUE
-        $m6 = $createMember('OVERRIDE-OVERDUE', 'Override Overdue', 'ID-OVERDUE-001', '+10000000006');
+        $m6 = $createMember('OVERRIDE-OVERDUE', 'Morgan Davis', 'ID-OVERDUE-001', '+10000000006');
         $sub6 = \App\Models\Subscription::create([
             'member_id' => $m6->id, 'plan_id' => $planToro->id, 'location_id' => $location->id,
             'start_date' => now()->subDays(5)->toDateString(), 'end_date' => now()->addDays(25)->toDateString(), 'status' => Status::Ongoing->value,
@@ -149,7 +149,7 @@ class TestOverrideMembersSeeder extends Seeder
         Invoice::create(['subscription_id' => $sub6->id, 'location_id' => $location->id, 'date' => now()->subDays(10)->toDateString(), 'due_date' => now()->subDay()->toDateString(), 'subscription_fee' => 45000, 'paid_amount' => 0, 'status' => Status::Issued->value]);
 
         // 7. EXPIRED
-        $m7 = $createMember('OVERRIDE-EXPIRED', 'Override Expired', 'ID-EXPIRED-001', '+10000000007');
+        $m7 = $createMember('OVERRIDE-EXPIRED', 'Riley Wilson', 'ID-EXPIRED-001', '+10000000007');
         $sub7 = \App\Models\Subscription::create([
             'member_id' => $m7->id, 'plan_id' => $planToro->id, 'location_id' => $location->id,
             'start_date' => now()->subDays(40)->toDateString(), 'end_date' => now()->subDays(10)->toDateString(), 'status' => Status::Expired->value,
@@ -157,7 +157,7 @@ class TestOverrideMembersSeeder extends Seeder
         Invoice::create(['subscription_id' => $sub7->id, 'location_id' => $location->id, 'date' => $sub7->start_date, 'due_date' => $sub7->start_date, 'subscription_fee' => 45000, 'paid_amount' => 45000, 'status' => Status::Paid->value]);
 
         // 8. BANNED
-        $m8 = $createMember('OVERRIDE-BANNED', 'Override Banned', 'ID-BANNED-001', '+10000000008', null, 'banned');
+        $m8 = $createMember('OVERRIDE-BANNED', 'Avery Thompson', 'ID-BANNED-001', '+10000000008', null, 'banned');
         $m8->update(['ban_reason' => 'Violation of gym policy']);
         $sub8 = \App\Models\Subscription::create([
             'member_id' => $m8->id, 'plan_id' => $planToro->id, 'location_id' => $location->id,
