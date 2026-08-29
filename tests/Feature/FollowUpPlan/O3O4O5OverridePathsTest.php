@@ -139,15 +139,15 @@ it('opens the renewal popup preselecting the expired plan with cash and blank da
     Livewire::actingAs(o3o4o5Staff())
         ->test(ExpiredSubscriptionModal::class)
         ->call('open', $member->id, (int) $plan->primaryService()->id, $previous->id)
-        ->assertSet('planId', (int) $previous->plan_id)
-        ->assertSet('paymentMethod', 'cash')
-        ->assertSet('startDate', now()->toDateString())
-        ->assertSet('endDate', \App\Helpers\Helpers::calculateSubscriptionEndDate(now()->toDateString(), (int) $previous->plan_id))
-        ->assertSet('discountAmount', null)
-        ->assertSet('paidAmount', null)
-        ->set('startDate', null)
+        ->assertSet('sales.0.plan_id', (int) $previous->plan_id)
+        ->assertSet('sales.0.payment_method', 'cash')
+        ->assertSet('sales.0.start_date', now()->toDateString())
+        ->assertSet('sales.0.end_date', \App\Helpers\Helpers::calculateSubscriptionEndDate(now()->toDateString(), (int) $previous->plan_id))
+        ->assertSet('sales.0.discount_amount', 0)
+        ->assertSet('sales.0.paid_amount', 0)
+        ->set('sales.0.start_date', null)
         ->call('submit')
-        ->assertHasErrors(['startDate']);
+        ->assertHasErrors(['sales.0.start_date']);
 });
 
 it('renews via SubscriptionRenewalService and completes a normal check-in when fully paid', function (): void {
@@ -163,8 +163,8 @@ it('renews via SubscriptionRenewalService and completes a normal check-in when f
     Livewire::actingAs(o3o4o5Staff())
         ->test(ExpiredSubscriptionModal::class)
         ->call('open', $member->id, (int) $plan->primaryService()->id, $previous->id)
-        ->set('startDate', $startDate)
-        ->set('paidAmount', 100)
+        ->set('sales.0.start_date', $startDate)
+        ->set('sales.0.paid_amount', 100)
         ->call('submit')
         ->assertHasNoErrors()
         ->assertDispatched('close-modal', id: 'expired-subscription-modal')
@@ -211,9 +211,9 @@ it('fires the new_subscription follow-up alert when the renewed invoice is left 
     Livewire::actingAs(o3o4o5Staff())
         ->test(ExpiredSubscriptionModal::class)
         ->call('open', $member->id, (int) $plan->primaryService()->id, $previous->id)
-        ->set('startDate', now()->toDateString())
-        ->set('discountAmount', 10)
-        ->set('paidAmount', 0)
+        ->set('sales.0.start_date', now()->toDateString())
+        ->set('sales.0.discount_amount', 10)
+        ->set('sales.0.paid_amount', 0)
         ->call('submit')
         ->assertHasNoErrors();
 
@@ -238,7 +238,7 @@ it('refuses to renew the same expired subscription twice', function (): void {
     $component = Livewire::actingAs(o3o4o5Staff())
         ->test(ExpiredSubscriptionModal::class)
         ->call('open', $member->id, (int) $plan->primaryService()->id, $previous->id)
-        ->set('startDate', now()->toDateString());
+        ->set('sales.0.start_date', now()->toDateString());
 
     $component->call('submit')->assertHasNoErrors();
 
@@ -246,7 +246,7 @@ it('refuses to renew the same expired subscription twice', function (): void {
     expect($countAfterFirst)->toBe(2);
 
     $component->call('open', $member->id, (int) $plan->primaryService()->id, $previous->id)
-        ->set('startDate', now()->toDateString())
+        ->set('sales.0.start_date', now()->toDateString())
         ->call('submit')
         ->assertDispatched('notify');
 
@@ -268,8 +268,8 @@ it('blocks the renewal popup behind billing permissions', function (): void {
     Livewire::actingAs($limited)
         ->test(ExpiredSubscriptionModal::class)
         ->call('open', $member->id, (int) $plan->primaryService()->id, $previous->id)
-        ->set('startDate', now()->toDateString())
-        ->set('paidAmount', 100)
+        ->set('sales.0.start_date', now()->toDateString())
+        ->set('sales.0.paid_amount', 100)
         ->call('submit');
 
     expect(Subscription::query()->where('member_id', $member->id)->count())->toBe(1)
