@@ -36,7 +36,8 @@ return [
         'health_issues' => 'مشاكل صحية',
         'member' => 'العضو',
         'plan' => 'الخطة',
-        'quantity' => 'الكمية (أشهر)',
+        'quantity' => 'الكمية (الاشتراكات)',
+        'quantity_help' => 'ينشئ هذا العدد من الاشتراكات المتتالية لهذه الخطة، مرتبة حسب التاريخ.',
         'start_date' => 'تاريخ البداية',
         'end_date' => 'تاريخ النهاية',
         'date_from' => 'من تاريخ',
@@ -940,6 +941,7 @@ return [
         'first_subscription_title' => 'أول اشتراك لـ :member',
     ],
     'validation' => [
+        'subscription_overlap' => 'تاريخ البدء هذا يتداخل مع اشتراك موجود ينتهي في :end. اختر تاريخًا لاحقًا أو تعامل مع الاشتراك الموجود أولاً.',
         'founding_location_required' => 'الموقع المؤسس مطلوب.',
         'location_outside_jurisdiction' => 'الموقع المحدد خارج نطاق صلاحياتك.',
         'role_outside_jurisdiction' => 'الدور المحدد خارج نطاق صلاحياتك.',

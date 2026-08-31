@@ -36,7 +36,8 @@ return [
         'health_issues' => 'Problemas de salud',
         'member' => 'Socio',
         'plan' => 'Plan',
-        'quantity' => 'Cantidad (meses)',
+        'quantity' => 'Cantidad (suscripciones)',
+        'quantity_help' => 'Crea esa cantidad de suscripciones consecutivas de este plan, encadenadas por fecha.',
         'start_date' => 'Fecha de inicio',
         'end_date' => 'Fecha de finalización',
         'date_from' => 'Desde',
@@ -940,6 +941,7 @@ return [
         'first_subscription_title' => 'Primera suscripción de :member',
     ],
     'validation' => [
+        'subscription_overlap' => 'Esta fecha de inicio se solapa con una suscripción existente que termina el :end. Elija una fecha posterior o gestione la suscripción existente primero.',
         'founding_location_required' => 'La ubicación fundadora es obligatoria.',
         'location_outside_jurisdiction' => 'La ubicación seleccionada está fuera de su jurisdicción.',
         'role_outside_jurisdiction' => 'El rol seleccionado está fuera de su jurisdicción.',

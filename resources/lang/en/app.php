@@ -36,7 +36,8 @@ return [
         'health_issues' => 'Health Issues',
         'member' => 'Member',
         'plan' => 'Plan',
-        'quantity' => 'Quantity (months)',
+        'quantity' => 'Quantity (subscriptions)',
+        'quantity_help' => 'Creates that many consecutive subscriptions of this plan, chained by date.',
         'start_date' => 'Start Date',
         'end_date' => 'End Date',
         'date_from' => 'Date from',
@@ -945,6 +946,7 @@ return [
         'first_subscription_title' => 'First subscription for :member',
     ],
     'validation' => [
+        'subscription_overlap' => 'This start date overlaps an existing subscription ending :end. Choose a later date or handle the existing subscription first.',
         'founding_location_required' => 'The founding location is required.',
         'location_outside_jurisdiction' => 'The selected location is outside your jurisdiction.',
         'role_outside_jurisdiction' => 'The selected role is outside your jurisdiction.',

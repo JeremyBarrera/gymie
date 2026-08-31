@@ -219,7 +219,7 @@
                                 {{ __('app.fields.quantity') }}
                             </label>
                             <x-filament::input.wrapper>
-                                <x-filament::input type="number" id="verify-quantity" class="verify-money-input" min="1" step="1" wire:model.live.debounce.500ms="verifyForm.sale.quantity" />
+                                <x-filament::input type="number" id="verify-quantity" class="verify-money-input" min="1" step="1" wire:model.live.debounce.500ms="verifyForm.sale.quantity" :disabled="\App\Models\Plan::find((int)($verifyForm['sale']['plan_id'] ?? 0))?->isEvergreen()" />
                             </x-filament::input.wrapper>
                         </div>
 
