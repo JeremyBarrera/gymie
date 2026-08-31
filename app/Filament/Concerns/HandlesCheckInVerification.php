@@ -237,9 +237,30 @@ trait HandlesCheckInVerification
         }
 
         $access = collect($services)->where('state', 'access')->values();
-        $this->checkInServiceId = $access->count() === 1
-            ? (int) $access->first()['id']
-            : (int) $services[0]['id'];
+        if ($access->count() === 1) {
+            $this->checkInServiceId = (int) $access->first()['id'];
+
+            return;
+        }
+
+        if ($access->count() > 1) {
+            $this->checkInServiceId = (int) $access->first()['id'];
+
+            return;
+        }
+
+        $rank = fn (?string $state): int => match ($state) {
+            'overdue' => 5,
+            'expired' => 4,
+            'uses_exhausted' => 3,
+            'no_access' => 2,
+            'unpaid' => 1,
+            'same_day_duplicate' => 1,
+            default => 0,
+        };
+
+        $sorted = collect($services)->sortByDesc(fn (array $row): int => $rank($row['state'] ?? null))->values();
+        $this->checkInServiceId = (int) $sorted->first()['id'];
     }
 
     

@@ -13,6 +13,7 @@ use App\Models\Member;
 use App\Models\QueueEntry;
 use App\Models\Subscription;
 use App\Services\Membership\PlanCheckInService;
+use Illuminate\Support\Collection;
 use App\Support\DevOps\FeatureFlags;
 use App\Support\Locations\LocationAccess;
 use App\Support\Notifications\FollowUpAlert;
@@ -115,14 +116,7 @@ class Reception extends Page
             return;
         }
 
-        if ($member->checkInBlocker() === 'banned') {
-            $this->beginManualCheckIn(collect([$member]));
-
-            return;
-        }
-
-        $this->manualCheckInSearch = (string) $member->code;
-        $this->openManualCheckInOverlay();
+        $this->beginManualCheckIn(new Collection([$member]));
     }
 
     public function loadQueueEntries(): void
