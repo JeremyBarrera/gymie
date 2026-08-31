@@ -290,11 +290,8 @@ class SubscriptionForm
 
     public static function renewSchema(Subscription $record): array
     {
-        $today = Carbon::today(AppConfig::timezone())->toDateString();
-        $defaultStartDate = max(
-            $today,
-            $record->end_date?->copy()->addDay()->toDateString() ?? $today,
-        );
+        $plan = Plan::findOrFail($record->plan_id);
+        $defaultStartDate = \App\Services\Subscriptions\SubscriptionChainService::nextStartDate($record->member, $plan);
 
         return [
             Group::make()

@@ -36,7 +36,8 @@ return [
         'health_issues' => 'Problèmes de santé',
         'member' => 'Membre',
         'plan' => 'Forfait',
-        'quantity' => 'Quantité (mois)',
+        'quantity' => 'Quantité (abonnements)',
+        'quantity_help' => 'Crée ce nombre d’abonnements consécutifs de ce plan, enchaînés par date.',
         'start_date' => 'Date de début',
         'end_date' => 'Date de fin',
         'date_from' => 'Date de début',
@@ -940,6 +941,7 @@ return [
         'first_subscription_title' => 'Premier abonnement de :member',
     ],
     'validation' => [
+        'subscription_overlap' => 'Cette date de début chevauche un abonnement existant se terminant le :end. Choisissez une date ultérieure ou gérez d’abord l’abonnement existant.',
         'founding_location_required' => 'L\'emplacement fondateur est requis.',
         'location_outside_jurisdiction' => 'L\'emplacement sélectionné est hors de votre juridiction.',
         'role_outside_jurisdiction' => 'Le rôle sélectionné est hors de votre juridiction.',

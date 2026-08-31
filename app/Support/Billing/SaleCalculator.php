@@ -12,9 +12,12 @@ class SaleCalculator
         $planId = is_numeric($sale['plan_id'] ?? null) ? (int) $sale['plan_id'] : null;
         $quantity = max(1, (int) ($sale['quantity'] ?? 1));
         $plan = $planId ? Plan::find($planId) : null;
+        if ($plan && $plan->isEvergreen()) {
+            $quantity = 1;
+        }
         $fee = $plan ? (float) $plan->amount * $quantity : 0.0;
         $startDate = (string) ($sale['start_date'] ?? '');
-        $endDate = ($plan && $startDate) ? Helpers::calculateSubscriptionEndDate($startDate, $planId, $quantity) : null;
+        $endDate = ($plan && $startDate && ! $plan->isEvergreen()) ? Helpers::calculateSubscriptionEndDate($startDate, $planId, $quantity) : null;
         $discount = min(max((float) ($sale['discount_amount'] ?? 0), 0), $fee);
         $paid = (float) ($sale['paid_amount'] ?? 0);
         $summary = InvoiceCalculator::summary($fee, Helpers::getTaxRate() ?: 0, $discount, $paid);

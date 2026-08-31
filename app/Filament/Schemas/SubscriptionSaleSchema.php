@@ -33,17 +33,26 @@ class SubscriptionSaleSchema
                         ->live()
                         ->required()
                         ->afterStateUpdated(function (Get $get, Set $set): void {
+                            if (Plan::find((int) $get('plan_id'))?->isEvergreen()) {
+                                $set('quantity', 1);
+                            }
                             self::recalculate($get, $set);
                         }),
                     TextInput::make('quantity')
                         ->label(__('app.fields.quantity'))
+                        ->helperText(__('app.fields.quantity_help'))
                         ->numeric()
                         ->default(1)
                         ->minValue(1)
                         ->required()
                         ->live()
+                        ->dehydrated()
+                        ->disabled(fn (Get $get): bool => Plan::find((int) $get('plan_id'))?->isEvergreen() ?? false)
                         ->extraAttributes(['class' => 'verify-money-input'])
                         ->afterStateUpdated(function (Get $get, Set $set): void {
+                            if (Plan::find((int) $get('plan_id'))?->isEvergreen()) {
+                                $set('quantity', 1);
+                            }
                             self::recalculate($get, $set);
                         }),
                     DatePicker::make('start_date')

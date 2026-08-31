@@ -6,6 +6,7 @@ use App\Helpers\Helpers;
 use App\Models\Invoice;
 use App\Models\Plan;
 use App\Models\Subscription;
+use App\Services\Subscriptions\SubscriptionChainService;
 use App\Support\AppConfig;
 use App\Support\Data;
 use Carbon\Carbon;
@@ -16,18 +17,20 @@ class SubscriptionRenewalService
 
     public function renew(Subscription $record, array $data): array
     {
-        
         $result = Subscription::query()->getConnection()->transaction(function () use ($record, $data): array {
             $timezone = AppConfig::timezone();
             $today = Carbon::today($timezone);
-
             $plan = Plan::findOrFail(Data::int($data['plan_id']));
-
-            $startDate = Carbon::parse(Data::string($data['start_date']))->toDateString();
-            
-            $endDate = filled($data['end_date'] ?? null)
-                ? Carbon::parse(Data::string($data['end_date']))->toDateString()
-                : ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id)));
+            $member = $record->member;
+            $startDate = Carbon::parse(Data::string($data['start_date'] ?? SubscriptionChainService::nextStartDate($member, $plan)))->toDateString();
+            $endDate = $plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id), 1);
+            $conflict = SubscriptionChainService::overlaps($member, $plan, $startDate, $endDate);
+            if ($conflict) {
+                $endDisplay = $conflict->end_date ? $conflict->end_date->toDateString() : __('app.fields.unlimited');
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'start_date' => [__('app.validation.subscription_overlap', ['end' => $endDisplay])],
+                ]);
+            }
 
             $status = Carbon::parse($startDate)->gt($today)
                 ? 'upcoming'
