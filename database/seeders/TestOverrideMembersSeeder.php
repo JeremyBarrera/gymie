@@ -159,6 +159,20 @@ class TestOverrideMembersSeeder extends Seeder
         // 8. BANNED
         $m8 = $createMember('OVERRIDE-BANNED', 'Avery Thompson', 'ID-BANNED-001', '+10000000008', null, 'banned');
         $m8->update(['ban_reason' => 'Violation of gym policy']);
+
+        // 9. USES_EXHAUSTED without renewable (3-button case: Deny + Add Sub + Override)
+        $m9 = $createMember('OVERRIDE-EXHAUSTED-NORENEW', 'Casey Miller', 'ID-EXHNORNW-001', '+10000000009');
+        $sub9a = \App\Models\Subscription::create([
+            'member_id' => $m9->id, 'plan_id' => $planTest1->id, 'location_id' => $location->id,
+            'start_date' => now()->subDays(1)->toDateString(), 'end_date' => now()->addDays(10)->toDateString(), 'status' => Status::Ongoing->value,
+        ]);
+        Invoice::create(['subscription_id' => $sub9a->id, 'location_id' => $location->id, 'date' => now()->toDateString(), 'due_date' => now()->addDays(10)->toDateString(), 'subscription_fee' => 100, 'paid_amount' => 100, 'status' => Status::Paid->value]);
+        PlanCheckIn::create(['member_id' => $m9->id, 'subscription_id' => $sub9a->id, 'plan_id' => $planTest1->id, 'service_id' => $testService->id, 'location_id' => $location->id, 'checked_in_by' => 1, 'checked_in_at' => now()->subHours(2), 'override' => false]);
+        $sub9b = \App\Models\Subscription::create([
+            'member_id' => $m9->id, 'plan_id' => $planTest1->id, 'location_id' => $location->id,
+            'start_date' => now()->addDays(5)->toDateString(), 'end_date' => now()->addDays(20)->toDateString(), 'status' => Status::Upcoming->value,
+        ]);
+        Invoice::create(['subscription_id' => $sub9b->id, 'location_id' => $location->id, 'date' => $sub9b->start_date, 'due_date' => $sub9b->start_date, 'subscription_fee' => 100, 'paid_amount' => 0, 'status' => Status::Issued->value]);
         $sub8 = \App\Models\Subscription::create([
             'member_id' => $m8->id, 'plan_id' => $planToro->id, 'location_id' => $location->id,
             'start_date' => now()->subDays(5)->toDateString(), 'end_date' => now()->addDays(25)->toDateString(), 'status' => Status::Ongoing->value,

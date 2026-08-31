@@ -521,16 +521,6 @@
                                 @endif
                             @elseif(($checkInSelectedRow['state'] ?? null) === 'no_access')
                                 <x-filament::button
-                                    wire:key="checkin-renew-noaccess"
-                                    color="success"
-                                    size="md"
-                                    class="min-w-28"
-                                    wire:click="openExpiredSubscriptionModal({{ $checkInSelectedRow['id'] }})"
-                                    wire:loading.attr="disabled"
-                                >
-                                    {{ __('app.check_in.add_subscription') }}
-                                </x-filament::button>
-                                <x-filament::button
                                     wire:key="checkin-override"
                                     color="warning"
                                     size="md"
