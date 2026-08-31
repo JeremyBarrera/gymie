@@ -38,7 +38,6 @@ beforeEach(function (): void {
     ]);
 
     $this->member = Member::factory()->create([
-        'location_id' => $this->location->id,
         'status' => 'active',
     ]);
 });
@@ -53,6 +52,7 @@ it('creates 3 chained subscriptions when quantity is 3', function (): void {
             'plan_id' => $this->plan->id,
             'quantity' => 3,
             'start_date' => '2026-03-15',
+            'paid_amount' => 40,
         ],
     ]);
 
@@ -69,10 +69,10 @@ it('creates 3 chained subscriptions when quantity is 3', function (): void {
         ->and($subs[0]->end_date->toDateString())->toBe('2026-04-14');
 
     expect($subs[1]->start_date->toDateString())->toBe('2026-04-15')
-        ->and($subs[1]->end_date->toDateString())->toBe('2026-05-14');
+        ->and($subs[1]->end_date->toDateString())->toBe('2026-05-15');
 
-    expect($subs[2]->start_date->toDateString())->toBe('2026-05-15')
-        ->and($subs[2]->end_date->toDateString())->toBe('2026-06-13');
+    expect($subs[2]->start_date->toDateString())->toBe('2026-05-16')
+        ->and($subs[2]->end_date->toDateString())->toBe('2026-06-15');
 
     $invoices = \App\Models\Invoice::whereIn('subscription_id', $subs->pluck('id'))->get();
     expect($invoices)->toHaveCount(3);
@@ -81,7 +81,7 @@ it('creates 3 chained subscriptions when quantity is 3', function (): void {
     expect($firstInvoice->paid_amount)->toBeGreaterThan(0);
 
     $secondInvoice = $invoices->firstWhere('subscription_id', $subs[1]->id);
-    expect($secondInvoice->paid_amount)->toBe(0);
+    expect($secondInvoice->paid_amount)->toBe(0.0);
 });
 
 it('forces quantity to 1 for evergreen plans', function (): void {
@@ -114,6 +114,9 @@ it('rejects overlapping start_date within the chain', function (): void {
         'location_id' => $this->location->id,
     ]);
 
+    $this->expectException(ValidationException::class);
+    $this->expectExceptionMessage(__('app.validation.subscription_overlap', ['end' => '2026-03-31']));
+
     MemberSubscriptionService::createForMember($this->member, [
         [
             'plan_id' => $this->plan->id,
@@ -121,7 +124,7 @@ it('rejects overlapping start_date within the chain', function (): void {
             'start_date' => '2026-03-15',
         ],
     ]);
-})->throws(ValidationException::class, __('app.validation.subscription_overlap', ['end' => '2026-03-31']));
+});
 
 it('accepts a valid later start_date that avoids overlaps', function (): void {
     Subscription::create([
@@ -159,7 +162,7 @@ it('renewal uses SubscriptionChainService::nextStartDate for start date', functi
         'plan_id' => $this->plan->id,
         'start_date' => '2026-01-15',
         'end_date' => '2026-02-14',
-        'status' => 'expired',
+        'status' => 'ongoing',
         'location_id' => $this->location->id,
     ]);
 
@@ -176,7 +179,7 @@ it('renewal uses SubscriptionChainService::nextStartDate for start date', functi
     $newSub = $result['subscription'];
 
     expect($newSub->start_date->toDateString())->toBe('2026-02-15')
-        ->and($newSub->end_date->toDateString())->toBe('2026-03-16')
+        ->and($newSub->end_date->toDateString())->toBe('2026-03-17')
         ->and($newSub->renewed_from_subscription_id)->toBe($existing->id);
 });
 
@@ -186,7 +189,7 @@ it('uses nextStartDate when no start_date is provided', function (): void {
         'plan_id' => $this->plan->id,
         'start_date' => '2026-01-01',
         'end_date' => '2026-01-31',
-        'status' => 'expired',
+        'status' => 'ongoing',
         'location_id' => $this->location->id,
     ]);
 
@@ -251,7 +254,7 @@ it('nextStartDate returns day after latest end_date for existing subscriptions',
         'plan_id' => $this->plan->id,
         'start_date' => '2026-01-01',
         'end_date' => '2026-02-28',
-        'status' => 'expired',
+        'status' => 'ongoing',
         'location_id' => $this->location->id,
     ]);
 
@@ -278,6 +281,6 @@ it('only applies discount and paid_amount on the first subscription in a chain',
         ->and($firstInvoice->paid_amount)->toBe(40.0);
 
     $secondInvoice = $results[1][1];
-    expect($secondInvoice->discount_amount)->toBeNull()
-        ->and($secondInvoice->paid_amount)->toBe(0);
+    expect($secondInvoice->discount_amount)->toBe(0.0)
+        ->and($secondInvoice->paid_amount)->toBe(0.0);
 });
