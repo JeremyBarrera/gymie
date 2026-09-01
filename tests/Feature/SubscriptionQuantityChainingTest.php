@@ -285,12 +285,12 @@ it('only applies discount and paid_amount on the first subscription in a chain',
     expect($results)->toHaveCount(2);
 
     $firstInvoice = $results[0][1];
-    expect($firstInvoice->discount_amount)->toBe(0.0)
+    expect($firstInvoice->discount_amount)->toBe(10.0)
         ->and((float) $firstInvoice->paid_amount)->toBe((float) $firstInvoice->total_amount)
         ->and($firstInvoice->due_date->toDateString())->toBe('2026-03-15');
 
     $secondInvoice = $results[1][1];
-    expect($secondInvoice->discount_amount)->toBe(10.0)
+    expect($secondInvoice->discount_amount)->toBe(0.0)
         ->and($secondInvoice->paid_amount)->toBe(40.0)
         ->and($secondInvoice->due_date->toDateString())->toBe($results[1][0]->start_date->toDateString());
 });
