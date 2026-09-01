@@ -341,24 +341,32 @@
                             <h3 class="fi-text text-2xl font-bold leading-tight tracking-tight">{{ $checkInMember->name }}</h3>
 
                             <div class="grid gap-x-8 sm:grid-cols-2">
-                                @foreach([$memberDetailsLeft, $memberDetailsRight] as $memberDetailsColumn)
-                                    <div class="space-y-2">
-                                        @foreach($memberDetailsColumn as $detail)
-                                            @if(filled($detail['value']))
-                                                <div class="space-y-1">
-                                                    <span class="fi-text-muted text-xs font-medium uppercase tracking-wide">{{ $detail['label'] }}</span>
-                                                    <p class="fi-text text-base font-medium {{ ($detail['break'] ?? false) ? 'break-all' : '' }}">{{ $detail['value'] }}</p>
-                                                </div>
-                                            @endif
-                                        @endforeach
-                                    </div>
-                                @endforeach
-                            </div>
-                            @if($this->statusPill)
-                                <div class="pt-2">
-                                    <x-checkin-status-pill :color="$this->statusPill['color']" :label="$this->statusPill['label']" />
+                                <div class="space-y-2">
+                                    @foreach($memberDetailsLeft as $detail)
+                                        @if(filled($detail['value']))
+                                            <div class="space-y-1">
+                                                <span class="fi-text-muted text-xs font-medium uppercase tracking-wide">{{ $detail['label'] }}</span>
+                                                <p class="fi-text text-base font-medium {{ ($detail['break'] ?? false) ? 'break-all' : '' }}">{{ $detail['value'] }}</p>
+                                            </div>
+                                        @endif
+                                    @endforeach
                                 </div>
-                            @endif
+                                <div class="space-y-2">
+                                    @foreach($memberDetailsRight as $detail)
+                                        @if(filled($detail['value']))
+                                            <div class="space-y-1">
+                                                <span class="fi-text-muted text-xs font-medium uppercase tracking-wide">{{ $detail['label'] }}</span>
+                                                <p class="fi-text text-base font-medium {{ ($detail['break'] ?? false) ? 'break-all' : '' }}">{{ $detail['value'] }}</p>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                    @if($this->statusPill)
+                                        <div class="pt-1">
+                                            <x-checkin-status-pill :color="$this->statusPill['color']" :label="$this->statusPill['label']" />
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
 
