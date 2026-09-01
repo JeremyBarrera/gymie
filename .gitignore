@@ -37,6 +37,7 @@ docker/nginx-tls.rendered.conf
 # Local databases: this repo is a single source for CODE; every machine
 # creates and transfers its own database (Docker MySQL in production, or a
 # local SQLite file for ad-hoc runs), so no local DB artifact is committed.
+/public-hosted
 /torogym
 *.sqlite
 *.sqlite3

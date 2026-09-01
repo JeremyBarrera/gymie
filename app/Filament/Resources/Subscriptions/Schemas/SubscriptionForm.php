@@ -63,6 +63,20 @@ class SubscriptionForm
                             ->live()
                             ->getOptionLabelFromRecordUsing(fn (Plan $record): string => self::formatPlanOptionLabel($record))
                             ->afterStateUpdated(function (Get $get, Set $set) {
+                                $memberId = self::intState($get, 'member_id');
+                                $planId = self::intState($get, 'plan_id');
+                                if ($memberId && $planId) {
+                                    $member = Member::find($memberId);
+                                    $planForStart = Plan::find($planId);
+                                    if ($member && $planForStart && $planForStart->id) {
+                                        $nextStart = SubscriptionChainService::nextStartDate($member, $planForStart);
+                                        $currentStart = self::stringState($get, 'start_date');
+                                        if ($currentStart !== $nextStart) {
+                                            $set('start_date', $nextStart);
+                                            $set('end_date', Helpers::calculateSubscriptionEndDate($nextStart, $planId));
+                                        }
+                                    }
+                                }
                                 $plan = self::planFromState($get);
                                 $fee = (float) ($plan->amount ?? 0);
                                 $taxRate = Helpers::getTaxRate() ?: 0;
@@ -104,6 +118,19 @@ class SubscriptionForm
                             ->label(__('app.fields.start_date'))
                             ->live()
                             ->required()
+                            ->default(function (Get $get): ?string {
+                                $memberId = self::intState($get, 'member_id');
+                                $planId = self::intState($get, 'plan_id');
+                                if ($memberId && $planId) {
+                                    $member = Member::find($memberId);
+                                    $plan = Plan::find($planId);
+                                    if ($member && $plan) {
+                                        return SubscriptionChainService::nextStartDate($member, $plan);
+                                    }
+                                }
+
+                                return now()->toDateString();
+                            })
                             ->afterStateUpdated(function (Get $get, Set $set) {
                                 $set('end_date', Helpers::calculateSubscriptionEndDate(
                                     self::stringState($get, 'start_date'),
