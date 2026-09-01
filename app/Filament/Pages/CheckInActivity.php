@@ -3,7 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Location;
-use App\Models\QueueEntry;
+use App\Models\PlanCheckIn;
 use App\Support\Dates\DeviceDateFormat;
 use App\Support\Locations\LocationAccess;
 use Filament\Forms\Components\DatePicker;
@@ -47,11 +47,10 @@ class CheckInActivity extends Page implements HasTable
 
         return $table
             ->query(
-                QueueEntry::query()
-                    ->with(['location', 'claimedBy'])
-                    ->where('kind', 'checkin')
+                PlanCheckIn::query()
+                    ->with(['member', 'plan', 'location', 'checkedInBy'])
                     ->when($accessible !== null, fn (Builder $query): Builder => $query->whereIn('location_id', $accessible))
-                    ->latest('created_at')
+                    ->latest('checked_in_at')
             )
             ->columns([
                 TextColumn::make('id')
@@ -60,45 +59,33 @@ class CheckInActivity extends Page implements HasTable
                     ->sortable(),
                 TextColumn::make('member.name')
                     ->label(__('app.fields.name'))
-                    ->searchable()
-                    ->getStateUsing(fn (QueueEntry $record): ?string => $record->member?->name)
-                    ->placeholder(__('app.placeholders.dash')),
+                    ->searchable(),
                 TextColumn::make('plan.name')
                     ->label(__('app.resources.plans.singular'))
-                    ->getStateUsing(fn (QueueEntry $record): ?string => $record->plan?->name)
                     ->placeholder(__('app.placeholders.dash')),
                 TextColumn::make('location.name')
                     ->label(__('app.fields.location'))
                     ->sortable(),
-                TextColumn::make('status')
-                    ->label(__('app.fields.status'))
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'approved' => 'success',
-                        'attending' => 'warning',
-                        'denied' => 'danger',
-                        'expired' => 'gray',
-                        default => 'info',
-                    })
-                    ->formatStateUsing(fn (string $state): string => __("app.reception.status.{$state}")),
                 TextColumn::make('override')
                     ->label(__('app.activity.override'))
                     ->badge()
                     ->color(fn (bool $state): string => $state ? 'warning' : 'gray')
                     ->formatStateUsing(fn (bool $state): string => $state ? __('app.activity.overridden') : __('app.activity.normal')),
-                TextColumn::make('claimedBy.name')
+                TextColumn::make('override_reason')
+                    ->label(__('app.fields.note'))
+                    ->placeholder(__('app.placeholders.dash'))
+                    ->limit(40),
+                TextColumn::make('checkedInBy.name')
                     ->label(__('app.fields.checked_in_by'))
-                    ->getStateUsing(fn (QueueEntry $record): ?string => $record->claimedBy?->name)
                     ->placeholder(__('app.placeholders.dash')),
+                TextColumn::make('checked_in_at')
+                    ->label(__('app.activity.checked_in_at'))
+                    ->dateTime(DeviceDateFormat::dateTime())
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->label(__('app.fields.created_at'))
                     ->dateTime(DeviceDateFormat::dateTime())
                     ->sortable(),
-                TextColumn::make('checked_in_at')
-                    ->label(__('app.activity.checked_in_at'))
-                    ->getStateUsing(fn (QueueEntry $record): ?string => $record->status === 'approved' ? $record->created_at : null)
-                    ->dateTime(DeviceDateFormat::dateTime())
-                    ->placeholder(__('app.placeholders.dash')),
             ])
             ->filters([
                 Filter::make('date')
@@ -110,21 +97,18 @@ class CheckInActivity extends Page implements HasTable
                         return $query
                             ->when(
                                 $data['date_from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                                fn (Builder $query, $date): Builder => $query->whereDate('checked_in_at', '>=', $date),
                             )
                             ->when(
                                 $data['date_to'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                                fn (Builder $query, $date): Builder => $query->whereDate('checked_in_at', '<=', $date),
                             );
                     }),
-                SelectFilter::make('status')
-                    ->label(__('app.fields.status'))
+                SelectFilter::make('override')
+                    ->label(__('app.activity.override'))
                     ->options([
-                        'waiting' => __('app.reception.status.waiting'),
-                        'attending' => __('app.reception.status.attending'),
-                        'approved' => __('app.reception.status.approved'),
-                        'denied' => __('app.reception.status.denied'),
-                        'expired' => __('app.reception.status.expired'),
+                        0 => __('app.activity.normal'),
+                        1 => __('app.activity.overridden'),
                     ]),
                 SelectFilter::make('location_id')
                     ->label(__('app.fields.location'))
@@ -138,7 +122,7 @@ class CheckInActivity extends Page implements HasTable
                         return $query->orderBy('name')->pluck('name', 'id')->all();
                     }),
             ])
-            ->defaultSort('created_at', 'desc')
+            ->defaultSort('checked_in_at', 'desc')
             ->emptyStateIcon('heroicon-o-clock')
             ->emptyStateHeading(__('app.activity.empty_heading'))
             ->emptyStateDescription(__('app.activity.empty_description'));

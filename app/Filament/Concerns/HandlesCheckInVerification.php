@@ -442,7 +442,12 @@ trait HandlesCheckInVerification
         }
 
         if ($entry !== null) {
-            $entry->update(['status' => 'approved', 'override' => false]);
+            $payload = array_merge($entry->payload, ['member_id' => $member->id]);
+            $entry->update([
+                'status' => 'approved',
+                'override' => false,
+                'payload' => $payload,
+            ]);
 
             $this->broadcastCheckInResolution($entry, true, null);
         }
@@ -636,11 +641,13 @@ trait HandlesCheckInVerification
         }
 
         if ($entry !== null) {
+            $payload = array_merge($entry->payload, ['member_id' => $member->id]);
             $entry->update([
                 'status' => 'approved',
                 'override' => true,
                 'override_by_user_id' => Auth::id(),
                 'override_reason' => __('app.reception.service_same_day_duplicate', ['plan' => $subscription->plan?->name ?? '']),
+                'payload' => $payload,
             ]);
 
             $this->broadcastCheckInResolution($entry, true, null);
@@ -709,9 +716,11 @@ trait HandlesCheckInVerification
         }
 
         if ($entry !== null) {
+            $payload = array_merge($entry->payload, ['member_id' => $member->id]);
             $entry->update([
                 'status' => 'approved',
                 'override' => false,
+                'payload' => $payload,
             ]);
 
             $this->broadcastCheckInResolution($entry, true, null);
@@ -783,12 +792,14 @@ trait HandlesCheckInVerification
         $wasManualPostSignup = $this->pendingSignupCheckInQueueId !== null && $entry === null;
 
         if ($entry !== null) {
+            $payload = array_merge($entry->payload, ['member_id' => $member->id]);
             $entry->update([
                 'status' => 'denied',
                 'denied_reason' => __('app.reception.same_day_duplicate_denied_reason'),
                 'override' => true,
                 'override_by_user_id' => Auth::id(),
                 'override_reason' => __('app.reception.same_day_duplicate_denied_reason'),
+                'payload' => $payload,
             ]);
 
             $this->broadcastCheckInResolution($entry, false, __('app.reception.same_day_duplicate_denied_reason'));
