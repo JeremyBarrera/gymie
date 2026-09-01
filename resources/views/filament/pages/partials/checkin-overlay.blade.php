@@ -153,7 +153,7 @@
                 : ($checkInOverrideStep
                     ? __('app.reception.override_hint')
                     : __('app.reception.checkin_overlay_hint'))"
-        >            <div class="space-y-3 max-h-[68vh] overflow-y-auto pr-2 -mr-2">
+        >            <div class="space-y-3">
                 @if($checkInDenyStep)
                     <div>
                         <label for="checkin-deny-reason" class="fi-text text-base font-semibold">
@@ -419,13 +419,14 @@
             </div>
 
             <x-slot name="footer">
-                <div class="flex w-full flex-wrap justify-end gap-2">
+                <div class="flex w-full flex-col gap-3">
                     @if($footerStep !== null)
-                        <x-filament::button
-                            wire:key="checkin-{{ $footerStep }}-back"
-                            color="gray"
-                            size="md"
-                            class="min-w-28"
+                        <div class="flex w-full flex-col sm:flex-row sm:justify-end gap-2">
+                            <x-filament::button
+                                wire:key="checkin-{{ $footerStep }}-back"
+                                color="gray"
+                                size="md"
+                            class="w-full sm:w-auto min-w-28"
                             wire:click="{{ $footerBackActions[$footerStep] }}"
                         >
                             {{ __('app.reception.back') }}
@@ -435,12 +436,13 @@
                             wire:key="checkin-{{ $footerStep }}-confirm"
                             :color="$footerConfirmMeta[$footerStep]['color']"
                             size="md"
-                            class="min-w-28"
-                            wire:click="{{ $footerConfirmMeta[$footerStep]['action'] }}"
-                            wire:loading.attr="disabled"
-                        >
-                            {{ $footerConfirmMeta[$footerStep]['label'] }}
-                        </x-filament::button>
+                            class="w-full sm:w-auto min-w-28"
+                                wire:click="{{ $footerConfirmMeta[$footerStep]['action'] }}"
+                                wire:loading.attr="disabled"
+                            >
+                                {{ $footerConfirmMeta[$footerStep]['label'] }}
+                            </x-filament::button>
+                        </div>
                     @else
                         @if($isBanned)
                             <div class="flex w-full justify-end">
@@ -448,14 +450,15 @@
                             </div>
                         @elseif($checkInMember)
                             @if(($checkInSelectedRow['state'] ?? null) === 'same_day_duplicate')
-                                <p class="fi-text-muted text-sm">{{ __('app.reception.same_day_duplicate_helper') }}</p>
+                                <p class="w-full fi-text-muted text-sm">{{ __('app.reception.same_day_duplicate_helper') }}</p>
                             @endif
+                            <div class="flex w-full flex-col sm:flex-row sm:justify-end gap-2">
                             @if(($checkInSelectedRow['state'] ?? null) !== 'same_day_duplicate')
                                 <x-filament::button
                                     wire:key="checkin-deny"
                                     color="danger"
                                     size="md"
-                                    class="min-w-28"
+                                    class="w-full sm:w-auto min-w-28"
                                     wire:click="denyCheckIn"
                                 >
                                     {{ __('app.reception.deny') }}
@@ -470,7 +473,7 @@
                                     wire:key="checkin-approve"
                                     color="success"
                                     size="md"
-                                    class="min-w-28"
+                                    class="w-full sm:w-auto min-w-28"
                                     wire:click="approveCheckIn"
                                     wire:loading.attr="disabled"
                                     :disabled="! $checkInSelectedRow || ($checkInSelectedRow['state'] ?? null) !== 'access'"
@@ -482,7 +485,7 @@
                                     wire:key="checkin-renew"
                                     color="success"
                                     size="md"
-                                    class="min-w-28"
+                                    class="w-full sm:w-auto min-w-28"
                                     wire:click="openExpiredSubscriptionModal({{ $checkInSelectedRow['id'] }})"
                                     wire:loading.attr="disabled"
                                 >
@@ -493,7 +496,7 @@
                                     wire:key="checkin-renew"
                                     color="success"
                                     size="md"
-                                    class="min-w-28"
+                                    class="w-full sm:w-auto min-w-28"
                                     wire:click="openExpiredSubscriptionModal({{ $checkInSelectedRow['id'] }})"
                                     wire:loading.attr="disabled"
                                 >
@@ -503,7 +506,7 @@
                                     wire:key="checkin-override"
                                     color="warning"
                                     size="md"
-                                    class="min-w-28"
+                                    class="w-full sm:w-auto min-w-28"
                                     wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
                                 >
                                     {{ __('app.reception.override') }}
@@ -513,7 +516,7 @@
                                     wire:key="checkin-override"
                                     color="warning"
                                     size="md"
-                                    class="min-w-28"
+                                    class="w-full sm:w-auto min-w-28"
                                     wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
                                 >
                                     {{ __('app.reception.override') }}
@@ -523,7 +526,7 @@
                                     wire:key="checkin-deny-same-day"
                                     color="danger"
                                     size="md"
-                                    class="min-w-28"
+                                    class="w-full sm:w-auto min-w-28"
                                     wire:click="denySameDayDuplicateCheckIn"
                                     wire:loading.attr="disabled"
                                 >
@@ -533,7 +536,7 @@
                                     wire:key="checkin-same-day-nocount"
                                     color="success"
                                     size="md"
-                                    class="min-w-28"
+                                    class="w-full sm:w-auto min-w-28"
                                     wire:click="confirmSameDayDuplicateCheckIn"
                                     wire:loading.attr="disabled"
                                 >
@@ -543,7 +546,7 @@
                                     wire:key="checkin-same-day-count"
                                     color="warning"
                                     size="md"
-                                    class="min-w-28"
+                                    class="w-full sm:w-auto min-w-28"
                                     wire:click="confirmSameDayDuplicateCheckInAndCount"
                                     wire:loading.attr="disabled"
                                 >
@@ -554,7 +557,7 @@
                                     wire:key="checkin-add-payment"
                                     color="success"
                                     size="md"
-                                    class="min-w-28"
+                                    class="w-full sm:w-auto min-w-28"
                                     wire:click="openAddPaymentModal({{ $checkInSelectedRow['id'] }})"
                                     wire:loading.attr="disabled"
                                 >
@@ -564,13 +567,14 @@
                                     wire:key="checkin-change-due-date"
                                     color="gray"
                                     size="md"
-                                    class="min-w-28"
+                                    class="w-full sm:w-auto min-w-28"
                                     wire:click="openChangeDueDateModal({{ $checkInSelectedRow['id'] }})"
                                     wire:loading.attr="disabled"
                                 >
                                     {{ __('app.check_in.change_due_date') }}
                                 </x-filament::button>
                             @endif
+                            </div>
                         @endif
                     @endif
                 </div>
