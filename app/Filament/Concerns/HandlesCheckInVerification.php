@@ -1042,7 +1042,13 @@ trait HandlesCheckInVerification
 
     public function getStatusPillProperty(): ?array
     {
-        if (! $this->selectedCheckInMemberId || ! $this->checkInSelectedRow) {
+        if (! $this->selectedCheckInMemberId || ! $this->checkInServiceId) {
+            return null;
+        }
+
+        $row = collect($this->checkInServices)->firstWhere('id', $this->checkInServiceId);
+
+        if (! $row) {
             return null;
         }
 
@@ -1052,13 +1058,12 @@ trait HandlesCheckInVerification
             return null;
         }
 
-        $state = $this->checkInSelectedRow['state'] ?? null;
+        $state = $row['state'] ?? null;
 
         if ($state === 'access' || $state === null) {
             return null;
         }
 
-        $row = $this->checkInSelectedRow;
         $subscription = ! empty($row['subscription_id']) ? Subscription::find((int) $row['subscription_id']) : null;
 
         if ($subscription) {
