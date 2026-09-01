@@ -236,7 +236,12 @@ trait HandlesCheckInVerification
             return;
         }
 
-        $access = collect($services)->where('state', 'access')->values();
+        $member = $this->selectedCheckInMemberId ? Member::find($this->selectedCheckInMemberId) : null;
+        $active = $member
+            ? collect($services)->filter(fn (array $row): bool => $this->hasRenewableSubscriptionForService($member, (int) $row['id']))->values()
+            : collect();
+        $pool = $active->isNotEmpty() ? $active : collect($services);
+        $access = $pool->where('state', 'access')->values();
         if ($access->count() === 1) {
             $this->checkInServiceId = (int) $access->first()['id'];
 
@@ -259,7 +264,7 @@ trait HandlesCheckInVerification
             default => 0,
         };
 
-        $sorted = collect($services)->sortByDesc(fn (array $row): int => $rank($row['state'] ?? null))->values();
+        $sorted = $pool->sortByDesc(fn (array $row): int => $rank($row['state'] ?? null))->values();
         $this->checkInServiceId = (int) $sorted->first()['id'];
     }
 
