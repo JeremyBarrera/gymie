@@ -2,12 +2,10 @@
 
 namespace App\Filament\Resources\Subscriptions\Tables;
 
-use App\Filament\Resources\Subscriptions\Schemas\SubscriptionForm;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Models\Member;
 use App\Models\Plan;
 use App\Models\Subscription;
-use App\Support\AppConfig;
 use App\Support\Dates\DeviceDateFormat;
 use Carbon\Carbon;
 use Filament\Actions\Action;
@@ -31,8 +29,6 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SubscriptionTable
 {
-    
-
     public static function configure(Table $table): Table
     {
         return $table
@@ -209,36 +205,7 @@ class SubscriptionTable
                         Action::make('heading_actions')
                             ->label(__('app.actions.record_actions'))
                             ->disabled()
-                            ->color('gray'),
-                        Action::make('renew')
-                            ->label(__('app.actions.renew'))
-                            ->icon('heroicon-m-arrow-path')
-                            ->color('success')
-                            ->modalHeading(__('app.actions.renew'))
-                            ->modalSubmitActionLabel(__('app.actions.renew'))
-                            ->modalWidth('6xl')
-                            ->closeModalByClickingAway(false)
-                            ->visible(function (Subscription $record): bool {
-                                if (! in_array($record->status?->value, ['expiring', 'expired'], true)) {
-                                    return false;
-                                }
-
-                                if ($record->renewals()->exists()) {
-                                    return false;
-                                }
-
-                                $today = Carbon::today(AppConfig::timezone());
-
-                                return ! Subscription::query()
-                                    ->where('member_id', $record->member_id)
-                                    ->whereDate('start_date', '>', $today)
-                                    ->exists();
-                            })
-                            ->schema(fn (Subscription $record): array => SubscriptionForm::renewSchema($record))
-                            ->action(function (Subscription $record, array $data): void {
-                                SubscriptionForm::handleRenew($record, $data);
-                            }),
-                        ViewAction::make()
+                            ->color('gray'),                        ViewAction::make()
                             ->url(fn ($record) => SubscriptionResource::getUrl('view', ['record' => $record])),
                         EditAction::make()
                             ->hiddenLabel()

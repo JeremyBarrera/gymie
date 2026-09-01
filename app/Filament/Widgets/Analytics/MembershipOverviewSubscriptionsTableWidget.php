@@ -2,14 +2,12 @@
 
 namespace App\Filament\Widgets\Analytics;
 
-use App\Filament\Resources\Subscriptions\Schemas\SubscriptionForm;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Helpers\Helpers;
 use App\Models\Subscription;
 use App\Support\AppConfig;
 use App\Support\Locations\LocationAccess;
 use Carbon\CarbonImmutable;
-use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -26,18 +24,12 @@ class MembershipOverviewSubscriptionsTableWidget extends TableWidget
 
     protected static ?int $sort = -39;
 
-    
-
     protected int|string|array $columnSpan = [
         'default' => 1,
         'md' => 2,
     ];
 
-    
-
     public string $activeTab = 'expiring';
-
-    
 
     public function updatedActiveTab(string $activeTab): void
     {
@@ -49,8 +41,6 @@ class MembershipOverviewSubscriptionsTableWidget extends TableWidget
 
         $this->resetPage();
     }
-
-    
 
     private function tableHeader(): HtmlString
     {
@@ -95,8 +85,6 @@ BLADE,
         ));
     }
 
-    
-
     protected function getActiveTabQuery(): Builder
     {
         return match ($this->activeTab) {
@@ -104,8 +92,6 @@ BLADE,
             default => $this->getExpiringSoonQuery(),
         };
     }
-
-    
 
     protected function getExpiringSoonQuery(): Builder
     {
@@ -127,8 +113,6 @@ BLADE,
             )
             ->orderBy('end_date');
     }
-
-    
 
     protected function getExpiredQuery(): Builder
     {
@@ -193,31 +177,8 @@ BLADE,
                     }),
             ])
             ->recordActions([
-                ActionGroup::make([
-                    Action::make('renew')
-                        ->label(__('app.actions.renew'))
-                        ->icon('heroicon-m-arrow-path')
-                        ->color('success')
-                        ->modalHeading(__('app.titles.renew_subscription'))
-                        ->modalSubmitActionLabel(__('app.actions.renew'))
-                        ->modalWidth('6xl')
-                        ->closeModalByClickingAway(false)
-                        ->visible(function (Subscription $record) use ($today): bool {
-                            if ($record->renewals()->exists()) {
-                                return false;
-                            }
-
-                            return ! Subscription::query()
-                                ->where('member_id', $record->member_id)
-                                ->whereDate('start_date', '>', $today)
-                                ->exists();
-                        })
-                        ->schema(fn (Subscription $record): array => SubscriptionForm::renewSchema($record))
-                        ->action(function (Subscription $record, array $data): void {
-                            SubscriptionForm::handleRenew($record, $data);
-                        }),
-                    ViewAction::make()
-                        ->url(fn (Subscription $record): string => SubscriptionResource::getUrl('view', ['record' => $record])),
+                ActionGroup::make([ViewAction::make()
+                    ->url(fn (Subscription $record): string => SubscriptionResource::getUrl('view', ['record' => $record])),
                 ]),
             ])
             ->emptyStateHeading(fn (): string => $this->activeTab === 'expired'
