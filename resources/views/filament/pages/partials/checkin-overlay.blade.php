@@ -354,6 +354,11 @@
                                     </div>
                                 @endforeach
                             </div>
+                            @if($this->statusPill)
+                                <div class="pt-2">
+                                    <x-checkin-status-pill :color="$this->statusPill['color']" :label="$this->statusPill['label']" />
+                                </div>
+                            @endif
                         </div>
                     </div>
 
@@ -374,12 +379,6 @@
                                     {{ $checkInStatus['help'] }}
                                 </span>
                             @endif
-                        </div>
-                    @endif
-
-                    @if($this->statusPill)
-                        <div class="flex flex-wrap items-center gap-2">
-                            <x-checkin-status-pill :color="$this->statusPill['color']" :label="$this->statusPill['label']" />
                         </div>
                     @endif
 
