@@ -1,7 +1,6 @@
 <?php
 
-use App\Enums\Status;
-use App\Helpers\Helpers;
+use App\Models\Invoice;
 use App\Models\Location;
 use App\Models\Member;
 use App\Models\Plan;
@@ -74,14 +73,23 @@ it('creates 3 chained subscriptions when quantity is 3', function (): void {
     expect($subs[2]->start_date->toDateString())->toBe('2026-05-16')
         ->and($subs[2]->end_date->toDateString())->toBe('2026-06-15');
 
-    $invoices = \App\Models\Invoice::whereIn('subscription_id', $subs->pluck('id'))->get();
+    $invoices = Invoice::whereIn('subscription_id', $subs->pluck('id'))->orderBy('due_date')->get();
     expect($invoices)->toHaveCount(3);
 
     $firstInvoice = $invoices->firstWhere('subscription_id', $subs[0]->id);
-    expect($firstInvoice->paid_amount)->toBeGreaterThan(0);
-
     $secondInvoice = $invoices->firstWhere('subscription_id', $subs[1]->id);
-    expect($secondInvoice->paid_amount)->toBe(0.0);
+    $thirdInvoice = $invoices->firstWhere('subscription_id', $subs[2]->id);
+
+    expect($firstInvoice->due_date->toDateString())->toBe('2026-03-15')
+        ->and($firstInvoice->paid_amount)->toBe((float) $firstInvoice->total_amount)
+        ->and($firstInvoice->status->value)->toBe('paid');
+
+    expect($secondInvoice->due_date->toDateString())->toBe('2026-03-15')
+        ->and($secondInvoice->paid_amount)->toBe((float) $secondInvoice->total_amount)
+        ->and($secondInvoice->status->value)->toBe('paid');
+
+    expect($thirdInvoice->due_date->toDateString())->toBe($subs[2]->start_date->toDateString())
+        ->and($thirdInvoice->paid_amount)->toBe(40.0);
 });
 
 it('forces quantity to 1 for evergreen plans', function (): void {
@@ -166,7 +174,7 @@ it('renewal uses SubscriptionChainService::nextStartDate for start date', functi
         'location_id' => $this->location->id,
     ]);
 
-    $renewalService = new SubscriptionRenewalService();
+    $renewalService = new SubscriptionRenewalService;
 
     $result = $renewalService->renew($existing, [
         'plan_id' => $this->plan->id,
@@ -277,10 +285,82 @@ it('only applies discount and paid_amount on the first subscription in a chain',
     expect($results)->toHaveCount(2);
 
     $firstInvoice = $results[0][1];
-    expect($firstInvoice->discount_amount)->toBe(10.0)
-        ->and($firstInvoice->paid_amount)->toBe(40.0);
+    expect($firstInvoice->discount_amount)->toBe(0.0)
+        ->and((float) $firstInvoice->paid_amount)->toBe((float) $firstInvoice->total_amount)
+        ->and($firstInvoice->due_date->toDateString())->toBe('2026-03-15');
 
     $secondInvoice = $results[1][1];
-    expect($secondInvoice->discount_amount)->toBe(0.0)
-        ->and($secondInvoice->paid_amount)->toBe(0.0);
+    expect($secondInvoice->discount_amount)->toBe(10.0)
+        ->and($secondInvoice->paid_amount)->toBe(40.0)
+        ->and($secondInvoice->due_date->toDateString())->toBe($results[1][0]->start_date->toDateString());
+});
+
+it('quantity 3 last invoice unpaid due equals its start_date with issued status', function (): void {
+    $results = MemberSubscriptionService::createForMember($this->member, [
+        [
+            'plan_id' => $this->plan->id,
+            'quantity' => 3,
+            'start_date' => '2026-03-15',
+            'paid_amount' => 0,
+        ],
+    ]);
+
+    $subs = Subscription::where('member_id', $this->member->id)->orderBy('start_date')->get();
+    $invoices = Invoice::whereIn('subscription_id', $subs->pluck('id'))->orderBy('due_date')->get();
+
+    $first = $invoices[0];
+    $second = $invoices[1];
+    $third = $invoices[2];
+
+    expect($first->due_date->toDateString())->toBe('2026-03-15')
+        ->and((float) $first->paid_amount)->toBe((float) $first->total_amount)
+        ->and($first->status->value)->toBe('paid');
+
+    expect($second->due_date->toDateString())->toBe('2026-03-15')
+        ->and((float) $second->paid_amount)->toBe((float) $second->total_amount);
+
+    expect($third->due_date->toDateString())->toBe($subs[2]->start_date->toDateString())
+        ->and($third->paid_amount)->toBe(0.0)
+        ->and($third->refresh()->status->value)->toBe('issued')
+        ->and($third->refresh()->due_amount)->toBe((float) $third->total_amount);
+});
+
+it('quantity 3 last invoice partially paid due equals its start_date with partial status', function (): void {
+    $results = MemberSubscriptionService::createForMember($this->member, [
+        [
+            'plan_id' => $this->plan->id,
+            'quantity' => 3,
+            'start_date' => '2026-03-15',
+            'paid_amount' => 20,
+        ],
+    ]);
+
+    $subs = Subscription::where('member_id', $this->member->id)->orderBy('start_date')->get();
+    $invoices = Invoice::whereIn('subscription_id', $subs->pluck('id'))->orderBy('due_date')->get();
+
+    $third = $invoices[2]->refresh();
+
+    expect($third->due_date->toDateString())->toBe($subs[2]->start_date->toDateString())
+        ->and($third->paid_amount)->toBe(20.0)
+        ->and($third->status->value)->toBe('partial')
+        ->and($third->due_amount)->toBe((float) $third->total_amount - 20.0);
+});
+
+it('quantity 1 invoice fully paid due today unchanged', function (): void {
+    $results = MemberSubscriptionService::createForMember($this->member, [
+        [
+            'plan_id' => $this->plan->id,
+            'quantity' => 1,
+            'start_date' => '2026-03-15',
+            'paid_amount' => 50,
+        ],
+    ]);
+
+    expect($results)->toHaveCount(1);
+
+    $invoice = $results[0][1]->refresh();
+
+    expect($invoice->due_date->toDateString())->toBe('2026-03-15')
+        ->and((float) $invoice->paid_amount)->toBe((float) $invoice->total_amount)
+        ->and($invoice->status->value)->toBe('paid');
 });

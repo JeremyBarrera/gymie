@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Models\Member;
 use App\Models\Plan;
 use App\Models\Subscription;
+use App\Services\Subscriptions\SubscriptionChainService;
 use App\Support\AppConfig;
 use App\Support\Billing\InvoiceCalculator;
 use App\Support\Billing\PaymentMethod;
@@ -21,7 +22,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
@@ -29,17 +29,14 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class SubscriptionForm
 {
-    
-
     public static function paymentMethodOptions(): array
     {
         return PaymentMethod::options();
     }
-
-    
 
     public static function configure(Schema $schema): Schema
     {
@@ -72,8 +69,6 @@ class SubscriptionForm
                                 $fee = (float) ($plan->amount ?? 0);
                                 $taxRate = Helpers::getTaxRate() ?: 0;
 
-                                
-                                
                                 $invoices = $get('invoices');
 
                                 if (is_array($invoices)) {
@@ -286,12 +281,10 @@ class SubscriptionForm
             ]);
     }
 
-    
-
     public static function renewSchema(Subscription $record): array
     {
         $plan = Plan::findOrFail($record->plan_id);
-        $defaultStartDate = \App\Services\Subscriptions\SubscriptionChainService::nextStartDate($record->member, $plan);
+        $defaultStartDate = SubscriptionChainService::nextStartDate($record->member, $plan);
 
         return [
             Group::make()
@@ -497,8 +490,6 @@ class SubscriptionForm
         ];
     }
 
-    
-
     public static function handleRenew(Subscription $record, array $data): void
     {
         Subscription::query()->getConnection()->transaction(function () use ($record, $data): void {
@@ -506,10 +497,17 @@ class SubscriptionForm
             $today = Carbon::today($timezone);
 
             $plan = Plan::findOrFail(Data::int($data['plan_id'] ?? null));
+            $member = $record->member;
             $startDate = Carbon::parse(Data::string($data['start_date'] ?? null))->toDateString();
-            
             $endDate = Data::string($data['end_date'] ?? null)
                 ?: ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id)));
+            $conflict = SubscriptionChainService::overlaps($member, $plan, $startDate, $endDate);
+            if ($conflict) {
+                $endDisplay = $conflict->end_date ? $conflict->end_date->toDateString() : __('app.fields.unlimited');
+                throw ValidationException::withMessages([
+                    'start_date' => [__('app.validation.subscription_overlap', ['end' => $endDisplay])],
+                ]);
+            }
 
             $status = Carbon::parse($startDate)->gt($today)
                 ? 'upcoming'
@@ -568,8 +566,6 @@ class SubscriptionForm
         });
     }
 
-    
-
     private static function recalculateRenewInvoiceSummary(Get $get, Set $set): void
     {
         $plan = self::planFromState($get);
@@ -578,8 +574,6 @@ class SubscriptionForm
 
         self::recalculateInvoiceSummary($get, $set, $fee, $taxRate);
     }
-
-    
 
     private static function recalculateInvoiceSummary(Get $get, Set $set, ?float $fee = null, ?float $taxRate = null): void
     {
@@ -603,8 +597,6 @@ class SubscriptionForm
         $set('paid_amount', $summary['paid']);
         $set('due_amount', $summary['due']);
     }
-
-    
 
     public static function formatPlanOptionLabel(Plan $plan): string
     {

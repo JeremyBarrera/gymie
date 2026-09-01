@@ -9,9 +9,11 @@ use App\Models\Member;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Support\AppConfig;
+use App\Support\Billing\InvoiceCalculator;
 use App\Support\Data;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class MemberSubscriptionService
 {
@@ -30,7 +32,7 @@ class MemberSubscriptionService
                 $conflict = SubscriptionChainService::chainOverlaps($member, $plan, $baseStart, $quantity);
                 if ($conflict) {
                     $endDisplay = $conflict->end_date ? $conflict->end_date->toDateString() : __('app.fields.unlimited');
-                    throw \Illuminate\Validation\ValidationException::withMessages([
+                    throw ValidationException::withMessages([
                         'sales' => [__('app.validation.subscription_overlap', ['end' => $endDisplay])],
                     ]);
                 }
@@ -48,20 +50,29 @@ class MemberSubscriptionService
                         'location_id' => $plan->location_id,
                     ]);
                     $fee = round(Data::float($plan->amount));
+                    $isLast = $i === $quantity - 1;
+                    $isSingle = $quantity === 1;
                     $discountPct = 0;
                     $discountAmount = 0;
                     $paidAmount = 0;
                     $paymentMethod = Data::nullableString($sale['payment_method'] ?? null) ?: 'cash';
-                    if ($i === 0) {
+                    if ($isSingle) {
                         $discountAmount = min(max(Data::float($sale['discount_amount'] ?? 0), 0), $fee);
                         $paidAmount = max(Data::float($sale['paid_amount'] ?? 0), 0);
+                    } elseif ($isLast) {
+                        $discountAmount = min(max(Data::float($sale['discount_amount'] ?? 0), 0), $fee);
+                        $paidAmount = max(Data::float($sale['paid_amount'] ?? 0), 0);
+                    } else {
+                        $summary = InvoiceCalculator::summary($fee, Helpers::getTaxRate() ?: 0.0, 0.0, $fee);
+                        $paidAmount = $summary['total'];
                     }
                     $invoiceDate = $today->toDateString();
+                    $invoiceDueDate = $isLast && ! $isSingle ? $start : $invoiceDate;
                     $invoice = Invoice::create([
                         'number' => Helpers::generateLastNumber('invoice', Invoice::class, $invoiceDate),
                         'subscription_id' => $subscription->id,
                         'date' => $invoiceDate,
-                        'due_date' => $invoiceDate,
+                        'due_date' => $invoiceDueDate,
                         'payment_method' => $paymentMethod,
                         'discount' => $discountPct ?: null,
                         'discount_amount' => $discountAmount ?: null,
@@ -81,6 +92,7 @@ class MemberSubscriptionService
             if ($member->status === Status::Pending) {
                 $member->update(['status' => Status::Active]);
             }
+
             return $results;
         });
     }
@@ -98,7 +110,7 @@ class MemberSubscriptionService
             $conflict = SubscriptionChainService::chainOverlaps($member, $plan, $baseStart, $quantity);
             if ($conflict) {
                 $endDisplay = $conflict->end_date ? $conflict->end_date->toDateString() : __('app.fields.unlimited');
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'start_date' => [__('app.validation.subscription_overlap', ['end' => $endDisplay])],
                 ]);
             }
@@ -118,11 +130,13 @@ class MemberSubscriptionService
                     'location_id' => $plan->location_id,
                 ]);
                 $fee = round(Data::float($plan->amount));
+                $isLast = $i === $quantity - 1;
+                $isSingle = $quantity === 1;
                 $discountPct = 0;
                 $discountAmount = 0;
                 $paidAmount = 0;
                 $paymentMethod = Data::nullableString($invoiceData['payment_method'] ?? $validated['payment_method'] ?? null) ?: 'cash';
-                if ($i === 0) {
+                if ($isSingle) {
                     $discountPct = max(Data::int($invoiceData['discount'] ?? $validated['discount'] ?? 0), 0);
                     $discountAmount = Data::float($invoiceData['discount_amount'] ?? $validated['discount_amount'] ?? 0);
                     $discountAmount = min(max($discountAmount, 0), $fee);
@@ -130,9 +144,20 @@ class MemberSubscriptionService
                         $discountAmount = Helpers::getDiscountAmount($discountPct, $fee);
                     }
                     $paidAmount = max(Data::float($invoiceData['paid_amount'] ?? $validated['paid_amount'] ?? 0), 0);
+                } elseif ($isLast) {
+                    $discountPct = max(Data::int($invoiceData['discount'] ?? $validated['discount'] ?? 0), 0);
+                    $discountAmount = Data::float($invoiceData['discount_amount'] ?? $validated['discount_amount'] ?? 0);
+                    $discountAmount = min(max($discountAmount, 0), $fee);
+                    if ($discountPct > 0 && $discountAmount <= 0) {
+                        $discountAmount = Helpers::getDiscountAmount($discountPct, $fee);
+                    }
+                    $paidAmount = max(Data::float($invoiceData['paid_amount'] ?? $validated['paid_amount'] ?? 0), 0);
+                } else {
+                    $summary = InvoiceCalculator::summary($fee, Helpers::getTaxRate() ?: 0.0, 0.0, $fee);
+                    $paidAmount = $summary['total'];
                 }
                 $invoiceDate = isset($invoiceData['date']) ? Carbon::parse(Data::string($invoiceData['date']))->toDateString() : $today->toDateString();
-                $invoiceDueDate = isset($invoiceData['due_date']) ? Carbon::parse(Data::string($invoiceData['due_date']))->toDateString() : $invoiceDate;
+                $invoiceDueDate = isset($invoiceData['due_date']) ? Carbon::parse(Data::string($invoiceData['due_date']))->toDateString() : ($isLast && ! $isSingle ? $start : $invoiceDate);
                 $invoiceNumber = Helpers::generateLastNumber('invoice', Invoice::class, $invoiceDate);
                 if ($i === 0) {
                     $invoiceNumber = $invoiceData['number'] ?? $invoiceData['invoice_number'] ?? $validated['invoice_number'] ?? $invoiceNumber;
@@ -159,6 +184,7 @@ class MemberSubscriptionService
                     break;
                 }
             }
+
             return $firstResult;
         });
     }
