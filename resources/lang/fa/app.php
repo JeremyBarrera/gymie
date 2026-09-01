@@ -242,7 +242,6 @@ return [
         'mark_as_expired' => 'علامت‌گذاری به عنوان منقضی شده',
         'mark_as_done' => 'علامت‌گذاری به عنوان انجام شده',
         'mark_as_lost' => 'علامت‌گذاری به عنوان از دست رفته',
-        'renew' => 'تمدید',
         'manage_services' => 'مدیریت سرویس‌ها',
         'manage_invoice' => 'مدیریت فاکتور',
         'add_payment' => 'افزودن پرداخت',
@@ -304,7 +303,6 @@ return [
         'invoice_details' => 'جزئیات فاکتور',
         'summary' => 'خلاصه وضعیت',
         'follow_up_timeline' => 'خط زمانی پیگیری‌ها',
-        'renew_subscription' => 'تمدید اشتراک',
         'membership_plan' => 'طرح عضویت',
     ],
     'ui' => [

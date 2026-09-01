@@ -240,7 +240,6 @@ return [
         'mark_as_expired' => 'Mark as expired',
         'mark_as_done' => 'Mark as done',
         'mark_as_lost' => 'Mark as lost',
-        'renew' => 'Renew',
         'manage_services' => 'Manage services',
         'manage_invoice' => 'Manage invoice',
         'add_payment' => 'Add payment',
@@ -304,7 +303,6 @@ return [
         'invoice_details' => 'Invoice Details',
         'summary' => 'Summary',
         'follow_up_timeline' => 'Follow Up Timeline',
-        'renew_subscription' => 'Renew Subscription',
         'membership_plan' => 'Membership Plan',
     ],
     'ui' => [
