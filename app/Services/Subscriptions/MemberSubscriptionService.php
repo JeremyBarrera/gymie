@@ -36,57 +36,21 @@ class MemberSubscriptionService
                         'sales' => [__('app.validation.subscription_overlap', ['end' => $endDisplay])],
                     ]);
                 }
-                $prevEnd = null;
-                for ($i = 0; $i < $quantity; $i++) {
-                    $start = $i === 0 ? $baseStart : Carbon::parse($prevEnd)->addDay()->toDateString();
-                    $end = $plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($start, $plan->id, 1);
-                    $status = Carbon::parse($start)->gt($today) ? 'upcoming' : 'ongoing';
-                    $subscription = Subscription::create([
-                        'member_id' => $member->id,
-                        'plan_id' => $plan->id,
-                        'start_date' => $start,
-                        'end_date' => $end,
-                        'status' => $status,
-                        'location_id' => $plan->location_id,
-                    ]);
-                    $fee = round(Data::float($plan->amount));
-                    $isLast = $i === $quantity - 1;
-                    $isSingle = $quantity === 1;
-                    $discountPct = 0;
-                    $discountAmount = 0;
-                    $paidAmount = 0;
-                    $paymentMethod = Data::nullableString($sale['payment_method'] ?? null) ?: 'cash';
-                    if ($isSingle) {
-                        $discountAmount = min(max(Data::float($sale['discount_amount'] ?? 0), 0), $fee);
-                        $paidAmount = max(Data::float($sale['paid_amount'] ?? 0), 0);
-                    } elseif ($isLast) {
-                        $discountAmount = min(max(Data::float($sale['discount_amount'] ?? 0), 0), $fee);
-                        $paidAmount = max(Data::float($sale['paid_amount'] ?? 0), 0);
-                    } else {
-                        $summary = InvoiceCalculator::summary($fee, Helpers::getTaxRate() ?: 0.0, 0.0, $fee);
-                        $paidAmount = $summary['total'];
-                    }
-                    $invoiceDate = $today->toDateString();
-                    $invoiceDueDate = $isLast && ! $isSingle ? $start : $invoiceDate;
-                    $invoice = Invoice::create([
-                        'number' => Helpers::generateLastNumber('invoice', Invoice::class, $invoiceDate),
-                        'subscription_id' => $subscription->id,
-                        'date' => $invoiceDate,
-                        'due_date' => $invoiceDueDate,
-                        'payment_method' => $paymentMethod,
-                        'discount' => $discountPct ?: null,
-                        'discount_amount' => $discountAmount ?: null,
-                        'discount_note' => $sale['discount_note'] ?? null,
-                        'paid_amount' => $paidAmount,
-                        'subscription_fee' => $fee,
-                        'status' => 'issued',
-                        'location_id' => $plan->location_id,
-                    ]);
-                    $results[] = [$subscription, $invoice];
-                    $prevEnd = $end;
-                    if ($plan->isEvergreen()) {
-                        break;
-                    }
+
+                $payload = [
+                    'payment_method' => $sale['payment_method'] ?? null,
+                    'discount' => 0,
+                    'discount_amount' => $sale['discount_amount'] ?? 0,
+                    'paid_amount' => $sale['paid_amount'] ?? 0,
+                    'discount_note' => $sale['discount_note'] ?? null,
+                    'date' => null,
+                    'due_date' => null,
+                    'number' => null,
+                ];
+
+                $chain = self::createChain($member, $plan, $quantity, $baseStart, $today, $payload);
+                foreach ($chain as $pair) {
+                    $results[] = $pair;
                 }
             }
             if ($member->status === Status::Pending) {
@@ -115,77 +79,93 @@ class MemberSubscriptionService
                 ]);
             }
             $today = Carbon::today(AppConfig::timezone());
-            $prevEnd = null;
-            $firstResult = null;
-            for ($i = 0; $i < $quantity; $i++) {
-                $start = $i === 0 ? $baseStart : Carbon::parse($prevEnd)->addDay()->toDateString();
-                $end = $plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($start, $plan->id, 1);
-                $status = Carbon::parse($start)->gt($today) ? 'upcoming' : 'ongoing';
-                $subscription = Subscription::create([
-                    'member_id' => $member->id,
-                    'plan_id' => $plan->id,
-                    'start_date' => $start,
-                    'end_date' => $end,
-                    'status' => $status,
-                    'location_id' => $plan->location_id,
-                ]);
-                $fee = round(Data::float($plan->amount));
-                $isLast = $i === $quantity - 1;
-                $isSingle = $quantity === 1;
-                $discountPct = 0;
-                $discountAmount = 0;
-                $paidAmount = 0;
-                $paymentMethod = Data::nullableString($invoiceData['payment_method'] ?? $validated['payment_method'] ?? null) ?: 'cash';
-                if ($isSingle) {
-                    $discountPct = max(Data::int($invoiceData['discount'] ?? $validated['discount'] ?? 0), 0);
-                    $discountAmount = Data::float($invoiceData['discount_amount'] ?? $validated['discount_amount'] ?? 0);
-                    $discountAmount = min(max($discountAmount, 0), $fee);
-                    if ($discountPct > 0 && $discountAmount <= 0) {
-                        $discountAmount = Helpers::getDiscountAmount($discountPct, $fee);
-                    }
-                    $paidAmount = max(Data::float($invoiceData['paid_amount'] ?? $validated['paid_amount'] ?? 0), 0);
-                } elseif ($isLast) {
-                    $discountPct = max(Data::int($invoiceData['discount'] ?? $validated['discount'] ?? 0), 0);
-                    $discountAmount = Data::float($invoiceData['discount_amount'] ?? $validated['discount_amount'] ?? 0);
-                    $discountAmount = min(max($discountAmount, 0), $fee);
-                    if ($discountPct > 0 && $discountAmount <= 0) {
-                        $discountAmount = Helpers::getDiscountAmount($discountPct, $fee);
-                    }
-                    $paidAmount = max(Data::float($invoiceData['paid_amount'] ?? $validated['paid_amount'] ?? 0), 0);
-                } else {
-                    $summary = InvoiceCalculator::summary($fee, Helpers::getTaxRate() ?: 0.0, 0.0, $fee);
+
+            $payload = [
+                'payment_method' => $invoiceData['payment_method'] ?? $validated['payment_method'] ?? null,
+                'discount' => $invoiceData['discount'] ?? $validated['discount'] ?? 0,
+                'discount_amount' => $invoiceData['discount_amount'] ?? $validated['discount_amount'] ?? 0,
+                'paid_amount' => $invoiceData['paid_amount'] ?? $validated['paid_amount'] ?? 0,
+                'discount_note' => $invoiceData['discount_note'] ?? $validated['discount_note'] ?? null,
+                'date' => $invoiceData['date'] ?? null,
+                'due_date' => $invoiceData['due_date'] ?? null,
+                'number' => $invoiceData['number'] ?? $invoiceData['invoice_number'] ?? $validated['invoice_number'] ?? null,
+            ];
+
+            $chain = self::createChain($member, $plan, $quantity, $baseStart, $today, $payload);
+
+            return $chain[0];
+        });
+    }
+
+    private static function createChain(Member $member, Plan $plan, int $quantity, string $baseStart, Carbon $today, array $payload): array
+    {
+        $results = [];
+        $prevEnd = null;
+
+        for ($i = 0; $i < $quantity; $i++) {
+            $start = $i === 0 ? $baseStart : Carbon::parse($prevEnd)->addDay()->toDateString();
+            $end = $plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($start, $plan->id, 1);
+            $status = Carbon::parse($start)->gt($today) ? 'upcoming' : 'ongoing';
+            $subscription = Subscription::create([
+                'member_id' => $member->id,
+                'plan_id' => $plan->id,
+                'start_date' => $start,
+                'end_date' => $end,
+                'status' => $status,
+                'location_id' => $plan->location_id,
+            ]);
+            $fee = round(Data::float($plan->amount));
+            $isLast = $i === $quantity - 1;
+            $isSingle = $quantity === 1;
+            $discountPct = 0;
+            $discountAmount = 0;
+            $paidAmount = 0;
+            $paymentMethod = Data::nullableString($payload['payment_method'] ?? null) ?: 'cash';
+            if ($isSingle || $i === 0) {
+                $discountPct = max(Data::int($payload['discount'] ?? 0), 0);
+                $discountAmount = Data::float($payload['discount_amount'] ?? 0);
+                $discountAmount = min(max($discountAmount, 0), $fee);
+                if ($discountPct > 0 && $discountAmount <= 0) {
+                    $discountAmount = Helpers::getDiscountAmount($discountPct, $fee);
+                }
+                $paidAmount = max(Data::float($payload['paid_amount'] ?? 0), 0);
+                if (! $isSingle) {
+                    $summary = InvoiceCalculator::summary($fee, Helpers::getTaxRate() ?: 0.0, $discountAmount, $fee);
                     $paidAmount = $summary['total'];
                 }
-                $invoiceDate = isset($invoiceData['date']) ? Carbon::parse(Data::string($invoiceData['date']))->toDateString() : $today->toDateString();
-                $invoiceDueDate = isset($invoiceData['due_date']) ? Carbon::parse(Data::string($invoiceData['due_date']))->toDateString() : ($isLast && ! $isSingle ? $start : $invoiceDate);
-                $invoiceNumber = Helpers::generateLastNumber('invoice', Invoice::class, $invoiceDate);
-                if ($i === 0) {
-                    $invoiceNumber = $invoiceData['number'] ?? $invoiceData['invoice_number'] ?? $validated['invoice_number'] ?? $invoiceNumber;
-                }
-                $invoice = Invoice::create([
-                    'number' => $invoiceNumber,
-                    'subscription_id' => $subscription->id,
-                    'date' => $invoiceDate,
-                    'due_date' => $invoiceDueDate,
-                    'payment_method' => $paymentMethod,
-                    'discount' => $discountPct ?: null,
-                    'discount_amount' => $discountAmount ?: null,
-                    'discount_note' => $invoiceData['discount_note'] ?? $validated['discount_note'] ?? null,
-                    'paid_amount' => $paidAmount,
-                    'subscription_fee' => $fee,
-                    'status' => 'issued',
-                    'location_id' => $plan->location_id,
-                ]);
-                if ($i === 0) {
-                    $firstResult = [$subscription, $invoice];
-                }
-                $prevEnd = $end;
-                if ($plan->isEvergreen()) {
-                    break;
-                }
+            } elseif ($isLast) {
+                $paidAmount = max(Data::float($payload['paid_amount'] ?? 0), 0);
+            } else {
+                $summary = InvoiceCalculator::summary($fee, Helpers::getTaxRate() ?: 0.0, 0.0, $fee);
+                $paidAmount = $summary['total'];
             }
+            $invoiceDate = Data::string($payload['date'] ?? null) ? Carbon::parse(Data::string($payload['date']))->toDateString() : $today->toDateString();
+            $invoiceDueDate = Data::string($payload['due_date'] ?? null) ? Carbon::parse(Data::string($payload['due_date']))->toDateString() : ($isLast && ! $isSingle ? $start : $invoiceDate);
+            $invoiceNumber = Helpers::generateLastNumber('invoice', Invoice::class, $invoiceDate);
+            if ($i === 0 && Data::string($payload['number'] ?? null)) {
+                $invoiceNumber = Data::string($payload['number']);
+            }
+            $invoice = Invoice::create([
+                'number' => $invoiceNumber,
+                'subscription_id' => $subscription->id,
+                'date' => $invoiceDate,
+                'due_date' => $invoiceDueDate,
+                'payment_method' => $paymentMethod,
+                'discount' => $discountPct ?: null,
+                'discount_amount' => $discountAmount ?: null,
+                'discount_note' => $payload['discount_note'] ?? null,
+                'paid_amount' => $paidAmount,
+                'subscription_fee' => $fee,
+                'status' => 'issued',
+                'location_id' => $plan->location_id,
+            ]);
+            $results[] = [$subscription, $invoice];
+            $prevEnd = $end;
+            if ($plan->isEvergreen()) {
+                break;
+            }
+        }
 
-            return $firstResult;
-        });
+        return $results;
     }
 }

@@ -10,11 +10,10 @@ use App\Models\Member;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Services\Subscriptions\SubscriptionChainService;
-use App\Support\AppConfig;
+use App\Services\Subscriptions\SubscriptionRenewalService;
 use App\Support\Billing\InvoiceCalculator;
 use App\Support\Billing\PaymentMethod;
 use App\Support\Data;
-use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
@@ -29,7 +28,6 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class SubscriptionForm
 {
@@ -492,78 +490,28 @@ class SubscriptionForm
 
     public static function handleRenew(Subscription $record, array $data): void
     {
-        Subscription::query()->getConnection()->transaction(function () use ($record, $data): void {
-            $timezone = AppConfig::timezone();
-            $today = Carbon::today($timezone);
-
-            $plan = Plan::findOrFail(Data::int($data['plan_id'] ?? null));
-            $member = $record->member;
-            $startDate = Carbon::parse(Data::string($data['start_date'] ?? null))->toDateString();
-            $endDate = Data::string($data['end_date'] ?? null)
-                ?: ($plan->isEvergreen() ? null : Helpers::calculateSubscriptionEndDate($startDate, Data::int($plan->id)));
-            $conflict = SubscriptionChainService::overlaps($member, $plan, $startDate, $endDate);
-            if ($conflict) {
-                $endDisplay = $conflict->end_date ? $conflict->end_date->toDateString() : __('app.fields.unlimited');
-                throw ValidationException::withMessages([
-                    'start_date' => [__('app.validation.subscription_overlap', ['end' => $endDisplay])],
-                ]);
-            }
-
-            $status = Carbon::parse($startDate)->gt($today)
-                ? 'upcoming'
-                : 'ongoing';
-
-            $newSubscription = Subscription::create([
-                'renewed_from_subscription_id' => $record->id,
-                'member_id' => $record->member_id,
-                'plan_id' => $plan->id,
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-                'status' => $status,
-                'location_id' => $plan->location_id,
-            ]);
-
-            if ($record->end_date && $record->end_date->lt($today)) {
-                $record->update([
-                    'status' => 'renewed',
-                ]);
-            }
-
-            $fee = round(Data::float($plan->amount));
-            $discountPct = max(Data::int($data['discount'] ?? 0), 0);
-            $discountAmount = Data::float($data['discount_amount'] ?? 0);
-            $discountAmount = min(max($discountAmount, 0), $fee);
-            if ($discountPct > 0 && $discountAmount <= 0) {
-                $discountAmount = Helpers::getDiscountAmount($discountPct, $fee);
-            }
-
-            $paymentMethod = Data::nullableString($data['payment_method'] ?? null);
-            $paidAmount = max(Data::float($data['paid_amount'] ?? 0), 0);
-
-            $invoiceDate = Carbon::parse(Data::string($data['invoice_date'] ?? null))->toDateString();
-            $invoiceDueDate = Carbon::parse(Data::string($data['invoice_due_date'] ?? $invoiceDate))->toDateString();
-
-            $invoice = Invoice::create([
-                'number' => $data['invoice_number'] ?? null,
-                'subscription_id' => $newSubscription->id,
-                'date' => $invoiceDate,
-                'due_date' => $invoiceDueDate,
-                'payment_method' => $paymentMethod,
-                'discount' => $discountPct ?: null,
-                'discount_amount' => $discountAmount ?: null,
+        $normalized = [
+            'plan_id' => $data['plan_id'] ?? null,
+            'start_date' => $data['start_date'] ?? null,
+            'invoice' => [
+                'discount' => $data['discount'] ?? 0,
+                'discount_amount' => $data['discount_amount'] ?? 0,
                 'discount_note' => $data['discount_note'] ?? null,
-                'paid_amount' => $paidAmount,
-                'subscription_fee' => $fee,
-                'status' => 'issued',
-                'location_id' => $plan->location_id,
-            ]);
+                'paid_amount' => $data['paid_amount'] ?? 0,
+                'payment_method' => $data['payment_method'] ?? null,
+                'date' => $data['invoice_date'] ?? null,
+                'due_date' => $data['invoice_due_date'] ?? null,
+                'number' => $data['invoice_number'] ?? null,
+            ],
+        ];
 
-            Notification::make()
-                ->title(__('app.notifications.subscription_renewed_title'))
-                ->body(__('app.notifications.subscription_renewed_body', ['invoice_number' => (string) $invoice->number]))
-                ->success()
-                ->send();
-        });
+        $result = (new SubscriptionRenewalService)->renew($record, $normalized);
+
+        Notification::make()
+            ->title(__('app.notifications.subscription_renewed_title'))
+            ->body(__('app.notifications.subscription_renewed_body', ['invoice_number' => (string) $result['invoice']->number]))
+            ->success()
+            ->send();
     }
 
     private static function recalculateRenewInvoiceSummary(Get $get, Set $set): void
