@@ -133,6 +133,7 @@ class Reception extends Page
             ->where('location_id', $locationId)
             ->where('kind', 'checkin')
             ->whereIn('status', ['waiting', 'attending'])
+            ->where('expires_at', '>', now())
             ->latest('created_at')
             ->get()
             ->toArray();
@@ -141,6 +142,7 @@ class Reception extends Page
             ->where('location_id', $locationId)
             ->where('kind', 'signup')
             ->whereIn('status', ['waiting', 'attending'])
+            ->where('expires_at', '>', now())
             ->latest('created_at')
             ->get()
             ->toArray();

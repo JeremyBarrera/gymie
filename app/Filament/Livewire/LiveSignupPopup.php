@@ -191,6 +191,7 @@ class LiveSignupPopup extends Component
     {
         $query = QueueEntry::query()
             ->whereIn('status', ['waiting', 'attending'])
+            ->where('expires_at', '>', now())
             ->where('created_at', '>=', now()->subMinutes(60));
 
         $accessible = LocationAccess::accessibleLocationIds(Auth::user());
