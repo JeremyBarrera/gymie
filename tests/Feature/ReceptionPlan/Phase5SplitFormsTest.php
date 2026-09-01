@@ -151,15 +151,16 @@ it('creates a member with multiple subscriptions and respects quantity', functio
         ->assertHasNoFormErrors();
 
     expect(Member::query()->count())->toBe(1)
-        ->and(Subscription::query()->count())->toBe(2)
-        ->and(Invoice::query()->count())->toBe(2);
+        ->and(Subscription::query()->count())->toBe(3)
+        ->and(Invoice::query()->count())->toBe(3);
 
-    $subs = Subscription::query()->orderBy('plan_id')->get();
+    $subs = Subscription::query()->orderBy('plan_id')->orderBy('start_date')->get();
     expect((int) $subs[0]->plan_id)->toBe($planA->id)
-        ->and((int) $subs[1]->plan_id)->toBe($planB->id);
+        ->and((int) $subs[1]->plan_id)->toBe($planA->id)
+        ->and((int) $subs[2]->plan_id)->toBe($planB->id);
 
     $first = $subs->firstWhere('plan_id', $planA->id);
-    expect((float) $first->invoices()->first()->subscription_fee)->toBe(200.0);
+    expect((float) $first->invoices()->first()->subscription_fee)->toBe(100.0);
 });
 
 it('restricts the first-subscription page to accounts allowed to create subscriptions', function (): void {
