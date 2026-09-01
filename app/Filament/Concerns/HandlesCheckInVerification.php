@@ -1040,7 +1040,56 @@ trait HandlesCheckInVerification
         return in_array($subscription->status?->value, [Status::Ongoing->value, Status::Expiring->value], true);
     }
 
-    
+    public function getStatusPillProperty(): ?array
+    {
+        if (! $this->selectedCheckInMemberId || ! $this->checkInSelectedRow) {
+            return null;
+        }
+
+        $member = Member::find($this->selectedCheckInMemberId);
+
+        if (! $member || $member->checkInBlocker() === 'banned') {
+            return null;
+        }
+
+        $state = $this->checkInSelectedRow['state'] ?? null;
+
+        if ($state === 'access' || $state === null) {
+            return null;
+        }
+
+        $row = $this->checkInSelectedRow;
+        $subscription = ! empty($row['subscription_id']) ? Subscription::find((int) $row['subscription_id']) : null;
+
+        if ($subscription) {
+            $subscription->loadMissing('plan');
+        }
+
+        return match ($state) {
+            'same_day_duplicate' => ['color' => 'warning', 'label' => __('app.reception.pill_already_checked_in')],
+            'uses_exhausted' => $subscription?->plan?->name
+                ? ['color' => 'warning', 'label' => __('app.reception.pill_no_uses', ['plan' => $subscription->plan->name])]
+                : ['color' => 'warning', 'label' => __('app.reception.pill_no_uses_short')],
+            'unpaid' => $this->statusPillForInvoice($member, $row, 'pill_payment_due', 'warning'),
+            'overdue' => $this->statusPillForInvoice($member, $row, 'pill_payment_overdue', 'danger'),
+            'expired' => ['color' => 'danger', 'label' => __('app.reception.pill_expired')],
+            'no_access' => ['color' => 'danger', 'label' => __('app.reception.pill_no_access')],
+            default => null,
+        };
+    }
+
+    private function statusPillForInvoice(Member $member, array $row, string $key, string $color): ?array
+    {
+        $invoice = $this->pastDueInvoiceForMember($member, $row);
+
+        if (! $invoice) {
+            return null;
+        }
+
+        $date = \App\Support\Dates\DeviceDateFormat::format($invoice->due_date);
+
+        return ['color' => $color, 'label' => __('app.reception.' . $key, ['date' => $date])];
+    }
 
     private function pastDueModalContext(int $serviceId): ?array
     {

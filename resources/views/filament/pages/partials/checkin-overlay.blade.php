@@ -152,7 +152,7 @@
                 ? __('app.reception.deny_reason')
                 : ($checkInOverrideStep
                     ? __('app.reception.override_hint')
-                    : __('app.reception.checkin_overlay_hint'))"
+                    : null)"
         >            <div class="space-y-3">
                 @if($checkInDenyStep)
                     <div>
@@ -377,6 +377,12 @@
                         </div>
                     @endif
 
+                    @if($this->statusPill)
+                        <div class="flex flex-wrap items-center gap-2">
+                            <x-checkin-status-pill :color="$this->statusPill['color']" :label="$this->statusPill['label']" />
+                        </div>
+                    @endif
+
                     <div class="space-y-2">
                         <label for="checkin-service-select" class="fi-text text-base font-semibold">
                             {{ __('app.fields.service') }}
@@ -399,20 +405,6 @@
                                     @endforeach
                                 </x-filament::input.select>
                             </x-filament::input.wrapper>
-
-                            @if($checkInSelectedRow)
-                                <div class="flex flex-wrap items-center gap-3">
-                                    <x-filament::badge :color="$selectedStateColor" size="md">
-                                        {{ $serviceStateLabel($checkInSelectedRow['state'] ?? null) }}
-                                    </x-filament::badge>
-                                </div>
-
-                                @if(! empty($checkInSelectedRow['warning']))
-                                    <p class="fi-text fi-text-muted text-sm leading-relaxed">
-                                        {{ $checkInSelectedRow['warning'] }}
-                                    </p>
-                                @endif
-                            @endif
                         @endif
                     </div>
                 @endif
@@ -449,9 +441,6 @@
                                 <x-filament::button color="gray" wire:click="closeCheckInOverlay">{{ __('app.actions.close') }}</x-filament::button>
                             </div>
                         @elseif($checkInMember)
-                            @if(($checkInSelectedRow['state'] ?? null) === 'same_day_duplicate')
-                                <p class="w-full fi-text-muted text-sm">{{ __('app.reception.same_day_duplicate_helper') }}</p>
-                            @endif
                             <div class="flex w-full flex-col sm:flex-row sm:justify-end gap-2">
                             @if(($checkInSelectedRow['state'] ?? null) !== 'same_day_duplicate')
                                 <x-filament::button
