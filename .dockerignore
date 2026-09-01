@@ -19,3 +19,4 @@ start-dev.ps1
 stop-dev.ps1
 *.md
 !README.md
+public-hosted
