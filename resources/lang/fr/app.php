@@ -242,7 +242,6 @@ return [
         'mark_as_expired' => 'Marquer comme expire',
         'mark_as_done' => 'Marquer comme termine',
         'mark_as_lost' => 'Marquer comme perdu',
-        'renew' => 'Renouveler',
         'manage_services' => 'Gérer les services',
         'manage_invoice' => 'Gérer la facture',
         'add_payment' => 'Ajouter un paiement',
@@ -304,7 +303,6 @@ return [
         'invoice_details' => 'Détails facture',
         'summary' => 'Résumé',
         'follow_up_timeline' => 'Chronologie relance',
-        'renew_subscription' => 'Renouveler abonnement',
         'membership_plan' => 'Plan d’adhésion',
     ],
     'ui' => [

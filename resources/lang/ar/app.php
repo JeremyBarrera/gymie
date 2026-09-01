@@ -242,7 +242,6 @@ return [
         'mark_as_expired' => 'تعيين كمنتهي',
         'mark_as_done' => 'تعيين كتم',
         'mark_as_lost' => 'تعيين كمفقود',
-        'renew' => 'تجديد',
         'manage_services' => 'ادارة الخدمات',
         'manage_invoice' => 'ادارة الفاتورة',
         'add_payment' => 'اضافة دفعة',
@@ -304,7 +303,6 @@ return [
         'invoice_details' => 'تفاصيل الفاتورة',
         'summary' => 'الملخص',
         'follow_up_timeline' => 'سجل المتابعة',
-        'renew_subscription' => 'تجديد الاشتراك',
         'membership_plan' => 'خطة العضوية',
     ],
     'ui' => [

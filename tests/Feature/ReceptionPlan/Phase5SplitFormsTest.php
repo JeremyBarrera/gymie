@@ -218,30 +218,35 @@ it('creates the subscription, invoice and payment for a pending member (Form B)'
         ->and($invoice->transactions()->count())->toBe(1);
 });
 
-it('renews an expired subscription and invoices it (Form C)', function (): void {
+it('adds a subscription via auto-chaining when member has expired subscription (replaces renew)', function (): void {
     $member = Member::factory()->create(['status' => Status::Active]);
-    $plan = Plan::factory()->create(['amount' => 80, 'status' => Status::Active]);
-    $subscription = Subscription::factory()->create([
+    $plan = Plan::factory()->create(['amount' => 80, 'status' => Status::Active, 'days' => 30]);
+    $expired = Subscription::factory()->create([
         'member_id' => $member->id,
         'plan_id' => $plan->id,
         'start_date' => now()->subMonths(2)->toDateString(),
         'end_date' => now()->subDay()->toDateString(),
-        'status' => Status::Ongoing,
+        'status' => Status::Expired,
     ]);
 
-    SubscriptionForm::handleRenew($subscription, [
-        'plan_id' => $plan->id,
-        'start_date' => now()->toDateString(),
-        'end_date' => now()->addMonth()->toDateString(),
-        'discount' => 0,
-        'discount_amount' => 0,
-        'payment_method' => 'cash',
-        'paid_amount' => 80,
-        'invoice_date' => now()->toDateString(),
-        'invoice_due_date' => now()->toDateString(),
+    $expectedStart = \Carbon\Carbon::parse($expired->end_date)->addDay()->toDateString();
+
+    $results = \App\Services\Subscriptions\MemberSubscriptionService::createForMember($member, [
+        [
+            'plan_id' => $plan->id,
+            'quantity' => 1,
+            'paid_amount' => 80,
+        ],
     ]);
+
+    expect($results)->toHaveCount(1);
+    $newSub = $results[0][0];
+    $newInv = $results[0][1];
 
     expect(Subscription::query()->count())->toBe(2)
         ->and(Invoice::query()->count())->toBe(1)
-        ->and($subscription->refresh()->status)->toBe(Status::Renewed);
+        ->and($newSub->start_date->toDateString())->toBe($expectedStart)
+        ->and($newSub->status)->toBe(Status::Ongoing)
+        ->and((float) $newInv->paid_amount)->toBe((float) $newInv->total_amount)
+        ->and($expired->refresh()->status)->toBe(Status::Expired);
 });
