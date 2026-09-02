@@ -201,24 +201,6 @@ class PlanCheckInService
                 continue;
             }
 
-            if (in_array($status, [Status::Issued, Status::Partial], true) && (float) ($invoice->due_amount ?? 0) > 0) {
-                $states[] = [
-                    'id' => (int) $service->id,
-                    'name' => (string) $service->name,
-                    'state' => 'unpaid',
-                    'subscription_id' => $best->id,
-                    'warning' => __('app.reception.service_unpaid', [
-                        'date' => DeviceDateFormat::format($invoice->due_date),
-                        'amount' => Helpers::formatCurrency((float) $invoice->due_amount),
-                    ]),
-                ];
-
-                continue;
-            }
-
-            
-            
-            
             if ($this->remainingUses($best) === 0) {
                 $states[] = [
                     'id' => (int) $service->id,
@@ -233,9 +215,6 @@ class PlanCheckInService
                 continue;
             }
 
-            
-            
-            
             if ($this->hasCheckedInToday($best) && $this->remainingUses($best) !== null) {
                 $states[] = [
                     'id' => (int) $service->id,
@@ -244,6 +223,21 @@ class PlanCheckInService
                     'subscription_id' => $best->id,
                     'warning' => __('app.reception.service_same_day_duplicate', [
                         'plan' => (string) $best->plan?->name,
+                    ]),
+                ];
+
+                continue;
+            }
+
+            if (in_array($status, [Status::Issued, Status::Partial], true) && (float) ($invoice->due_amount ?? 0) > 0) {
+                $states[] = [
+                    'id' => (int) $service->id,
+                    'name' => (string) $service->name,
+                    'state' => 'unpaid',
+                    'subscription_id' => $best->id,
+                    'warning' => __('app.reception.service_unpaid', [
+                        'date' => DeviceDateFormat::format($invoice->due_date),
+                        'amount' => Helpers::formatCurrency((float) $invoice->due_amount),
                     ]),
                 ];
 

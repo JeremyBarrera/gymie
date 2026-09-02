@@ -22,7 +22,7 @@
     $cardSeverityRank = function (string $stateOrColor): int {
         return match (true) {
             in_array($stateOrColor, ['overdue', 'expired', 'no_access', 'uses_exhausted', 'danger'], true) => 2,
-            in_array($stateOrColor, ['unpaid', 'warning', 'same_day_duplicate'], true) => 1,
+            in_array($stateOrColor, ['warning', 'same_day_duplicate'], true) => 1,
             default => 0,
         };
     };

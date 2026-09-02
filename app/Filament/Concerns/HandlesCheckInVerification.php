@@ -259,8 +259,8 @@ trait HandlesCheckInVerification
             'expired' => 4,
             'uses_exhausted' => 3,
             'no_access' => 2,
-            'unpaid' => 1,
             'same_day_duplicate' => 1,
+            'unpaid' => 0,
             default => 0,
         };
 
