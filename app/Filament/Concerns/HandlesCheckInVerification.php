@@ -1175,6 +1175,24 @@ trait HandlesCheckInVerification
         }
 
         $reason = $this->checkInDenyReason ?: __('app.reception.denied_no_reason');
+        $member = Member::find($this->selectedCheckInMemberId);
+        $row = collect($this->checkInServices)->firstWhere('id', $this->checkInServiceId);
+        $subscription = $row ? Subscription::find($row['subscription_id']) : null;
+
+        if ($member) {
+            try {
+                app(PlanCheckInService::class)->checkInOverride(
+                    $member,
+                    $subscription,
+                    Auth::user(),
+                    $reason,
+                    false,
+                    $this->checkInServiceId,
+                    $this->checkInLocation($entry),
+                );
+            } catch (\Throwable) {
+            }
+        }
 
         if ($entry !== null) {
             $entry->update([
