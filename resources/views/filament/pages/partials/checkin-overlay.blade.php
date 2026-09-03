@@ -464,8 +464,8 @@
                                 </x-filament::button>
                             @endif
 
-                            @if(! $checkInSelectedRow || ($checkInSelectedRow['state'] ?? null) === 'access')
-                                @if(! $checkInSelectedRow || ($checkInSelectedRow['state'] ?? null) !== 'access')
+                            @if(! $checkInSelectedRow || in_array($checkInSelectedRow['state'] ?? null, ['access', 'unpaid'], true))
+                                @if(! $checkInSelectedRow || !in_array($checkInSelectedRow['state'] ?? null, ['access', 'unpaid'], true))
                                     <p class="fi-text-muted mb-2 text-xs">{{ __('app.reception.approve_disabled_helper') }}</p>
                                 @endif
                                 <x-filament::button
@@ -475,7 +475,7 @@
                                     class="w-full sm:w-auto min-w-28"
                                     wire:click="approveCheckIn"
                                     wire:loading.attr="disabled"
-                                    :disabled="! $checkInSelectedRow || ($checkInSelectedRow['state'] ?? null) !== 'access'"
+                                    :disabled="! $checkInSelectedRow || !in_array($checkInSelectedRow['state'] ?? null, ['access', 'unpaid'], true)"
                                 >
                                     {{ __('app.reception.approve') }}
                                 </x-filament::button>
