@@ -4,6 +4,7 @@ namespace App\Support\Membership;
 
 use App\Enums\Status;
 use App\Helpers\Helpers;
+use App\Models\Invoice;
 use App\Models\Member;
 use App\Models\Subscription;
 use App\Support\AppConfig;
@@ -86,6 +87,28 @@ final class MembershipStatus
     }
 
     
+
+    public static function isPaymentDueSoon(Member $member): bool
+    {
+        $expiringDays = Helpers::getSubscriptionExpiringDays();
+        $today = Carbon::today(AppConfig::timezone());
+        $windowEnd = $today->copy()->addDays($expiringDays);
+
+        return Invoice::query()
+            ->whereHas('subscription', fn ($query) => $query
+                ->where('member_id', $member->id)
+                ->whereIn('status', [Status::Ongoing->value, Status::Expiring->value])
+                ->whereDate('start_date', '<=', $today->toDateString())
+                ->where(fn ($q) => $q->whereNull('end_date')->orWhereDate('end_date', '>=', $today->toDateString())))
+            ->whereNotNull('due_date')
+            ->where('due_amount', '>', 0)
+            ->whereIn('status', [Status::Issued->value, Status::Partial->value])
+            ->whereDate('due_date', '>=', $today->toDateString())
+            ->whereDate('due_date', '<=', $windowEnd->toDateString())
+            ->get()
+            ->filter(fn (Invoice $invoice): bool => in_array($invoice->effectiveStatus(), [Status::Issued, Status::Partial], true))
+            ->isNotEmpty();
+    }
 
     private static function bestSubscription(Member $member): ?Subscription
     {

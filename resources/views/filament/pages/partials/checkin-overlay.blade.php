@@ -48,8 +48,10 @@
 
     
     
+    $paymentDueSoon = $checkInMember ? \App\Support\Membership\MembershipStatus::isPaymentDueSoon($checkInMember) : false;
+    $paymentRank = $paymentDueSoon ? 1 : 0;
     $planWins = $planRank >= $serviceRank;
-    $cardRank = max($planRank, $serviceRank);
+    $cardRank = max($planRank, $serviceRank, $paymentRank);
     $planIsNone = ($checkInStatus['color'] ?? null) === 'gray';
 
     
