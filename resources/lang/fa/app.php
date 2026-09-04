@@ -806,6 +806,7 @@ return [
         'pill_no_access' => 'اشتراک فعال وجود ندارد',
         'service_unpaid' => 'سررسید پرداخت :date — باقی‌مانده :amount',
         'service_overdue' => 'پرداخت از :date معوق است',
+        'expiring_soon_warning' => 'عضویت در تاریخ :date منقضی می‌شود — برای جلوگیری از وقفه به‌زودی تمدید کنید.',
         'override_confirm_title' => 'نادیده‌گرفتن ورود',
         'override_hint' => 'نادیده‌گرفتن را تأیید کنید. به گیرندگان پیکربندی‌شده اطلاع داده خواهد شد.',
         'override_notifies' => 'اطلاع‌رسانی به: :names',

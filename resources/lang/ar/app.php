@@ -806,6 +806,7 @@ return [
         'pill_no_access' => 'لا يوجد اشتراك نشط',
         'service_unpaid' => 'الدفع مستحق في :date — المتبقي :amount',
         'service_overdue' => 'الدفع متأخر منذ :date',
+        'expiring_soon_warning' => 'تنتهي العضوية في :date — جدّد قريبًا لتجنب الانقطاع.',
         'override_confirm_title' => 'تجاوز تسجيل الدخول',
         'override_hint' => 'أكّد التجاوز. سيتم إرسال إشعار إلى المستلمين المكوّنين.',
         'override_notifies' => 'سيتم إشعار: :names',

@@ -806,6 +806,7 @@ return [
         'pill_no_access' => 'Aucun abonnement actif',
         'service_unpaid' => 'Paiement dû le :date — :amount restant',
         'service_overdue' => 'Paiement en retard depuis le :date',
+        'expiring_soon_warning' => 'L’adhésion expire le :date — renouvelez bientôt pour éviter toute interruption.',
         'override_confirm_title' => 'Outrepasser l\'enregistrement',
         'override_hint' => 'Confirmez l\'outrepassement. Un avis est envoyé aux destinataires configurés.',
         'override_notifies' => 'Avis envoyé à : :names',

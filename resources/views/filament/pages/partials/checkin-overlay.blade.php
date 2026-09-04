@@ -50,8 +50,11 @@
     
     $paymentDueSoon = $checkInMember ? \App\Support\Membership\MembershipStatus::isPaymentDueSoon($checkInMember) : false;
     $paymentRank = $paymentDueSoon ? 1 : 0;
+    $expiringSoon = $checkInMember ? \App\Support\Membership\MembershipStatus::isExpiringSoon($checkInMember) : false;
+    $expiringSoonDate = $checkInMember ? \App\Support\Membership\MembershipStatus::expiringSoonEndDate($checkInMember) : null;
+    $expiringRank = $expiringSoon ? 1 : 0;
     $planWins = $planRank >= $serviceRank;
-    $cardRank = max($planRank, $serviceRank, $paymentRank);
+    $cardRank = max($planRank, $serviceRank, $paymentRank, $expiringRank);
     $planIsNone = ($checkInStatus['color'] ?? null) === 'gray';
 
     
@@ -392,6 +395,13 @@
                                     {{ $checkInStatus['help'] }}
                                 </span>
                             @endif
+                        </div>
+                    @endif
+
+                    @if($expiringSoon && $expiringSoonDate)
+                        <div class="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm" style="background: var(--warning-50); border-color: var(--warning-200); color: var(--warning-700);">
+                            <x-filament::icon icon="heroicon-m-clock" class="h-5 w-5 shrink-0" style="color: var(--warning-500);" />
+                            <span>{{ __('app.reception.expiring_soon_warning', ['date' => \App\Support\Dates\DeviceDateFormat::format($expiringSoonDate)]) }}</span>
                         </div>
                     @endif
 
