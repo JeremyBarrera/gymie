@@ -807,6 +807,7 @@ return [
         'pill_no_access' => 'No active subscription',
         'service_unpaid' => 'Payment due :date — :amount remaining',
         'service_overdue' => 'Payment past due since :date',
+        'expiring_soon_warning' => 'Membership expires on :date — renew soon to avoid interruption.',
         'override_confirm_title' => 'Override check-in',
         'override_hint' => 'Confirm the override. A notification is sent to the configured recipients.',
         'override_notifies' => 'Notifies: :names',

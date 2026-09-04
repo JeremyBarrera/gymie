@@ -110,6 +110,41 @@ final class MembershipStatus
             ->isNotEmpty();
     }
 
+    public static function isExpiringSoon(Member $member): bool
+    {
+        $expiringDays = Helpers::getSubscriptionExpiringDays();
+        $today = Carbon::today(AppConfig::timezone());
+        $windowEnd = $today->copy()->addDays($expiringDays);
+
+        return Subscription::query()
+            ->where('member_id', $member->id)
+            ->whereIn('status', [Status::Ongoing->value, Status::Expiring->value])
+            ->whereDate('start_date', '<=', $today->toDateString())
+            ->whereNotNull('end_date')
+            ->whereDate('end_date', '>=', $today->toDateString())
+            ->whereDate('end_date', '<=', $windowEnd->toDateString())
+            ->exists();
+    }
+
+    public static function expiringSoonEndDate(Member $member): ?Carbon
+    {
+        $expiringDays = Helpers::getSubscriptionExpiringDays();
+        $today = Carbon::today(AppConfig::timezone());
+        $windowEnd = $today->copy()->addDays($expiringDays);
+
+        $subscription = Subscription::query()
+            ->where('member_id', $member->id)
+            ->whereIn('status', [Status::Ongoing->value, Status::Expiring->value])
+            ->whereDate('start_date', '<=', $today->toDateString())
+            ->whereNotNull('end_date')
+            ->whereDate('end_date', '>=', $today->toDateString())
+            ->whereDate('end_date', '<=', $windowEnd->toDateString())
+            ->orderBy('end_date')
+            ->first();
+
+        return $subscription?->end_date;
+    }
+
     private static function bestSubscription(Member $member): ?Subscription
     {
         return $member->subscriptions()

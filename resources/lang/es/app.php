@@ -806,6 +806,7 @@ return [
         'pill_no_access' => 'Sin suscripción activa',
         'service_unpaid' => 'Pago vence el :date — :amount pendiente',
         'service_overdue' => 'Pago vencido desde el :date',
+        'expiring_soon_warning' => 'La membresía vence el :date — renueva pronto para evitar interrupciones.',
         'override_confirm_title' => 'Forzar registro de entrada',
         'override_hint' => 'Confirma el forzado. Se enviará una notificación a los destinatarios configurados.',
         'override_notifies' => 'Notifica a: :names',
