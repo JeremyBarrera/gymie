@@ -18,6 +18,12 @@
 5. **Keep each commit scoped to one logical change.** Don't fold an unrelated fix into the same commit as a feature — it makes it harder to revert or bisect just the part that later turns out to be the problem.
 6. **Never treat public-clean as your development branch. dev is the source of truth.** `public-clean` is a filtered, sanitized view of `dev` for publishing to GitHub (`JeremyBarrera/gymie` `main`); all development, commits, and merges happen on `dev`. Do not commit, merge, or `git checkout public-clean` to make changes — `public-clean` is only updated via `scripts/sync-public-branch.ps1` from `dev`.
 
+## How to Publish When Done
+
+1. **Work only on `dev`.**
+2. **From `dev` run `scripts/sync-public-branch.ps1` — regenerates `public-clean`.**
+3. **`git push origin public-clean:main --force` — updates public GitHub. Never `git checkout public-clean` to edit or `git push origin dev`.**
+
 ## Production Readiness, Robustness & Scalability
 
 1. **Validate all user input server-side — never trust the client.** Every form (Livewire component, Filament resource, public scan/signup endpoint) must validate through Laravel validation rules or Form Requests, even for fields the UI already constrains (dropdowns, split phone inputs). Client-side constraints are a UX nicety, not a security boundary.
