@@ -14,13 +14,13 @@ $filterRepoExe = Get-Command git-filter-repo -ErrorAction SilentlyContinue
 python -m git_filter_repo --version 2>$null | Out-Null
 $filterRepoModule = $?
 if ($filterRepoExe) {
-    Write-Host "filter-repo found — rewriting public-clean history to exclude internal files..."
+    Write-Host "filter-repo found - rewriting public-clean history to exclude internal files..."
     git filter-repo @filterRepoArgs
 } elseif ($filterRepoModule) {
-    Write-Host "filter-repo module found — rewriting public-clean history to exclude internal files..."
+    Write-Host "filter-repo module found - rewriting public-clean history to exclude internal files..."
     python -m git_filter_repo @filterRepoArgs
 } else {
-    Write-Host "filter-repo not found — falling back to git rm (no history rewrite)..."
+    Write-Host "filter-repo not found - falling back to git rm (no history rewrite)..."
     $toRemove = @(
         "AGENTS.md","TORO_GYM_PLAN.md","LOCATION_DRIVEN_RBAC_PLAN.md","MEMBER_STATUS_PLAN.md","RECEPTION_SYSTEM_PLAN.md",
         "docs/features/subscription-quantity-chaining.md","docs/planning"
