@@ -12,7 +12,7 @@ class ProductionHostSeparationTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const FUNNEL_HOST = 'torogym.taild62334.ts.net';
+    private const FUNNEL_HOST = 'public-funnel.example.net';
 
     protected function setUp(): void
     {
@@ -45,7 +45,7 @@ class ProductionHostSeparationTest extends TestCase
             ->assertOk();
 
         $this->actingAs(User::factory()->create())
-            ->get('http://server.taild62334.ts.net/dashboard')
+            ->get('http://staff-laptop.example.net/dashboard')
             ->assertOk();
     }
 
@@ -59,9 +59,9 @@ class ProductionHostSeparationTest extends TestCase
             ->assertRedirect()
             ->assertLocation('http://192.168.10.23/login');
 
-        $this->get('http://server.taild62334.ts.net/dashboard')
+        $this->get('http://staff-laptop.example.net/dashboard')
             ->assertRedirect()
-            ->assertLocation('http://server.taild62334.ts.net/login');
+            ->assertLocation('http://staff-laptop.example.net/login');
     }
 
     #[Test]

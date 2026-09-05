@@ -3,7 +3,7 @@
 # Run ON THE NEW DESKTOP, from the cloned repository root, in an ELEVATED
 # PowerShell:
 #
-#   powershell -ExecutionPolicy Bypass -File scripts\provision-new-server.ps1 -MachineName torogym-gym
+#   powershell -ExecutionPolicy Bypass -File scripts\provision-new-server.ps1 -MachineName gym-server
 #
 # Installs Git/Docker Desktop/Tailscale if missing, joins the tailnet,
 # scaffolds .env, builds the stack, runs migrations, and prints the exact
