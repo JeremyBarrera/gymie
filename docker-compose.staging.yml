@@ -61,6 +61,8 @@ services:
     command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
 
 volumes:
+  db-data:
+    name: gymie-staging_db-data-isolated
   db-data-staging:
   redis-data-staging:
   app-storage-staging:
