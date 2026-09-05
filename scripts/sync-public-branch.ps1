@@ -9,9 +9,16 @@ Write-Host "Updating public-clean from dev..."
 git checkout public-clean
 git merge dev --no-edit --no-ff | Out-Null
 
-if (Get-Command git-filter-repo -ErrorAction SilentlyContinue) {
+$filterRepoArgs = @("--invert-paths", "--path", "AGENTS.md", "--path", "TORO_GYM_PLAN.md", "--path", "LOCATION_DRIVEN_RBAC_PLAN.md", "--path", "MEMBER_STATUS_PLAN.md", "--path", "RECEPTION_SYSTEM_PLAN.md", "--path-glob", "*_PLAN.md", "--path", "docs/features/subscription-quantity-chaining.md", "--path", "docs/planning", "--force", "--refs", "public-clean")
+$filterRepoExe = Get-Command git-filter-repo -ErrorAction SilentlyContinue
+python -m git_filter_repo --version 2>$null | Out-Null
+$filterRepoModule = $?
+if ($filterRepoExe) {
     Write-Host "filter-repo found — rewriting public-clean history to exclude internal files..."
-    git filter-repo --invert-paths --path AGENTS.md --path TORO_GYM_PLAN.md --path LOCATION_DRIVEN_RBAC_PLAN.md --path MEMBER_STATUS_PLAN.md --path RECEPTION_SYSTEM_PLAN.md --path-glob "*_PLAN.md" --path docs/features/subscription-quantity-chaining.md --path docs/planning --force --refs public-clean
+    git filter-repo @filterRepoArgs
+} elseif ($filterRepoModule) {
+    Write-Host "filter-repo module found — rewriting public-clean history to exclude internal files..."
+    python -m git_filter_repo @filterRepoArgs
 } else {
     Write-Host "filter-repo not found — falling back to git rm (no history rewrite)..."
     $toRemove = @(

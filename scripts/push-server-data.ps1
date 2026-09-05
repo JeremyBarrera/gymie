@@ -5,7 +5,7 @@
 # scripts\provision-new-server.ps1:
 #
 #   powershell -ExecutionPolicy Bypass -File scripts\push-server-data.ps1 `
-#       -TargetHost torogym-gym.tailXXXX.ts.net -TargetUser <windows-user-on-new-box>
+#       -TargetHost gym-server.tailXXXX.ts.net -TargetUser <windows-user-on-new-box>
 #
 # Requirements on the new box: OpenSSH Server (the provisioner enables it)
 # and the repository cloned at C:\gymie.

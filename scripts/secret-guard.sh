@@ -4,7 +4,7 @@ fail=0
 allow='^$|^(null|test|changeme.*|your-.*|.*example.*|reverb(-key|-secret)?|\$.*)$'
 while IFS= read -r f; do
   [ -z "$f" ] && continue
-  if grep -qEi 'tail[a-z0-9-]*\.ts\.net' "$f"; then
+  if grep -qEi '[a-z0-9-]+\.ts\.net' "$f"; then
     echo "secret-guard: tailnet hostname in $f"
     fail=1
   fi
