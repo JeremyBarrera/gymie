@@ -1,6 +1,6 @@
-#Requires git filter-repo (pip install git-filter-repo) or falls back to git rm
+# Note: requires git filter-repo (pip install git-filter-repo) or falls back to git rm
 # Usage: powershell -File scripts/sync-public-branch.ps1
-# Keeps `public-clean` as a filtered view of `dev` without internal docs.
+# Keeps public-clean as a filtered view of dev without internal docs.
 # dev is source of truth, never edit public-clean directly.
 
 $ErrorActionPreference = "Stop"
@@ -34,7 +34,10 @@ if (Get-Command git-filter-repo -ErrorAction SilentlyContinue) {
     }
 }
 
-Write-Host "Public-clean branch now at $(git rev-parse --short HEAD) — for agent-review PR push branch with: git push origin public-clean"
+$publicShort = git rev-parse --short HEAD
+$devShort = git rev-parse --short dev
+Write-Host "Public-clean branch now at $publicShort"
+Write-Host "For agent-review PR push branch with: git push origin public-clean"
 Write-Host "To publish directly use: git push origin public-clean:main --force"
-Write-Host "Private dev remains source of truth at $(git rev-parse --short dev)"
+Write-Host "Private dev remains source of truth at $devShort"
 git checkout dev
