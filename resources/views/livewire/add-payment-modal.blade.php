@@ -55,7 +55,7 @@
                             <x-filament::input
                                 id="payment-next-due"
                                 type="date"
-                                wire:model="nextDueDate"
+                                wire:model.live="nextDueDate"
                                 :class="$errors->has('nextDueDate') ? 'fi-input--error' : ''"
                             />
                         </x-filament::input.wrapper>
