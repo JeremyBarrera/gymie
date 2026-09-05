@@ -145,6 +145,24 @@ final class MembershipStatus
         return $subscription?->end_date;
     }
 
+    public static function remainingUsesForMember(Member $member): ?int
+    {
+        $subscription = $member->subscriptions()
+            ->with('plan')
+            ->whereIn('status', [Status::Ongoing->value, Status::Expiring->value])
+            ->whereHas('plan', fn ($query) => $query->where('limit_uses', true))
+            ->whereDate('start_date', '<=', Carbon::today(AppConfig::timezone())->toDateString())
+            ->where(fn ($query) => $query->whereNull('end_date')->orWhereDate('end_date', '>=', Carbon::today(AppConfig::timezone())->toDateString()))
+            ->orderByDesc('end_date')
+            ->first();
+
+        if ($subscription === null) {
+            return null;
+        }
+
+        return app(\App\Services\Membership\PlanCheckInService::class)->remainingUses($subscription);
+    }
+
     private static function bestSubscription(Member $member): ?Subscription
     {
         return $member->subscriptions()
