@@ -20,18 +20,7 @@ if ($filterRepoExe) {
     Write-Host "filter-repo module found - rewriting public-clean history to exclude internal files..."
     python -m git_filter_repo @filterRepoArgs
 } else {
-    Write-Host "filter-repo not found - falling back to git rm (no history rewrite)..."
-    $toRemove = @(
-        "AGENTS.md","TORO_GYM_PLAN.md","LOCATION_DRIVEN_RBAC_PLAN.md","MEMBER_STATUS_PLAN.md","RECEPTION_SYSTEM_PLAN.md",
-        "docs/features/subscription-quantity-chaining.md","docs/planning"
-    ) | Where-Object { Test-Path $_ }
-    if ($toRemove) {
-        git rm -r --cached $toRemove 2>$null | Out-Null
-        git rm -r $toRemove 2>$null | Out-Null
-        if ((git status --porcelain)) {
-            git commit -m "chore(public): sync from dev, exclude internal docs"
-        }
-    }
+    throw "git-filter-repo is required to sync public-clean (found neither the binary nor the python module). Aborting before any push so public history is never published without the rewrite."
 }
 
 $publicShort = git rev-parse --short HEAD
