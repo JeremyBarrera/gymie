@@ -12,6 +12,7 @@
     $checkInStatus = $checkInMember
         ? \App\Support\Membership\MembershipStatus::forMember($checkInMember)
         : null;
+    $remainingUses = $checkInMember ? \App\Support\Membership\MembershipStatus::remainingUsesForMember($checkInMember) : null;
     $isBanned = $checkInMember && $checkInMember->checkInBlocker() === 'banned';
 
     
@@ -22,7 +23,7 @@
     $cardSeverityRank = function (string $stateOrColor): int {
         return match (true) {
             in_array($stateOrColor, ['overdue', 'expired', 'no_access', 'uses_exhausted', 'danger'], true) => 2,
-            in_array($stateOrColor, ['warning', 'same_day_duplicate'], true) => 1,
+            in_array($stateOrColor, ['unpaid', 'warning', 'same_day_duplicate'], true) => 1,
             default => 0,
         };
     };
@@ -60,7 +61,8 @@
     
     [$cardRingVar, $cardIcon] = match (true) {
         $cardRank >= 2 => ['var(--danger-500)', 'heroicon-m-exclamation-triangle'],
-        $cardRank === 1 => ['var(--warning-500)', 'heroicon-m-clock'],
+        $cardRank === 1 && (($worstServiceRow['state'] ?? null) === 'unpaid' || $paymentDueSoon) => ['var(--warning-500)', 'heroicon-m-banknotes'],
+        $cardRank === 1 => ['var(--warning-500)', 'heroicon-m-exclamation-triangle'],
         $planIsNone => ['var(--gray-400)', 'heroicon-o-user'],
         default => ['var(--success-500)', 'heroicon-m-check-circle'],
     };
@@ -236,13 +238,13 @@
                                 </div>
                             @endif
                             <span
-                                class="absolute -top-2 -end-2 z-10 flex h-7 w-7 items-center justify-center rounded-full"
+                                class="absolute -top-2 -end-2 z-10 flex h-9 w-9 items-center justify-center rounded-full"
                                 style="background: {{ $cardRingVar }};"
                                 role="img"
                                 aria-label="{{ $cardTitle }}"
                                 title="{{ $cardTitle }}"
                             >
-                                <x-filament::icon icon="{{ $cardIcon }}" class="h-4 w-4 text-white" />
+                                <x-filament::icon icon="{{ $cardIcon }}" class="h-5 w-5 text-white" />
                             </span>
                         </div>
                         <div class="flex-1 min-w-0 space-y-5">
@@ -332,13 +334,13 @@
 
                             
                             <span
-                                class="absolute -top-2 -end-2 z-10 flex h-7 w-7 items-center justify-center rounded-full"
+                                class="absolute -top-2 -end-2 z-10 flex h-9 w-9 items-center justify-center rounded-full"
                                 style="background: {{ $cardRingVar }};"
                                 role="img"
                                 aria-label="{{ $cardTitle }}"
                                 title="{{ $cardTitle }}"
                             >
-                                <x-filament::icon icon="{{ $cardIcon }}" class="h-4 w-4 text-white" />
+                                <x-filament::icon icon="{{ $cardIcon }}" class="h-5 w-5 text-white" />
                             </span>
                         </div>
 
@@ -366,10 +368,10 @@
                                         @endif
                                     @endforeach
                                     @if($this->statusPill)
-                                        <div class="space-y-1">
+                                        <div class="space-y-1 max-w-full">
                                             <span class="fi-text-muted text-xs font-medium uppercase tracking-wide">{{ __('app.fields.status') }}</span>
-                                            <div>
-                                                <x-checkin-status-pill :color="$this->statusPill['color']" :label="$this->statusPill['label']" />
+                                            <div class="max-w-full">
+                                                <x-checkin-status-pill :color="$this->statusPill['color']" :label="$this->statusPill['label']" :size="$this->statusPill['size'] ?? 'xl'" />
                                             </div>
                                         </div>
                                     @endif
@@ -380,8 +382,8 @@
 
                     @if($checkInStatus)
                         <div class="flex flex-wrap items-center gap-3">
-                            <x-filament::badge :color="$checkInStatus['color']" size="md">
-                                {{ $checkInStatus['label'] }}
+                            <x-filament::badge :color="$checkInStatus['color']" size="lg">
+                                {{ $checkInStatus['help'] ?? $checkInStatus['label'] }}
                             </x-filament::badge>
 
                             @if(! empty($checkInStatus['hint']))
@@ -390,10 +392,10 @@
                                 </span>
                             @endif
 
-                            @if(! empty($checkInStatus['help']))
-                                <span class="fi-text fi-text-muted text-sm">
-                                    {{ $checkInStatus['help'] }}
-                                </span>
+                            @if($remainingUses !== null)
+                                <x-filament::badge color="info" size="lg">
+                                    {{ __('app.fields.uses_remaining', ['count' => $remainingUses]) }}
+                                </x-filament::badge>
                             @endif
                         </div>
                     @endif
@@ -491,7 +493,7 @@
                                 >
                                     {{ __('app.reception.approve') }}
                                 </x-filament::button>
-                            @elseif(($checkInSelectedRow['state'] ?? null) === 'expired')
+                            @elseif(in_array($checkInSelectedRow['state'] ?? null, ['expired', 'no_access'], true))
                                 <x-filament::button
                                     wire:key="checkin-renew"
                                     color="success"
@@ -501,6 +503,15 @@
                                     wire:loading.attr="disabled"
                                 >
                                     {{ __('app.check_in.add_subscription') }}
+                                </x-filament::button>
+                                <x-filament::button
+                                    wire:key="checkin-override"
+                                    color="danger"
+                                    size="md"
+                                    class="w-full sm:w-auto min-w-28"
+                                    wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
+                                >
+                                    {{ __('app.reception.override') }}
                                 </x-filament::button>
                             @elseif(($checkInSelectedRow['state'] ?? null) === 'uses_exhausted')
                                 <x-filament::button
@@ -515,17 +526,7 @@
                                 </x-filament::button>
                                 <x-filament::button
                                     wire:key="checkin-override"
-                                    color="warning"
-                                    size="md"
-                                    class="w-full sm:w-auto min-w-28"
-                                    wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
-                                >
-                                    {{ __('app.reception.override') }}
-                                </x-filament::button>
-                            @elseif(($checkInSelectedRow['state'] ?? null) === 'no_access')
-                                <x-filament::button
-                                    wire:key="checkin-override"
-                                    color="warning"
+                                    color="danger"
                                     size="md"
                                     class="w-full sm:w-auto min-w-28"
                                     wire:click="openCheckInOverrideFor({{ $checkInSelectedRow['id'] }})"
@@ -544,16 +545,6 @@
                                     {{ __('app.reception.deny') }}
                                 </x-filament::button>
                                 <x-filament::button
-                                    wire:key="checkin-same-day-nocount"
-                                    color="success"
-                                    size="md"
-                                    class="w-full sm:w-auto min-w-28"
-                                    wire:click="confirmSameDayDuplicateCheckIn"
-                                    wire:loading.attr="disabled"
-                                >
-                                    {{ __('app.reception.same_day_duplicate_nocount') }}
-                                </x-filament::button>
-                                <x-filament::button
                                     wire:key="checkin-same-day-count"
                                     color="warning"
                                     size="md"
@@ -563,7 +554,27 @@
                                 >
                                     {{ __('app.reception.same_day_duplicate_count') }}
                                 </x-filament::button>
+                                <x-filament::button
+                                    wire:key="checkin-same-day-nocount"
+                                    color="success"
+                                    size="md"
+                                    class="w-full sm:w-auto min-w-28"
+                                    wire:click="confirmSameDayDuplicateCheckIn"
+                                    wire:loading.attr="disabled"
+                                >
+                                    {{ __('app.reception.same_day_duplicate_nocount') }}
+                                </x-filament::button>
                             @else
+                                <x-filament::button
+                                    wire:key="checkin-change-due-date"
+                                    color="warning"
+                                    size="md"
+                                    class="w-full sm:w-auto min-w-28"
+                                    wire:click="openChangeDueDateModal({{ $checkInSelectedRow['id'] }})"
+                                    wire:loading.attr="disabled"
+                                >
+                                    {{ __('app.check_in.change_due_date') }}
+                                </x-filament::button>
                                 <x-filament::button
                                     wire:key="checkin-add-payment"
                                     color="success"
@@ -573,16 +584,6 @@
                                     wire:loading.attr="disabled"
                                 >
                                     {{ __('app.check_in.add_payment') }}
-                                </x-filament::button>
-                                <x-filament::button
-                                    wire:key="checkin-change-due-date"
-                                    color="gray"
-                                    size="md"
-                                    class="w-full sm:w-auto min-w-28"
-                                    wire:click="openChangeDueDateModal({{ $checkInSelectedRow['id'] }})"
-                                    wire:loading.attr="disabled"
-                                >
-                                    {{ __('app.check_in.change_due_date') }}
                                 </x-filament::button>
                             @endif
                             </div>

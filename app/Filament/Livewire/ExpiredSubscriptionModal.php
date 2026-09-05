@@ -36,12 +36,12 @@ class ExpiredSubscriptionModal extends Component implements HasSchemas
     public array $sales = [];
 
     #[On('open-expired-subscription-modal')]
-    public function open(int $memberId, int $serviceId, int $previousSubscriptionId): void
+    public function open(int $memberId, int $serviceId, ?int $previousSubscriptionId = null): void
     {
         $member = Member::find($memberId);
-        $previous = Subscription::find($previousSubscriptionId);
+        $previous = $previousSubscriptionId ? Subscription::find($previousSubscriptionId) : null;
 
-        if (! $member || ! $previous || (int) $previous->member_id !== (int) $member->id) {
+        if (! $member || ($previousSubscriptionId && (! $previous || (int) $previous->member_id !== (int) $member->id))) {
             return;
         }
 
@@ -49,12 +49,12 @@ class ExpiredSubscriptionModal extends Component implements HasSchemas
 
         $this->memberId = (int) $member->id;
         $this->serviceId = (int) $serviceId;
-        $this->previousSubscriptionId = (int) $previous->id;
+        $this->previousSubscriptionId = $previous ? (int) $previous->id : null;
 
-        $defaultPlan = Plan::withTrashed()->find($previous->plan_id);
+        $defaultPlan = $previous ? Plan::withTrashed()->find($previous->plan_id) : null;
         $available = $this->planOptions;
 
-        $defaultPlanId = isset($available[$defaultPlan?->id])
+        $defaultPlanId = $defaultPlan && isset($available[$defaultPlan->id])
             ? (int) $defaultPlan->id
             : (int) array_key_first($available);
 
@@ -159,38 +159,39 @@ class ExpiredSubscriptionModal extends Component implements HasSchemas
         $this->validate();
 
         $member = Member::find($this->memberId);
-        $previous = Subscription::find($this->previousSubscriptionId);
+        $previous = $this->previousSubscriptionId ? Subscription::find($this->previousSubscriptionId) : null;
 
-        if (! $member || ! $previous || (int) $previous->member_id !== (int) $member->id) {
+        if (! $member || ($this->previousSubscriptionId && (! $previous || (int) $previous->member_id !== (int) $member->id))) {
             $this->notifyDanger(__('app.notifications.check_in_failed'));
 
             return;
         }
 
         try {
-            $results = DB::transaction(function () use ($previous, $member): array {
-                $freshPrevious = Subscription::query()
-                    ->whereKey($previous->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+            if ($previous) {
+                $results = DB::transaction(function () use ($previous, $member): array {
+                    $freshPrevious = Subscription::query()
+                        ->whereKey($previous->id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
 
-                if ($freshPrevious->status === Status::Renewed) {
-                    throw new \RuntimeException('already renewed');
-                }
+                    if ($freshPrevious->status === Status::Renewed) {
+                        throw new \RuntimeException('already renewed');
+                    }
 
-                if ((int) $freshPrevious->member_id !== (int) $member->id) {
-                    throw new \RuntimeException('subscription mismatch');
-                }
+                    if ((int) $freshPrevious->member_id !== (int) $member->id) {
+                        throw new \RuntimeException('subscription mismatch');
+                    }
 
-                $results = [];
-                $currentPrevious = $freshPrevious;
+                    $results = [];
+                    $currentPrevious = $freshPrevious;
 
-                foreach ($this->sales as $sale) {
-                    $result = app(SubscriptionRenewalService::class)->renew($currentPrevious, [
-                        'plan_id' => (int) $sale['plan_id'],
-                        'quantity' => max(1, (int) ($sale['quantity'] ?? 1)),
-                        'start_date' => (string) $sale['start_date'],
-                        'end_date' => filled($sale['end_date'] ?? null) ? (string) $sale['end_date'] : null,
+                    foreach ($this->sales as $sale) {
+                        $result = app(SubscriptionRenewalService::class)->renew($currentPrevious, [
+                            'plan_id' => (int) $sale['plan_id'],
+                            'quantity' => max(1, (int) ($sale['quantity'] ?? 1)),
+                            'start_date' => (string) $sale['start_date'],
+                            'end_date' => filled($sale['end_date'] ?? null) ? (string) $sale['end_date'] : null,
                         'invoice' => [
                             'payment_method' => $sale['payment_method'] ?? 'cash',
                             'discount_amount' => (float) ($sale['discount_amount'] ?? 0),
@@ -204,6 +205,10 @@ class ExpiredSubscriptionModal extends Component implements HasSchemas
 
                 return $results;
             });
+            } else {
+                $raw = \App\Services\Subscriptions\MemberSubscriptionService::createForMember($member, $this->sales);
+                $results = array_map(fn($pair) => ['subscription' => $pair[0], 'invoice' => $pair[1]], $raw);
+            }
 
             $lastResult = end($results);
             $subscription = $lastResult['subscription'];
@@ -224,7 +229,7 @@ class ExpiredSubscriptionModal extends Component implements HasSchemas
         } catch (\Throwable $exception) {
             Log::error('Expired-path renewal failed', [
                 'member_id' => $member->id,
-                'previous_subscription_id' => $previous->id,
+                'previous_subscription_id' => $previous?->id,
                 'error' => $exception->getMessage(),
             ]);
 

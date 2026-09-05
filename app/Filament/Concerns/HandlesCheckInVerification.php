@@ -828,25 +828,16 @@ trait HandlesCheckInVerification
         $member = Member::find($this->selectedCheckInMemberId);
         $row = collect($this->checkInServices)->firstWhere('id', $serviceId);
 
-        if (! $member || ! $row || ! in_array($row['state'] ?? null, ['expired', 'uses_exhausted'], true)) {
+        if (! $member || ! $row || ! in_array($row['state'] ?? null, ['expired', 'uses_exhausted', 'no_access'], true)) {
             return;
         }
 
         $previous = $this->latestSubscriptionForService($member, $serviceId);
 
-        if ($previous === null) {
-            $this->dispatch('notify',
-                type: 'danger',
-                message: __('app.notifications.check_in_not_eligible'),
-            );
-
-            return;
-        }
-
         $this->dispatch('open-expired-subscription-modal',
             memberId: (int) $member->id,
             serviceId: (int) $serviceId,
-            previousSubscriptionId: (int) $previous->id,
+            previousSubscriptionId: $previous ? (int) $previous->id : null,
         );
     }
 
@@ -1082,14 +1073,16 @@ trait HandlesCheckInVerification
         }
 
         return match ($state) {
-            'same_day_duplicate' => ['color' => 'warning', 'label' => __('app.reception.pill_already_checked_in')],
+            'same_day_duplicate' => ['color' => 'warning', 'label' => __('app.reception.pill_already_checked_in'), 'size' => 'xl'],
             'uses_exhausted' => $subscription?->plan?->name
-                ? ['color' => 'warning', 'label' => __('app.reception.pill_no_uses', ['plan' => $subscription->plan->name])]
-                : ['color' => 'warning', 'label' => __('app.reception.pill_no_uses_short')],
-            'unpaid' => $this->statusPillForInvoice($member, $row, 'pill_payment_due', 'warning'),
-            'overdue' => $this->statusPillForInvoice($member, $row, 'pill_payment_overdue', 'danger'),
-            'expired' => ['color' => 'danger', 'label' => __('app.reception.pill_expired')],
-            'no_access' => ['color' => 'danger', 'label' => __('app.reception.pill_no_access')],
+                ? (mb_strlen($subscription->plan->name) > 25
+                    ? ['color' => 'danger', 'label' => __('app.reception.pill_no_uses', ['plan' => $subscription->plan->code ?? $subscription->plan->name]), 'size' => 'lg']
+                    : ['color' => 'danger', 'label' => __('app.reception.pill_no_uses', ['plan' => $subscription->plan->name]), 'size' => 'xl'])
+                : ['color' => 'danger', 'label' => __('app.reception.pill_no_uses_short'), 'size' => 'lg'],
+            'unpaid' => array_merge($this->statusPillForInvoice($member, $row, 'pill_payment_due', 'warning') ?? [], ['size' => 'xl']),
+            'overdue' => array_merge($this->statusPillForInvoice($member, $row, 'pill_payment_overdue', 'danger') ?? [], ['size' => 'xl']),
+            'expired' => ['color' => 'danger', 'label' => __('app.reception.pill_expired'), 'size' => 'lg'],
+            'no_access' => ['color' => 'danger', 'label' => __('app.reception.pill_no_access'), 'size' => 'lg'],
             default => null,
         };
     }
