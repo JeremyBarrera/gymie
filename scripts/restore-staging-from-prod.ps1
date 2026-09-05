@@ -17,4 +17,4 @@ docker compose -p gymie-staging exec db-staging mysql -u root -p$stagePass -e "C
 Get-Content "$env:TEMP\stage.sql" | docker compose -p gymie-staging exec -T db-staging mysql -u root -p$stagePass $stageDb
 
 Write-Host "Restore complete — staging now has production-like data. No PII scrub (per user choice, internal tailnet-only)."
-Write-Host "Verify: docker compose -p gymie-staging exec db-staging mysql -u root -p$stagePass -e 'SELECT COUNT(*) FROM gymie_staging.users; SELECT COUNT(*) FROM gymie_staging.members;'"
+Write-Host "Verify with the staging DB password from .env.staging (never printed here): docker compose -p gymie-staging exec db-staging mysql -u root -p --execute 'SELECT COUNT(*) FROM gymie_staging.users; SELECT COUNT(*) FROM gymie_staging.members;'"
