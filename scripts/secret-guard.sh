@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 fail=0
-allow='^$|^(null|test|changeme.*|your-.*|.*example.*|reverb(-key|-secret)?|\$.*)$'
+allow='^$|^(null|test|changeme.*|your-.*|test@example\.com|hello@example\.com|staging@example\.com|staging\.example\.com|reverb(-key|-secret)?|\$.*)$'
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   if grep -qEi '[a-z0-9-]+\.ts\.net' "$f"; then
