@@ -17,7 +17,7 @@ class SubscriptionChainService
         $compute = function () use ($member, $plan): string {
             $latest = Subscription::where('member_id', $member->id)
                 ->where('plan_id', $plan->id)
-                ->whereIn('status', ['ongoing', 'upcoming'])
+                ->whereIn('status', ['ongoing', 'upcoming', 'expiring'])
                 ->whereNotNull('end_date')
                 ->lockForUpdate()
                 ->max('end_date');
@@ -38,7 +38,7 @@ class SubscriptionChainService
         $end = $endDate ? Carbon::parse($endDate)->toDateString() : null;
         $query = Subscription::where('member_id', $member->id)
             ->where('plan_id', $plan->id)
-            ->whereIn('status', ['ongoing', 'upcoming'])
+            ->whereIn('status', ['ongoing', 'upcoming', 'expiring'])
             ->lockForUpdate();
         if ($end) {
             $query->where(function ($q) use ($start, $end) {
