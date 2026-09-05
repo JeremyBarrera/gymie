@@ -415,7 +415,7 @@ trait HandlesCheckInVerification
         $member = Member::find($this->selectedCheckInMemberId);
         $subscription = $row ? Subscription::find($row['subscription_id']) : null;
 
-        if (! $member || ! $subscription || ($row['state'] ?? null) !== 'access') {
+        if (! $member || ! $subscription || ! in_array($row['state'] ?? null, ['access', 'unpaid'], true)) {
             $this->dispatch('notify',
                 type: 'danger',
                 message: __('app.notifications.check_in_failed'),
@@ -1079,12 +1079,25 @@ trait HandlesCheckInVerification
                     ? ['color' => 'danger', 'label' => __('app.reception.pill_no_uses', ['plan' => $subscription->plan->code ?? $subscription->plan->name]), 'size' => 'lg']
                     : ['color' => 'danger', 'label' => __('app.reception.pill_no_uses', ['plan' => $subscription->plan->name]), 'size' => 'xl'])
                 : ['color' => 'danger', 'label' => __('app.reception.pill_no_uses_short'), 'size' => 'lg'],
-            'unpaid' => array_merge($this->statusPillForInvoice($member, $row, 'pill_payment_due', 'warning') ?? [], ['size' => 'xl']),
-            'overdue' => array_merge($this->statusPillForInvoice($member, $row, 'pill_payment_overdue', 'danger') ?? [], ['size' => 'xl']),
+            'unpaid' => $this->statusPillWithSize($member, $row, 'pill_payment_due', 'warning'),
+            'overdue' => $this->statusPillWithSize($member, $row, 'pill_payment_overdue', 'danger'),
             'expired' => ['color' => 'danger', 'label' => __('app.reception.pill_expired'), 'size' => 'lg'],
             'no_access' => ['color' => 'danger', 'label' => __('app.reception.pill_no_access'), 'size' => 'lg'],
             default => null,
         };
+    }
+
+    private function statusPillWithSize(Member $member, array $row, string $key, string $color): ?array
+    {
+        $pill = $this->statusPillForInvoice($member, $row, $key, $color);
+
+        if ($pill === null) {
+            return null;
+        }
+
+        $pill['size'] = 'xl';
+
+        return $pill;
     }
 
     private function statusPillForInvoice(Member $member, array $row, string $key, string $color): ?array

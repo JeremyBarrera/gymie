@@ -1,0 +1,5 @@
+reviews:
+  path_filters:
+    - "!public/js/**"
+    - "!public/fonts/**"
+    - "!public/css/filament/**"
