@@ -1097,7 +1097,7 @@ trait HandlesCheckInVerification
 
         $date = \App\Support\Dates\DeviceDateFormat::format($invoice->due_date);
 
-        return ['color' => $color, 'label' => __('app.reception.' . $key, ['date' => $date])];
+        return ['color' => $color, 'label' => __('app.reception.' . $key, ['date' => $date]), 'wrap' => $key === 'pill_payment_overdue'];
     }
 
     private function pastDueModalContext(int $serviceId): ?array

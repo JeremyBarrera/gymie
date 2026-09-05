@@ -368,10 +368,10 @@
                                         @endif
                                     @endforeach
                                     @if($this->statusPill)
-                                        <div class="space-y-1 max-w-full">
+                                        <div class="space-y-1">
                                             <span class="fi-text-muted text-xs font-medium uppercase tracking-wide">{{ __('app.fields.status') }}</span>
-                                            <div class="max-w-full">
-                                                <x-checkin-status-pill :color="$this->statusPill['color']" :label="$this->statusPill['label']" :size="$this->statusPill['size'] ?? 'xl'" />
+                                            <div>
+                                                <x-checkin-status-pill :color="$this->statusPill['color']" :label="$this->statusPill['label']" :size="$this->statusPill['size'] ?? 'xl'" :wrap="$this->statusPill['wrap'] ?? false" />
                                             </div>
                                         </div>
                                     @endif
