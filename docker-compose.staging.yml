@@ -1,4 +1,9 @@
 name: gymie-staging
+# Staging must be invoked with --env-file .env.staging so ${} interpolation
+# uses staging values, e.g.:
+# docker compose --env-file .env.staging -f docker-compose.yml -f docker-compose.staging.yml -p gymie-staging up -d
+# Base production services (db, backup, webserver, redis, reverb) are disabled
+# below so staging can never mount the production gymie_db-data volume.
 
 services:
   app:
@@ -13,6 +18,17 @@ services:
       REVERB_HOST: reverb-staging
     volumes:
       - app-storage-staging:/var/www/storage/app
+    depends_on:
+      db:
+        condition: service_healthy
+        required: false
+      redis:
+        condition: service_started
+        required: false
+      db-staging:
+        condition: service_healthy
+      redis-staging:
+        condition: service_started
 
   webserver-staging:
     image: nginx:1.27-alpine
@@ -26,6 +42,21 @@ services:
       - app-storage-staging:/var/www/storage/app:ro
     depends_on:
       - app
+
+  db:
+    profiles: ["disabled"]
+
+  backup:
+    profiles: ["disabled"]
+
+  webserver:
+    profiles: ["disabled"]
+
+  redis:
+    profiles: ["disabled"]
+
+  reverb:
+    profiles: ["disabled"]
 
   db-staging:
     image: mysql:8.0
@@ -60,9 +91,43 @@ services:
       - app-storage-staging:/var/www/storage/app
     command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
 
+  queue:
+    extends:
+      file: docker-compose.yml
+      service: queue
+    env_file: .env.staging
+    environment:
+      DB_HOST: db-staging
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis-staging
+      REVERB_HOST: reverb-staging
+    depends_on:
+      db-staging:
+        condition: service_healthy
+      redis-staging:
+        condition: service_started
+    volumes:
+      - app-storage-staging:/var/www/storage/app
+
+  scheduler:
+    extends:
+      file: docker-compose.yml
+      service: scheduler
+    env_file: .env.staging
+    environment:
+      DB_HOST: db-staging
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis-staging
+      REVERB_HOST: reverb-staging
+    depends_on:
+      db-staging:
+        condition: service_healthy
+      redis-staging:
+        condition: service_started
+    volumes:
+      - app-storage-staging:/var/www/storage/app
+
 volumes:
-  db-data:
-    name: gymie-staging_db-data-isolated
   db-data-staging:
   redis-data-staging:
   app-storage-staging:
