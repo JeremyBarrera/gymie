@@ -795,6 +795,8 @@ return [
         'service_same_day_duplicate_short' => 'امروز قبلاً ثبت ورود شده',
         'service_same_day_duplicate' => 'امروز قبلاً در :plan ثبت ورود شده — در سهمیه حساب نمی‌شود',
         'same_day_duplicate_check_in' => 'ثبت ورود — بدون شمارش',
+        'same_day_duplicate_nocount' => 'ثبت ورود — بدون شمارش',
+        'same_day_duplicate_count' => 'ثبت ورود — با شمارش',
         'same_day_duplicate_approved' => ':name ثبت ورود شد (همان روز، بدون شمارش)',
         'same_day_duplicate_denied_reason' => 'تکرار همان روز رد شد',
         'pill_already_checked_in' => 'ثبت امروز شد',

@@ -795,6 +795,8 @@ return [
         'service_same_day_duplicate_short' => 'تم تسجيل الدخول اليوم',
         'service_same_day_duplicate' => 'تم تسجيل الدخول اليوم على :plan — لن يُحتسب من الحد',
         'same_day_duplicate_check_in' => 'تسجيل دخول — غير محتسب',
+        'same_day_duplicate_nocount' => 'تسجيل دخول — غير محتسب',
+        'same_day_duplicate_count' => 'تسجيل دخول — محتسب',
         'same_day_duplicate_approved' => 'تم تسجيل دخول :name (نفس اليوم، غير محتسب)',
         'same_day_duplicate_denied_reason' => 'تم رفض التكرار في نفس اليوم',
         'pill_already_checked_in' => 'تم الدخول',

@@ -795,6 +795,8 @@ return [
         'service_same_day_duplicate_short' => 'Déjà enregistré aujourd’hui',
         'service_same_day_duplicate' => 'Déjà enregistré aujourd’hui sur :plan — ne comptera pas',
         'same_day_duplicate_check_in' => 'Enregistrer — ne comptera pas',
+        'same_day_duplicate_nocount' => 'Enregistrer — ne comptera pas',
+        'same_day_duplicate_count' => 'Enregistrer — comptera',
         'same_day_duplicate_approved' => ':name enregistré (même jour, non compté)',
         'same_day_duplicate_denied_reason' => 'Doublon du même jour refusé',
         'pill_already_checked_in' => 'Déjà enregistré',

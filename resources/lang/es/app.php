@@ -794,6 +794,8 @@ return [
         'service_same_day_duplicate_short' => 'Ya registrado hoy',
         'service_same_day_duplicate' => 'Ya registrado hoy en :plan — no contará para el límite',
         'same_day_duplicate_check_in' => 'Registrar — no contará',
+        'same_day_duplicate_nocount' => 'Registrar — no contará',
+        'same_day_duplicate_count' => 'Registrar — contará',
         'same_day_duplicate_approved' => ':name registrado (mismo día, no contado)',
         'same_day_duplicate_denied_reason' => 'Duplicado del mismo día denegado',
         'pill_already_checked_in' => 'Ya registrado',
