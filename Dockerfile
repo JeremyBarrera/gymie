@@ -68,6 +68,8 @@ RUN apk add --no-cache \
         freetype \
         oniguruma
 
+RUN apk update && apk upgrade --no-cache
+
 COPY --from=build /usr/local/lib/php/extensions /usr/local/lib/php/extensions
 COPY --from=build /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
