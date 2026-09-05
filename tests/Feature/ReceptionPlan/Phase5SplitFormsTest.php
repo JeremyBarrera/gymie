@@ -218,18 +218,18 @@ it('creates the subscription, invoice and payment for a pending member (Form B)'
         ->and($invoice->transactions()->count())->toBe(1);
 });
 
-it('adds a subscription via auto-chaining when member has expired subscription (replaces renew)', function (): void {
+it('starts a subscription today when member has long-expired subscription (replaces renew)', function (): void {
     $member = Member::factory()->create(['status' => Status::Active]);
     $plan = Plan::factory()->create(['amount' => 80, 'status' => Status::Active, 'days' => 30]);
     $expired = Subscription::factory()->create([
         'member_id' => $member->id,
         'plan_id' => $plan->id,
         'start_date' => now()->subMonths(2)->toDateString(),
-        'end_date' => now()->subDay()->toDateString(),
+        'end_date' => now()->subDays(10)->toDateString(),
         'status' => Status::Expired,
     ]);
 
-    $expectedStart = \Carbon\Carbon::parse($expired->end_date)->addDay()->toDateString();
+    $expectedStart = \Carbon\Carbon::today()->toDateString();
 
     $results = \App\Services\Subscriptions\MemberSubscriptionService::createForMember($member, [
         [
