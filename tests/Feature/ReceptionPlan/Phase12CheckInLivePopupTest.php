@@ -589,7 +589,7 @@ it('approves against the eligible subscription with the latest end date for the 
         ->and($entry->refresh()->status)->toBe('approved');
 });
 
-it('blocks the approve for an unpaid invoice and routes staff to the payment / due-date modals', function (): void {
+it('allows the approve for an unpaid invoice with future due date and still offers payment modals', function (): void {
     Feature::activate('checkin.override');
 
     $location = Location::factory()->create();
@@ -613,19 +613,20 @@ it('blocks the approve for an unpaid invoice and routes staff to the payment / d
         ->test(Reception::class)
         ->call('onQueueEntryCreated', ['queueEntryId' => $entry->id])
         ->set('checkInServiceId', $plan->primaryService()->id)
-        ->call('approveCheckIn')
-        ->assertDispatched('notify')
-        ->assertSet('showCheckInOverlay', true)
-        
-        
-        ->call('openCheckInOverrideFor', $plan->primaryService()->id)
-        ->assertSet('checkInOverrideStep', false)
         ->call('openAddPaymentModal', $plan->primaryService()->id)
         ->assertDispatched('open-add-payment-modal')
         ->call('openChangeDueDateModal', $plan->primaryService()->id)
-        ->assertDispatched('open-change-due-date-modal');
+        ->assertDispatched('open-change-due-date-modal')
+        ->call('approveCheckIn')
+        ->assertDispatched('notify')
+        ->assertSet('showCheckInOverlay', false);
 
-    expect(PlanCheckIn::count())->toBe(0);
+    $checkIn = PlanCheckIn::query()->latest('id')->first();
+
+    expect($checkIn)->not->toBeNull()
+        ->and((int) $checkIn->member_id)->toBe((int) $member->id)
+        ->and((bool) $checkIn->override)->toBeFalse()
+        ->and($entry->refresh()->status)->toBe('approved');
 });
 
 it('keeps the strict gate for an overdue member: approve and crafted overrides both blocked', function (): void {
