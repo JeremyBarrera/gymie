@@ -13,8 +13,8 @@ if ((git status --porcelain)) {
 Write-Host "Updating public-clean from dev..."
 git checkout public-clean
 if ($LASTEXITCODE -ne 0) { throw "Could not switch to public-clean. Aborting sync." }
-git merge dev --no-edit --no-ff | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "Merge of dev into public-clean failed. Resolve it manually: git merge --abort, return to dev, then re-run." }
+git reset --hard dev
+if ($LASTEXITCODE -ne 0) { throw "Reset of public-clean to dev failed. Aborting sync." }
 
 $filterRepoArgs = @("--invert-paths", "--path", "AGENTS.md", "--path", "TORO_GYM_PLAN.md", "--path", "LOCATION_DRIVEN_RBAC_PLAN.md", "--path", "MEMBER_STATUS_PLAN.md", "--path", "RECEPTION_SYSTEM_PLAN.md", "--path-glob", "*_PLAN.md", "--path", "docs/features/subscription-quantity-chaining.md", "--path", "docs/planning", "--force", "--refs", "public-clean")
 $filterRepoExe = Get-Command git-filter-repo -ErrorAction SilentlyContinue
