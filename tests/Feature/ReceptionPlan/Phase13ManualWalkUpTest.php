@@ -164,9 +164,9 @@ it('opens the overlay for a banned walk-up with only a close button and a banned
         ->assertDontSee(__('app.reception.override'));
 });
 
-it('denies a walk-up check-in without touching any queue entry', function (): void {
-    manualPlan();
-    manualMember();
+it('denies a walk-up check-in and logs the denial to Activity without touching any queue entry', function (): void {
+    $plan = manualPlan();
+    $member = manualMember();
 
     Livewire::actingAs(manualStaff())
         ->test(Reception::class)
@@ -180,7 +180,13 @@ it('denies a walk-up check-in without touching any queue entry', function (): vo
         ->assertDispatched('notify')
         ->assertSet('showCheckInOverlay', false);
 
-    expect(PlanCheckIn::count())->toBe(0)
+    $denial = PlanCheckIn::query()->latest('id')->first();
+
+    expect($denial)->not->toBeNull()
+        ->and((int) $denial->member_id)->toBe((int) $member->id)
+        ->and((bool) $denial->override)->toBeTrue()
+        ->and($denial->override_reason)->toBe('Not a member here')
+        ->and((int) $denial->service_id)->toBe((int) $plan->primaryService()->id)
         ->and(QueueEntry::count())->toBe(0);
 });
 
