@@ -100,7 +100,7 @@ function o3o4o5ConfigureRecipients(User $pinned): void
     ]);
 }
 
-it('swaps the override button for add-new-subscription when the selected service is expired', function (): void {
+it('offers add-new-subscription alongside override when the selected service is expired', function (): void {
     $location = Location::factory()->create();
     $plan = o3o4o5Plan();
     $member = o3o4o5Member();
@@ -115,7 +115,7 @@ it('swaps the override button for add-new-subscription when the selected service
 
     expect($html)->toContain('openExpiredSubscriptionModal')
         ->and($html)->toContain(__('app.check_in.add_subscription'))
-        ->not->toContain('openCheckInOverrideFor')
+        ->and($html)->toContain('openCheckInOverrideFor')
         ->not->toContain('openAddPaymentModal');
 });
 
