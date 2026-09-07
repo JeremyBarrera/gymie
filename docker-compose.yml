@@ -25,6 +25,9 @@ services:
       REVERB_SCHEME: http
     volumes:
       - app-storage:/var/www/storage/app
+      # Settings JSON (currency, taxes, notification prefs) must survive
+      # container recreates - storage/data is otherwise container-ephemeral.
+      - app-settings:/var/www/storage/data
     depends_on:
       db:
         condition: service_healthy
@@ -106,6 +109,7 @@ services:
     command: ["php", "artisan", "queue:work", "--sleep=1", "--tries=3", "--max-time=3600"]
     volumes:
       - app-storage:/var/www/storage/app
+      - app-settings:/var/www/storage/data
     depends_on:
       - app
 
@@ -127,6 +131,7 @@ services:
     command: ["php", "artisan", "schedule:work"]
     volumes:
       - app-storage:/var/www/storage/app
+      - app-settings:/var/www/storage/data
     depends_on:
       - app
 
@@ -179,6 +184,7 @@ volumes:
   redis-data:
   app-storage:
   app-public:
+  app-settings:
   backups:
   certbot-etc:
   certbot-www:
