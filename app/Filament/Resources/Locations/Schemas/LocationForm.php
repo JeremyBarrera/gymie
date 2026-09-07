@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Locations\Schemas;
 
 use App\Helpers\Helpers;
 use App\Models\User;
+use App\Support\Billing\Currency;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -11,6 +12,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Validation\Rule;
 
 class LocationForm
 {
@@ -62,6 +64,15 @@ class LocationForm
                                     ->label(__('app.fields.pincode'))
                                     ->maxLength(20),
                             ])->columns(4),
+                        Select::make('currency')
+                            ->label(__('app.fields.currency'))
+                            ->placeholder(__('app.placeholders.use_global_currency'))
+                            ->helperText(fn (): string => __('app.placeholders.currency_override_hint', ['code' => Currency::codeFromSettings(Helpers::getSettings())]))
+                            ->options(Helpers::getCurrencies())
+                            ->searchable()
+                            ->preload()
+                            ->rules(['nullable', 'string', 'size:3', Rule::in(Currency::codes())])
+                            ->dehydrateStateUsing(fn (mixed $state): ?string => filled($state) ? strtoupper(trim((string) $state)) : null),
                         Select::make('managed_by')
                             ->label(__('app.fields.managed_by'))
                             ->options(fn (): array => User::orderBy('name')->pluck('name', 'id')->toArray())

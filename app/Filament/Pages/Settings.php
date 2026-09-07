@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Contracts\SettingsRepository;
 use App\Helpers\Helpers;
 use App\Models\User;
+use App\Support\Billing\Currency;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -24,6 +25,8 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -70,6 +73,7 @@ class Settings extends Page implements HasForms
         return [
             Tabs::make(__('app.settings.title'))
                 ->tabs([
+                    $this->generalTab(),
                     $this->invoiceTab(),
                     $this->memberTab(),
                     $this->chargesTab(),
@@ -82,6 +86,24 @@ class Settings extends Page implements HasForms
     }
 
     
+
+    private function generalTab(): Tab
+    {
+        return
+            Tab::make(__('app.settings.tabs.general'))->icon('heroicon-m-globe-alt')
+                ->schema([
+                    Select::make('general.currency')
+                        ->label(__('app.fields.currency'))
+                        ->placeholder(__('app.placeholders.select_currency'))
+                        ->helperText(__('app.placeholders.currency_global_hint'))
+                        ->options(Helpers::getCurrencies())
+                        ->searchable()
+                        ->preload()
+                        ->default(Currency::codeFromSettings(Helpers::getSettings()))
+                        ->rules(['nullable', 'string', 'size:3', Rule::in(Currency::codes())])
+                        ->dehydrateStateUsing(fn (mixed $state): ?string => filled($state) ? strtoupper(trim((string) $state)) : null),
+                ]);
+    }
 
     private function invoiceTab(): Tab
     {
@@ -304,6 +326,42 @@ class Settings extends Page implements HasForms
     {
         $settings = $this->data ?? [];
 
+        $submitted = strtoupper(trim((string) ($settings['general']['currency'] ?? '')));
+        $stored = strtoupper(trim((string) (Helpers::getSettings()['general']['currency'] ?? '')));
+
+        if ($submitted !== $stored) {
+            $this->dispatch('open-modal', id: 'currency-change-modal');
+
+            return;
+        }
+
+        $this->persistSettings($settings);
+    }
+
+    public function confirmCurrencySave(): void
+    {
+        $this->dispatch('close-modal', id: 'currency-change-modal');
+
+        $settings = $this->data ?? [];
+        $previous = strtoupper(trim((string) (Helpers::getSettings()['general']['currency'] ?? '')));
+
+        $this->persistSettings($settings);
+
+        Log::info('Global currency changed.', [
+            'previous' => $previous,
+            'current' => strtoupper(trim((string) ($settings['general']['currency'] ?? ''))),
+        ]);
+    }
+
+    public function cancelCurrencySave(): void
+    {
+        $this->data['general']['currency'] = Helpers::getSettings()['general']['currency'] ?? null;
+
+        $this->dispatch('close-modal', id: 'currency-change-modal');
+    }
+
+    private function persistSettings(array $settings): void
+    {
         try {
             app(SettingsRepository::class)->put($settings);
             $this->data = $settings;
