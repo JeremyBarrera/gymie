@@ -215,7 +215,7 @@ class PlanCheckInService
                 continue;
             }
 
-            if ($this->hasCheckedInToday($best) && $this->remainingUses($best) !== null) {
+            if ($this->hasCheckedInToday($best)) {
                 $states[] = [
                     'id' => (int) $service->id,
                     'name' => (string) $service->name,

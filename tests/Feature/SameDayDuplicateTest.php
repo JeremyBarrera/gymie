@@ -50,7 +50,7 @@ it('shows same_day_duplicate for limited plan after one approved check-in same d
     } finally { LocationTenantContext::setLocationId(null); }
 });
 
-it('does not trigger same_day_duplicate for unlimited plan', function () {
+it('shows same_day_duplicate for unlimited plan after one approved check-in same day', function () {
     $loc = sameDayLocation(); $svc = sameDayService($loc); $plan = sameDayUnlimitedPlan($svc);
     $member = sameDayMember(); $sub = sameDaySub($member, $plan);
     LocationTenantContext::setLocationId($loc->id);
@@ -58,8 +58,8 @@ it('does not trigger same_day_duplicate for unlimited plan', function () {
         \App\Models\PlanCheckIn::create(['member_id'=>$member->id,'subscription_id'=>$sub->id,'plan_id'=>$plan->id,'service_id'=>$svc->id,'location_id'=>$loc->id,'checked_in_by'=>sameDayStaff()->id,'checked_in_at'=>now()]);
         $svc2 = app(\App\Services\Membership\PlanCheckInService::class);
         $states = $svc2->serviceStatesForMember($member, $loc->id);
-        expect(collect($states)->pluck('state')->contains('same_day_duplicate'))->toBeFalse();
-        expect(collect($states)->pluck('state')->contains('access'))->toBeTrue();
+        expect(collect($states)->pluck('state')->contains('same_day_duplicate'))->toBeTrue();
+        expect(collect($states)->firstWhere('state','same_day_duplicate')['subscription_id'])->toBe($sub->id);
     } finally { LocationTenantContext::setLocationId(null); }
 });
 

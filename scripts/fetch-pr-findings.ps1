@@ -13,19 +13,33 @@ if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
 $parts = $Repo.Split("/")
 $owner = $parts[0]
 $name = $parts[1]
-$query = 'query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){title,state,reviewThreads(first:100){totalCount,nodes{path,line,isResolved,comments(first:1){nodes{author{login},body}}}}}}}'
-$raw = gh api graphql -f query=$query -f o=$owner -f r=$name -F n=$PrNumber | Out-String
-$pr = ($raw | ConvertFrom-Json).data.repository.pullRequest
+$query = 'query($o:String!,$r:String!,$n:Int!,$after:String){repository(owner:$o,name:$r){pullRequest(number:$n){title,state,reviewThreads(first:100,after:$after){totalCount,pageInfo{hasNextPage,endCursor},nodes{path,line,isResolved,comments(first:1){nodes{author{login},body}}}}}}}'
+$nodes = @()
+$cursor = $null
+$title = ""
+$state = ""
+$totalCount = 0
+do {
+    $ghArgs = @('api', 'graphql', '-f', "query=$query", '-f', "o=$owner", '-f', "r=$name", '-F', "n=$PrNumber")
+    if ($cursor) { $ghArgs += @('-F', "after=$cursor") }
+    $raw = & gh @ghArgs | Out-String
+    $page = ($raw | ConvertFrom-Json).data.repository.pullRequest
+    if ($null -eq $page) {
+        throw "PR #$PrNumber not found in $Repo."
+    }
+    $title = $page.title
+    $state = $page.state
+    $nodes += $page.reviewThreads.nodes
+    $cursor = $page.reviewThreads.pageInfo.endCursor
+    $hasNext = $page.reviewThreads.pageInfo.hasNextPage
+    $totalCount = $page.reviewThreads.totalCount
+} while ($hasNext)
 
-if ($null -eq $pr) {
-    throw "PR #$PrNumber not found in $Repo."
-}
-
-Write-Host "Findings for $Repo#$PrNumber : $($pr.title) [$($pr.state)]"
+Write-Host "Findings for $Repo#$PrNumber : $title [$state]"
 
 $open = @()
 $resolved = 0
-foreach ($t in $pr.reviewThreads.nodes) {
+foreach ($t in $nodes) {
     $c = $t.comments.nodes | Select-Object -First 1
     if ($null -eq $c) { continue }
     if ($c.author.login -ne "coderabbitai") { continue }
@@ -33,7 +47,7 @@ foreach ($t in $pr.reviewThreads.nodes) {
     $open += [pscustomobject]@{ Thread = $t; Body = [string]$c.body }
 }
 
-Write-Host "Open CodeRabbit threads: $($open.Count) (already resolved: $resolved, of $($pr.reviewThreads.totalCount) total threads)"
+Write-Host "Open CodeRabbit threads: $($open.Count) (already resolved: $resolved, of $totalCount total threads)"
 
 $n = 0
 foreach ($item in $open) {
