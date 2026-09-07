@@ -226,15 +226,29 @@ class ExpiredSubscriptionModal extends Component implements HasSchemas
             $subscription = $lastResult['subscription'];
             $invoice = $lastResult['invoice'];
 
+            $alertPairs = [];
             foreach ($results as $result) {
-                if ((float) $result['invoice']->due_amount > 0) {
+                if (isset($result['subscriptions'], $result['invoices'])) {
+                    foreach (array_values($result['subscriptions']) as $cycleIndex => $cycleSubscription) {
+                        $cycleInvoice = array_values($result['invoices'])[$cycleIndex] ?? null;
+                        if ($cycleInvoice !== null) {
+                            $alertPairs[] = [$cycleSubscription, $cycleInvoice];
+                        }
+                    }
+                } elseif (isset($result['subscription'], $result['invoice'])) {
+                    $alertPairs[] = [$result['subscription'], $result['invoice']];
+                }
+            }
+
+            foreach ($alertPairs as [$alertSubscription, $alertInvoice]) {
+                if ((float) $alertInvoice->due_amount > 0) {
                     FollowUpAlert::send(
                         action: 'new_subscription',
                         member: $member,
                         actor: $actor,
-                        reason: __('app.check_in.balance_remaining', ['amount' => Helpers::formatCurrency((float) $result['invoice']->due_amount)]),
-                        subscription: $result['subscription'],
-                        invoice: $result['invoice'],
+                        reason: __('app.check_in.balance_remaining', ['amount' => Helpers::formatCurrency((float) $alertInvoice->due_amount)]),
+                        subscription: $alertSubscription,
+                        invoice: $alertInvoice,
                     );
                 }
             }

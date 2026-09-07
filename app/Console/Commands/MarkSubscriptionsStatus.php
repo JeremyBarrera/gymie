@@ -74,13 +74,17 @@ class MarkSubscriptionsStatus extends Command
         }
 
         if ($runAll || $runExpiringOnly) {
-            Subscription::query()
+            $expiringCount = Subscription::query()
                 ->whereDate('start_date', '<=', $today)
                 ->whereBetween('end_date', [$today->toDateString(), $expiringThreshold->toDateString()])
                 ->where('status', '!=', 'renewed')
                 ->where('status', '!=', 'expiring')
                 ->where('status', '!=', 'expired')
                 ->update(['status' => 'expiring']);
+
+            if ($expiringCount > 0) {
+                $summary[] = "{$expiringCount} expiring";
+            }
         }
 
         if ($runAll) {

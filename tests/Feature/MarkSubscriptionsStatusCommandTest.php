@@ -77,7 +77,7 @@ class MarkSubscriptionsStatusCommandTest extends TestCase
         $this->assertNotNull($notification);
         $this->assertStringContainsString(__('app.notifications.subscription_status_update_title'), (string) ($notification->data['title'] ?? ''));
         $this->assertStringContainsString('1 expired', (string) ($notification->data['body'] ?? ''));
-        $this->assertStringNotContainsString('expiring', (string) ($notification->data['body'] ?? ''));
+        $this->assertStringContainsString('1 expiring', (string) ($notification->data['body'] ?? ''));
     }
 
     public function test_it_notifies_configured_roles_instead_of_owners(): void

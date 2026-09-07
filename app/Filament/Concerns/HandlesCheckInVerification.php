@@ -442,7 +442,7 @@ trait HandlesCheckInVerification
         }
 
         if ($entry !== null) {
-            $payload = array_merge($entry->payload, ['member_id' => $member->id]);
+            $payload = array_merge(($entry->payload ?? []), ['member_id' => $member->id]);
             $entry->update([
                 'status' => 'approved',
                 'override' => false,
@@ -641,7 +641,7 @@ trait HandlesCheckInVerification
         }
 
         if ($entry !== null) {
-            $payload = array_merge($entry->payload, ['member_id' => $member->id]);
+            $payload = array_merge(($entry->payload ?? []), ['member_id' => $member->id]);
             $entry->update([
                 'status' => 'approved',
                 'override' => true,
@@ -716,7 +716,7 @@ trait HandlesCheckInVerification
         }
 
         if ($entry !== null) {
-            $payload = array_merge($entry->payload, ['member_id' => $member->id]);
+            $payload = array_merge(($entry->payload ?? []), ['member_id' => $member->id]);
             $entry->update([
                 'status' => 'approved',
                 'override' => false,
@@ -792,7 +792,7 @@ trait HandlesCheckInVerification
         $wasManualPostSignup = $this->pendingSignupCheckInQueueId !== null && $entry === null;
 
         if ($entry !== null) {
-            $payload = array_merge($entry->payload, ['member_id' => $member->id]);
+            $payload = array_merge(($entry->payload ?? []), ['member_id' => $member->id]);
             $entry->update([
                 'status' => 'denied',
                 'denied_reason' => __('app.reception.same_day_duplicate_denied_reason'),
