@@ -114,6 +114,7 @@ Write-Output 'Building the app image (first run takes several minutes)...'
 docker compose -f docker-compose.yml -f docker-compose.https.yml --profile https build app | Out-Null
 
 Write-Output 'Starting the stack...'
+docker volume create gymie_db-data | Out-Null
 docker compose -f docker-compose.yml -f docker-compose.https.yml --profile https up -d
 
 $appKey = (Select-String -Path '.env' -Pattern '^APP_KEY=(.+)$')

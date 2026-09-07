@@ -18,6 +18,7 @@ services:
       REVERB_HOST: reverb-staging
     volumes:
       - app-storage-staging:/var/www/storage/app
+      - app-public-staging:/var/www/public-hosted
     depends_on:
       db:
         condition: service_healthy
@@ -35,7 +36,6 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:8081:80"
-      - "${HTTPS_PORT:-8444}:443"
     volumes:
       - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - app-public-staging:/var/www/public:ro

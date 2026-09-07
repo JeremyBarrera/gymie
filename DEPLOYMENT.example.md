@@ -27,6 +27,7 @@ cp DEPLOYMENT.example.md DEPLOYMENT.md
 ```bash
 cp .env.example .env
 # fill .env from values above
+docker volume create gymie_db-data
 docker compose -f docker-compose.yml -f docker-compose.https.yml --profile https up -d
 docker compose exec app php artisan migrate --force
 ```

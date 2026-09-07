@@ -22,6 +22,11 @@ class SubscriptionRenewalService
             $today = Carbon::today($timezone);
             $plan = Plan::findOrFail(Data::int($data['plan_id']));
             $member = $record->member;
+            if ($member === null) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'member' => [__('app.notifications.check_in_failed')],
+                ]);
+            }
             $quantity = $plan->isEvergreen() ? 1 : max(1, (int) ($data['quantity'] ?? 1));
             $invoiceData = $data['invoice'] ?? [];
             $fee = round(Data::float($plan->amount), 2);

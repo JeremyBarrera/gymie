@@ -54,6 +54,12 @@ class ExpiredSubscriptionModal extends Component implements HasSchemas
         $defaultPlan = $previous ? Plan::withTrashed()->find($previous->plan_id) : null;
         $available = $this->planOptions;
 
+        if ($available === []) {
+            $this->notifyDanger(__('app.reception.no_eligible_plans'));
+
+            return;
+        }
+
         $defaultPlanId = $defaultPlan && isset($available[$defaultPlan->id])
             ? (int) $defaultPlan->id
             : (int) array_key_first($available);
@@ -186,21 +192,27 @@ class ExpiredSubscriptionModal extends Component implements HasSchemas
                     $results = [];
                     $currentPrevious = $freshPrevious;
 
-                    foreach ($this->sales as $sale) {
-                        $result = app(SubscriptionRenewalService::class)->renew($currentPrevious, [
-                            'plan_id' => (int) $sale['plan_id'],
-                            'quantity' => max(1, (int) ($sale['quantity'] ?? 1)),
-                            'start_date' => (string) $sale['start_date'],
-                            'end_date' => filled($sale['end_date'] ?? null) ? (string) $sale['end_date'] : null,
-                        'invoice' => [
-                            'payment_method' => $sale['payment_method'] ?? 'cash',
-                            'discount_amount' => (float) ($sale['discount_amount'] ?? 0),
-                            'paid_amount' => (float) ($sale['paid_amount'] ?? 0),
-                            'date' => (string) $sale['start_date'],
-                        ],
-                    ]);
-                    $results[] = $result;
-                    $currentPrevious = $result['subscription'];
+                    foreach ($this->sales as $index => $sale) {
+                        try {
+                            $result = app(SubscriptionRenewalService::class)->renew($currentPrevious, [
+                                'plan_id' => (int) $sale['plan_id'],
+                                'quantity' => max(1, (int) ($sale['quantity'] ?? 1)),
+                                'start_date' => (string) $sale['start_date'],
+                                'end_date' => filled($sale['end_date'] ?? null) ? (string) $sale['end_date'] : null,
+                                'invoice' => [
+                                    'payment_method' => $sale['payment_method'] ?? 'cash',
+                                    'discount_amount' => (float) ($sale['discount_amount'] ?? 0),
+                                    'paid_amount' => (float) ($sale['paid_amount'] ?? 0),
+                                    'date' => (string) $sale['start_date'],
+                                ],
+                            ]);
+                        } catch (\Illuminate\Validation\ValidationException $exception) {
+                            throw \Illuminate\Validation\ValidationException::withMessages(
+                                collect($exception->errors())->mapWithKeys(fn ($messages, $field) => ["sales.{$index}.{$field}" => $messages])->all()
+                            );
+                        }
+                        $results[] = $result;
+                        $currentPrevious = $result['subscription'];
                 }
 
                 return $results;
@@ -226,6 +238,8 @@ class ExpiredSubscriptionModal extends Component implements HasSchemas
                     );
                 }
             }
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            throw $exception;
         } catch (\Throwable $exception) {
             Log::error('Expired-path renewal failed', [
                 'member_id' => $member->id,
