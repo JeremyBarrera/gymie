@@ -2,8 +2,8 @@ $ErrorActionPreference = "Stop"
 
 $prodDb = "torogym"
 $stageDb = "gymie_staging"
-$prodPass = (Get-Content .env | Select-String "DB_PASSWORD").ToString().Split("=")[1]
-$stagePass = (Get-Content .env.staging | Select-String "DB_PASSWORD").ToString().Split("=")[1]
+$prodPass = (Get-Content .env | Select-String "DB_PASSWORD").ToString().Split("=",2)[1]
+$stagePass = (Get-Content .env.staging | Select-String "DB_PASSWORD").ToString().Split("=",2)[1]
 $stageSql = "$env:TEMP\stage.sql"
 $stagingCompose = @("--env-file", ".env.staging", "-f", "docker-compose.yml", "-f", "docker-compose.staging.yml", "-p", "gymie-staging")
 
